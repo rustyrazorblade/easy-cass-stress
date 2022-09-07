@@ -66,6 +66,7 @@ class AllPluginsBasicTest {
             concurrency = 10L
             partitionValues = 1000
             prometheusPort = prometheusPort++
+            threads = 2
         }.execute()
     }
 

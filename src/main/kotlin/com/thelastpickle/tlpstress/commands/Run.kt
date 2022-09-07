@@ -25,6 +25,7 @@ import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.lang.RuntimeException
 import kotlin.concurrent.fixedRateTimer
+import kotlin.concurrent.thread
 
 class NoSplitter : IParameterSplitter {
     override fun split(value: String?): MutableList<String> {
@@ -34,6 +35,10 @@ class NoSplitter : IParameterSplitter {
 }
 
 
+/**
+ * command is the original command that started the program.
+ * It's used solely for logging and reporting purposes.
+ */
 @Parameters(commandDescription = "Run a tlp-stress profile")
 class Run(val command: String) : IStressCommand {
 
@@ -272,14 +277,22 @@ class Run(val command: String) : IStressCommand {
 
             populateData(plugin, runners, metrics)
 
-            println("Starting main runner")
-
             metrics.startReporting()
 
-            runnersExecuted = runners.parallelStream().map {
-                println("Running")
-                it.run()
-            }.count()
+            println("Starting main runner")
+
+            val threads = mutableListOf<Thread>()
+            for (runner in runners) {
+                val t = thread(start = true, isDaemon = true) {
+                    runner.run()
+                }
+
+                threads.add(t)
+            }
+
+            for (t in threads) {
+                t.join()
+            }
 
             Thread.sleep(1000)
 
@@ -288,7 +301,7 @@ class Run(val command: String) : IStressCommand {
                 reporter.report()
             }
         } catch (e: Exception) {
-            println("There was an error with tlp-stress.  Please file a bug at https://github.com/thelastpickle/tlp-stress and report the following exception:\n $e")
+            println("There was an error with tlp-stress.  Please file a bug at https://github.com/rustyrazorblade/tlp-stress and report the following exception:\n $e")
             throw e
         } finally {
             // we need to be able to run multiple tests in the same JVM
@@ -299,7 +312,6 @@ class Run(val command: String) : IStressCommand {
         }
 
     }
-
 
 
     private fun getRateLimiter() = if(rate > 0) {
