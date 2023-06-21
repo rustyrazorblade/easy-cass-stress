@@ -13,31 +13,35 @@ import kotlin.concurrent.thread
  */
 class FixedRateScheduler(var rate: RateLimiter,
                          var total: Long,
-                         var maxId: Long,
-                         var queueDepth: Int,
+                         private var maxId: Long,
+                         queueDepth: Int,
                          var metrics: Metrics,
-                         var partitionKeyGenerator: PartitionKeyGenerator) : QueryScheduler {
+                         private var partitionKeyGenerator: PartitionKeyGenerator) : QueryScheduler {
 
-    var queue = ArrayBlockingQueue<PartitionKey>(queueDepth)
-    lateinit var thread : Thread
-    var isComplete = false
+    private var queue = ArrayBlockingQueue<PartitionKey>(queueDepth)
 
-    override fun start() {
-        // start a background thread that populates a concurrent queue
-        thread = thread {
-            for (pk in partitionKeyGenerator.generateKey(total, maxId)) {
-                if (isComplete) {
-                    break
-                }
-                try {
-                    queue.add(pk)
-                } catch (e : IllegalStateException) {
-                    metrics.errors.mark()
-                }
-                rate.acquire()
+    var thread = thread(start = false, name = "Fixed Rate Scheduler") {
+        for (pk in partitionKeyGenerator.generateKey(total, maxId)) {
+            if (isComplete) {
+                break
             }
-            isComplete = true
+            try {
+                queue.add(pk)
+            } catch (e : IllegalStateException) {
+                metrics.errors.mark()
+            }
+            rate.acquire()
         }
+        isComplete = true
+    }
+
+    private var isComplete = false
+
+    /*
+    start a background thread that populates a concurrent queue
+     */
+    override fun start() {
+        thread.start()
     }
 
     override fun generateKey() = sequence {
@@ -55,5 +59,4 @@ class FixedRateScheduler(var rate: RateLimiter,
     override fun stop() {
         isComplete = true
     }
-    // Thread generates
 }
