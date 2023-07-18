@@ -25,6 +25,7 @@ import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.lang.RuntimeException
 import kotlin.concurrent.fixedRateTimer
+import kotlin.concurrent.thread
 
 class NoSplitter : IParameterSplitter {
     override fun split(value: String?): MutableList<String> {
@@ -276,12 +277,20 @@ class Run(val command: String) : IStressCommand {
 
             metrics.startReporting()
 
-            runnersExecuted = runners.parallelStream().map {
-                println("Running")
-                it.run()
-            }.count()
+            val threads = mutableListOf<Thread>()
 
+            runners.forEach {
+                val tmp = thread(start = true, isDaemon = false, name = "runner-X") {
+                    it.run()
+                }
+                threads.add(tmp)
+            }
+            println("Running created, sleeping")
             Thread.sleep(1000)
+            // wait for threads to finish
+            for (thread in threads) {
+                thread.join()
+            }
 
             // dump out metrics
             for (reporter in metrics.reporters) {

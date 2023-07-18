@@ -1,6 +1,7 @@
 package com.thelastpickle.tlpstress
 
 import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.MoreExecutors
 import com.thelastpickle.tlpstress.profiles.IStressProfile
 import com.thelastpickle.tlpstress.profiles.IStressRunner
 import com.thelastpickle.tlpstress.profiles.Operation
@@ -132,7 +133,7 @@ class ProfileRunner(val context: StressContext,
             }
 
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op) )
+            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op), MoreExecutors.directExecutor() )
 
             operations++
         }
@@ -170,7 +171,7 @@ class ProfileRunner(val context: StressContext,
 
             val startTime = context.metrics.populate.time()
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op))
+            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op), MoreExecutors.directExecutor())
         }
 
         when(profile.getPopulateOption(context.mainArguments)) {
