@@ -1,4 +1,6 @@
 buildscript {
+    ext.kotlin_version = '1.9.0'
+
     repositories {
         mavenCentral()
     }
@@ -9,15 +11,14 @@ buildscript {
 
 plugins {
     id 'com.google.cloud.tools.jib' version '3.3.0'
+    id "org.jetbrains.kotlin.jvm" version "1.9.0"
     id "nebula.ospackage" version "9.1.1"
-    id "org.jetbrains.kotlin.jvm" version "1.7.10"
+    id "nebula.ospackage-application"  version "9.1.1"
 }
 
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'application'
-apply plugin: "nebula.ospackage"
-apply plugin: 'nebula.ospackage-application'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 group 'com.thelastpickle'
