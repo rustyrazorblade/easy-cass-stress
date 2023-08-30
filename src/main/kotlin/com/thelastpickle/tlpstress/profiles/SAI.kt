@@ -31,10 +31,10 @@ class SAI : IStressProfile {
     @WorkloadParameter(description = "Enable global queries with true to query the entire cluster.")
     var global = false
 
-    @WorkloadParameter(description = "Min size in words of value field in words")
+    @WorkloadParameter(description = "Min size in words of value field.")
     var minSize = 5
 
-    @WorkloadParameter(description = "Max size in words of value field in words")
+    @WorkloadParameter(description = "Max size in words of value field.")
     var maxSize = 10
 
     lateinit var insert: PreparedStatement
