@@ -43,6 +43,7 @@ class SAI : IStressProfile {
 
     val log = logger()
     override fun prepare(session: Session) {
+        println("Preparing workload with global=$global")
         insert = session.prepare("INSERT INTO $TABLE (partition_id, c_id, value) VALUES (?, ?, ?)")
         // todo make the operator configurable with a workload parameter
 

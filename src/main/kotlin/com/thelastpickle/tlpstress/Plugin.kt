@@ -74,6 +74,11 @@ data class Plugin (val name: String,
                 prop.setter.call(instance, value)
             }
 
+            // Boolean
+            if(prop.returnType.isSubtypeOf(Boolean::class.createType())) {
+                log.debug("Found the type, we have a Boolean, setting the value")
+                prop.setter.call(instance, value.toBoolean())
+            }
 
         }
 
