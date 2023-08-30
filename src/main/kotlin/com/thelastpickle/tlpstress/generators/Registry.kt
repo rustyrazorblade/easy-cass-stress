@@ -82,6 +82,7 @@ class Registry(val defaults: MutableMap<Field, FieldGenerator> = mutableMapOf(),
     }
 
     fun getGenerator(table: String, field: String) : FieldGenerator {
+        log.info("Getting generator for $table.$field")
         val tmp = Field(table, field)
         if(tmp in overrides)
             return overrides[tmp]!!

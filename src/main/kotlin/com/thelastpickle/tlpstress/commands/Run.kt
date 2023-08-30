@@ -333,9 +333,18 @@ class Run(val command: String) : IStressCommand {
                 }
 
                 // calling it on the runner
-                runners.parallelStream().map {
-                    it.populate(populate)
-                }.count()
+                val threads = mutableListOf<Thread>()
+                runners.forEach {
+                    val tmp = thread(start=true, isDaemon = false, name = "populate-X") {
+                        it.populate(populate)
+                    }
+                    threads.add(tmp)
+                }
+
+                Thread.sleep(1000)
+                for (thread in threads) {
+                    thread.join()
+                }
 
                 // have we really reached 100%?
                 Thread.sleep(1000)
@@ -384,6 +393,7 @@ class Run(val command: String) : IStressCommand {
         val fieldRegistry = Registry.create()
 
         for((field,generator) in plugin.instance.getFieldGenerators()) {
+            log.info("Defaulting $field to $generator")
             fieldRegistry.setDefault(field, generator)
         }
 
