@@ -24,7 +24,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 group 'com.thelastpickle'
 version '5.0.0'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 application {
     applicationName = "tlp-stress"
@@ -211,3 +211,4 @@ task uploadAll  {
 wrapper {
     distributionType = Wrapper.DistributionType.ALL
 }
+targetCompatibility = JavaVersion.VERSION_11

@@ -18,89 +18,143 @@ import java.util.concurrent.ThreadLocalRandom
  */
 
 const val TABLE = "sai"
+const val MIN_VALUE_TEXT_SIZE=5
+const val MAX_VALUE_TEXT_SIZE=10
+
 class SAI : IStressProfile {
 
-    // TODO allow for all operators, may be useful for simulating more workloads
-    // uncover some bugs.
     @WorkloadParameter(description = "Operator to use for SAI queries, defaults to equality = search.")
-    var operator = "="
+    var intCompare = "="
 
-    @WorkloadParameter(description = "Rows per partition")
+    @WorkloadParameter(description = "Logic operator combining multiple predicates.  Not yet supported." )
+    var operator = "AND"
+
+    @WorkloadParameter(description = "Max rows per partition")
     var rows = 10000
 
     @WorkloadParameter(description = "Enable global queries with true to query the entire cluster.")
     var global = false
 
-    @WorkloadParameter(description = "Min size in words of value field.")
-    var minSize = 5
+    @WorkloadParameter(description = "Fields to index, comma separated")
+    var indexFields = "value_int,value_text"
 
-    @WorkloadParameter(description = "Max size in words of value field.")
-    var maxSize = 10
+    @WorkloadParameter(description = "Fields to search, comma separated")
+    var searchFields = "value_text"
 
     lateinit var insert: PreparedStatement
     lateinit var select: PreparedStatement
     lateinit var delete: PreparedStatement
 
+    // mutable sets are backed by a LinkedHashSet, so we can preserve order
+    lateinit var indexFieldsSet : Set<String>
+    lateinit var searchFieldsSet : Set<String>
+
     val log = logger()
     override fun prepare(session: Session) {
         println("Preparing workload with global=$global")
-        insert = session.prepare("INSERT INTO $TABLE (partition_id, c_id, value) VALUES (?, ?, ?)")
+
+        indexFieldsSet = indexFields.split("\\s*,\\s*".toRegex()).toSet()
+        searchFieldsSet = searchFields.split("\\s*,\\s*".toRegex()).toSet()
+
+        insert = session.prepare("INSERT INTO $TABLE (partition_id, c_id, value_text, value_int) VALUES (?, ?, ?, ?)")
         // todo make the operator configurable with a workload parameter
 
-        select = when(global) {
-            // global queries are not partition restricted
-            true -> session.prepare("SELECT * from $TABLE WHERE value $operator ?")
-            false -> session.prepare("SELECT * from $TABLE WHERE partition_id = ? AND value $operator ?")
+        val parts = mutableListOf<String>()
+
+        // IMPORTANT - fields are added in this order: value_text, value_int (new fields added here)
+        if (searchFieldsSet.contains("value_text")) {
+            parts.add("value_text = ?")
         }
+        if (searchFieldsSet.contains("value_int")) {
+            parts.add("value_int $intCompare ? ")
+        }
+
+        parts.clear()
+
+        // if we're doing a global query we can skip the partition key
+        if (!global) {
+            parts.add("partition_id = ?")
+        }
+
+        if (searchFieldsSet.contains("value_text")) {
+            parts.add("value_text = ?")
+        }
+        if (searchFieldsSet.contains("value_int")) {
+            parts.add("value_int = ?")
+        }
+
+        val selectQuery = "SELECT * from $TABLE WHERE " + parts.joinToString(" $operator ")
+        println("Preparing $selectQuery")
+        select = session.prepare(selectQuery)
 
         delete = session.prepare("DELETE from $TABLE WHERE partition_id = ? AND c_id = ?")
     }
 
-    override fun schema(): List<String> =
-        listOf(
+    override fun schema(): List<String> {
+        val result = mutableListOf(
             """
                 CREATE TABLE IF NOT EXISTS $TABLE (
                     partition_id text,
                     c_id int,
-                    value text,
+                    value_text text,
+                    value_int int,
                     primary key (partition_id, c_id)
                 )
-            """.trimIndent(),
-            """
-                CREATE INDEX IF NOT EXISTS ON $TABLE (value) USING 'sai';
             """.trimIndent()
         )
-
+        if (indexFields.contains("value_text") ) {
+            result.add("CREATE INDEX IF NOT EXISTS ON $TABLE (value_text) USING 'sai'")
+        }
+        if (indexFields.contains("value_int")) {
+            result.add("CREATE INDEX IF NOT EXISTS ON $TABLE (value_int) USING 'sai'")
+        }
+        return result
+    }
 
     override fun getRunner(context: StressContext): IStressRunner {
         return object : IStressRunner {
 
-            val nextRow : Int get() = c_id.nextInt(0, rows)
-
             val c_id = ThreadLocalRandom.current()
+            // use nextRowId
+            val nextRowId : Int get() = c_id.nextInt(0, rows)
+
             // generator for the value field
-            val value = context.registry.getGenerator(TABLE, "value")
+            val value_text = context.registry.getGenerator(TABLE, "value_text")
+            val value_int = context.registry.getGenerator(TABLE, "value_int")
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
-                val bound = insert.bind(partitionKey.getText(), nextRow, value.getText())
+                val bound = insert.bind(partitionKey.getText(), nextRowId, value_text.getText(), value_int.getInt())
                 return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = when (global) {
-                    true -> select.bind(value.getText())
-                    false -> select.bind(partitionKey.getText(), value.getText())
+                // first bind the partition key
+                val boundValues = mutableListOf<Any>()
+
+                if (!global) {
+                    boundValues.add(partitionKey.getText())
                 }
-                return Operation.SelectStatement(bound)
+
+                if (searchFieldsSet.contains("value_text")) {
+                    boundValues.add(value_text.getText())
+                }
+
+                if (searchFieldsSet.contains("value_int")) {
+                    boundValues.add(value_int.getInt())
+                }
+
+                val boundStatement = select.bind(*boundValues.toTypedArray())
+                return Operation.SelectStatement(boundStatement)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey) =
-                Operation.Deletion(delete.bind(partitionKey.getText(), nextRow))
+                Operation.Deletion(delete.bind(partitionKey.getText(), nextRowId))
 
         }
     }
 
     override fun getFieldGenerators(): Map<Field, FieldGenerator> {
-        return mapOf(Field(TABLE, "value") to Book().apply{ min=minSize; max=maxSize})
+        return mapOf(Field(TABLE, "value_text") to Book().apply{ min= MIN_VALUE_TEXT_SIZE; max= MAX_VALUE_TEXT_SIZE},
+            Field(TABLE, "value_int") to Random().apply{ min=0; max=10000})
     }
 }
