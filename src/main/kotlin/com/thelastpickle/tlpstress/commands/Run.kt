@@ -23,6 +23,7 @@ import me.tongfei.progressbar.ProgressBar
 import me.tongfei.progressbar.ProgressBarStyle
 import org.apache.logging.log4j.kotlin.logger
 import java.io.File
+import java.io.PrintStream
 import java.lang.RuntimeException
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.thread
@@ -165,6 +166,9 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--max-connections"], description = "Sets the number of max connections per host")
     var maxConnections : Int = 8
 
+    @Parameter(names = ["--hdr"], description = "Print HDR Histograms using this prefix")
+    var hdrHistogramPrefix = ""
+
     /**
      * Lazily generate query options
      */
@@ -300,6 +304,19 @@ class Run(val command: String) : IStressCommand {
             for (reporter in metrics.reporters) {
                 reporter.report()
             }
+
+            // print out the hdr histograms if requested to 3 separate files
+            if (hdrHistogramPrefix != "") {
+                val pairs = listOf(Pair(metrics.mutationHistogram, "mutations"),
+                                   Pair(metrics.selectHistogram, "reads"),
+                                   Pair(metrics.deleteHistogram, "deletes"))
+                for (entry in pairs) {
+                    val fp = File(hdrHistogramPrefix + "-" + entry.second + ".txt")
+                    entry.first.outputPercentileDistribution(PrintStream(fp), 1_000_000.0)
+                }
+
+            }
+
         } catch (e: Exception) {
             println("There was an error with tlp-stress.  Please file a bug at https://github.com/rustyrazorblade/tlp-stress and report the following exception:\n $e")
             throw e

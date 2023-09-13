@@ -24,10 +24,9 @@ class OperationCallback(val context: StressContext,
         val log = logger()
     }
 
-    override fun onFailure(t: Throwable?) {
+    override fun onFailure(t: Throwable) {
         semaphore.release()
         context.metrics.errors.mark()
-        startTime.stop()
 
         log.error { t }
 
@@ -35,12 +34,23 @@ class OperationCallback(val context: StressContext,
 
     override fun onSuccess(result: ResultSet?) {
         semaphore.release()
-        startTime.stop()
+        val time = startTime.stop()
 
-        // we only do the callback for mutations
+        // we log to the HDR histogram and do the callback for mutations
         // might extend this to select, but I can't see a reason for it now
-        if(op is Operation.Mutation) {
-            runner.onSuccess(op, result)
+        when (op) {
+            is Operation.Mutation -> {
+                context.metrics.mutationHistogram.recordValue(time)
+                runner.onSuccess(op, result)
+            }
+
+            is Operation.Deletion -> {
+                context.metrics.deleteHistogram.recordValue(time)
+            }
+
+            is Operation.SelectStatement -> {
+                context.metrics.selectHistogram.recordValue(time)
+            }
         }
 
     }
