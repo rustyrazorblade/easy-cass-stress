@@ -128,6 +128,9 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--paging"], description = "Override the driver's default page size.")
     var paging : Int? = null
 
+    @Parameter(names = ["--paginate"], description = "Paginate through the entire partition before completing")
+    var paginate = false
+
     @Parameter(names = ["--rowcache"], description = "Row cache setting")
     var rowCache = "NONE"
 
@@ -314,7 +317,6 @@ class Run(val command: String) : IStressCommand {
                     val fp = File(hdrHistogramPrefix + "-" + entry.second + ".txt")
                     entry.first.outputPercentileDistribution(PrintStream(fp), 1_000_000.0)
                 }
-
             }
 
         } catch (e: Exception) {

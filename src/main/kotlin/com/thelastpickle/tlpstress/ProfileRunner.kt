@@ -133,14 +133,7 @@ class ProfileRunner(val context: StressContext,
             }
 
             val future = context.session.executeAsync(op.bound)
-            /**
-             *   public static <V> void addCallback(
-            ListenableFuture<V> future,
-            FutureCallback<? super V> callback) {
-            addCallback(future, callback, directExecutor());
-            }
-             */
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op), MoreExecutors.directExecutor())
+            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
             operations++
         }
 

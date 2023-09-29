@@ -18,7 +18,8 @@ class OperationCallback(val context: StressContext,
                         val semaphore: Semaphore,
                         val startTime: Timer.Context,
                         val runner: IStressRunner,
-                        val op: Operation) : FutureCallback<ResultSet> {
+                        val op: Operation,
+                        val paginate: Boolean = false) : FutureCallback<ResultSet> {
 
     companion object {
         val log = logger()
@@ -32,7 +33,15 @@ class OperationCallback(val context: StressContext,
 
     }
 
-    override fun onSuccess(result: ResultSet?) {
+    override fun onSuccess(result: ResultSet) {
+        // maybe paginate
+        if (paginate) {
+            var tmp = result
+            while (!tmp.isFullyFetched) {
+                tmp = result.fetchMoreResults().get()
+            }
+        }
+
         semaphore.release()
         val time = startTime.stop()
 
