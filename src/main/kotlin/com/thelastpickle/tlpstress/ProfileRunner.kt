@@ -162,7 +162,7 @@ class ProfileRunner(val context: StressContext,
         val runner = profile.getRunner(context)
         val sem = Semaphore(context.permits)
 
-        fun executePopulate(op: Operation.Mutation) {
+        fun executePopulate(op: Operation) {
             context.rateLimiter?.run {
                 acquire(1)
             }
@@ -187,7 +187,15 @@ class ProfileRunner(val context: StressContext,
 
                 // we follow the same access pattern as normal writes when pre-populating
                 for (key in partitionKeyGenerator.generateKey(numRows, context.mainArguments.partitionValues)) {
-                    val op = runner.getNextMutation(key) as Operation.Mutation
+                    // we should be inserting tombstones at the --deletes rate
+                    val nextOp = ThreadLocalRandom.current().nextInt(0, 100)
+
+                    // populate should populate with tombstones in the case of --deletes being set
+                    val op = if (deleteRate * 100 > nextOp) {
+                        runner.getNextDelete(key)
+                    } else {
+                        runner.getNextMutation(key)
+                    }
                     executePopulate(op)
                 }
 

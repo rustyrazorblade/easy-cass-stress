@@ -19,14 +19,17 @@ class RandomPartitionAccess : IStressProfile {
     @WorkloadParameter("Select and delete random row or the entire partition.  Acceptable values: row, partition")
     var select = "row"
 
-    lateinit var insert : PreparedStatement
-    lateinit var query : PreparedStatement
-    lateinit var delete : PreparedStatement
+    @WorkloadParameter("Select and delete random row or the entire partition.  Acceptable values: row, partition")
+    var delete = "row"
+
+    lateinit var insert_query : PreparedStatement
+    lateinit var select_query : PreparedStatement
+    lateinit var delete_query : PreparedStatement
 
     override fun prepare(session: Session) {
-        insert = session.prepare("INSERT INTO random_access (partition_id, row_id, value) values (?, ?, ?)")
+        insert_query = session.prepare("INSERT INTO random_access (partition_id, row_id, value) values (?, ?, ?)")
 
-        query = when(select) {
+        select_query = when(select) {
 
             "partition" -> {
                 println("Preparing full partition reads")
@@ -40,7 +43,7 @@ class RandomPartitionAccess : IStressProfile {
                 throw RuntimeException("select must be row or partition.")
         }
 
-        delete = when(select) {
+        delete_query = when(delete) {
 
             "partition" -> {
                 println("Preparing full partition deletes")
@@ -76,7 +79,7 @@ class RandomPartitionAccess : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val rowId = random.nextInt(0, rows)
-                val bound = insert.bind(partitionKey.getText(),
+                val bound = insert_query.bind(partitionKey.getText(),
                     rowId, value.getText())
                 return Operation.Mutation(bound)
             }
@@ -85,10 +88,10 @@ class RandomPartitionAccess : IStressProfile {
                 val bound = when(select) {
 
                     "partition" ->
-                        query.bind(partitionKey.getText())
+                        select_query.bind(partitionKey.getText())
                     "row" -> {
                         val rowId = random.nextInt(0, rows)
-                        query.bind(partitionKey.getText(), rowId)
+                        select_query.bind(partitionKey.getText(), rowId)
                     }
                     else -> throw RuntimeException("not even sure how you got here")
 
@@ -98,12 +101,12 @@ class RandomPartitionAccess : IStressProfile {
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = when(select) {
+                val bound = when(delete) {
                     "partition" ->
-                        delete.bind(partitionKey.getText())
+                        delete_query.bind(partitionKey.getText())
                     "row" -> {
                         val rowId = random.nextInt(0, rows)
-                        delete.bind(partitionKey.getText(), rowId)
+                        delete_query.bind(partitionKey.getText(), rowId)
                     }
                     else -> throw RuntimeException("not even sure how you got here")
 
