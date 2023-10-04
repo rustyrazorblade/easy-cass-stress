@@ -16,10 +16,10 @@ class RandomPartitionAccess : IStressProfile {
     @WorkloadParameter(description = "Number of rows per partition, defaults to 100")
     var rows = 100
 
-    @WorkloadParameter("Select and delete random row or the entire partition.  Acceptable values: row, partition")
+    @WorkloadParameter("Select random row or the entire partition.  Acceptable values: row, partition")
     var select = "row"
 
-    @WorkloadParameter("Select and delete random row or the entire partition.  Acceptable values: row, partition")
+    @WorkloadParameter("Delete random row or the entire partition.  Acceptable values: row, partition")
     var delete = "row"
 
     lateinit var insert_query : PreparedStatement

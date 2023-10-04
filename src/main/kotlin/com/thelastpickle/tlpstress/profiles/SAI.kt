@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom
  * which is the primary workload targeted by SAI indexes.
  */
 
-const val TABLE = "sai"
+const val TABLE : String = "sai"
 const val MIN_VALUE_TEXT_SIZE=5
 const val MAX_VALUE_TEXT_SIZE=10
 
