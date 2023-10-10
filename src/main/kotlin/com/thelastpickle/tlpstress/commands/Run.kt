@@ -82,6 +82,9 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--concurrency", "-c"], description = "Concurrent queries allowed.  Increase for larger clusters.", converter = HumanReadableConverter::class)
     var concurrency = 100L
 
+    @Parameter(names = ["--queue"], description = "Queue Depth")
+    var queueDepth = 1000
+
     @Parameter(names = ["--populate"], description = "Pre-population the DB with N rows before starting load test.", converter = HumanReadableConverter::class)
     var populate = 0L
 

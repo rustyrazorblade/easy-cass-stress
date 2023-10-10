@@ -9,6 +9,8 @@ import com.thelastpickle.tlpstress.StressContext
 import com.thelastpickle.tlpstress.commands.Run
 import com.thelastpickle.tlpstress.generators.FieldGenerator
 import com.thelastpickle.tlpstress.generators.Field
+import com.codahale.metrics.Timer
+import com.codahale.metrics.Timer.Context
 
 interface IStressRunner {
     fun getNextMutation(partitionKey: PartitionKey) : Operation
@@ -83,8 +85,6 @@ interface IStressProfile {
     fun getPopulateOption(args: Run)  : PopulateOption = PopulateOption.Standard()
 
 
-
-
 }
 
 
@@ -92,8 +92,9 @@ sealed class Operation(val bound: BoundStatement) {
     // we're going to track metrics on the mutations differently
     // inserts will also carry data that might be saved for later validation
     // clustering keys won't be realistic to compute in the framework
+    lateinit var startTime: Context
 
-    class Mutation(bound: BoundStatement, val callbackPayload: Any? = null ) : Operation(bound)
+    class Mutation(bound: BoundStatement, val callbackPayload: Any? = null) : Operation(bound)
 
     class SelectStatement(bound: BoundStatement): Operation(bound)
 

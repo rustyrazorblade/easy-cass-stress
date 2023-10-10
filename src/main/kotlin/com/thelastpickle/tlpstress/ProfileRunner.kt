@@ -106,6 +106,12 @@ class ProfileRunner(val context: StressContext,
         // we use MAX_VALUE since it's essentially infinite if we give a duration
         val totalValues = if (duration > 0) Long.MAX_VALUE else iterations
 
+        val queue = RequestQueue(partitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
+        queue.start()
+
+
+        // pull requests off the queue instead of using generateKey
+        // move the getNextOperation into the queue thing
         for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
             if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {
                 break
@@ -118,7 +124,7 @@ class ProfileRunner(val context: StressContext,
             // without having to write that code in the profile
             val nextOp = ThreadLocalRandom.current().nextInt(0, 100)
             val op : Operation = getNextOperation(nextOp, runner, key)
-            
+
             // if we're using the rate limiter (unlikely) grab a permit
             context.rateLimiter?.run {
                 acquire(1)
@@ -126,11 +132,11 @@ class ProfileRunner(val context: StressContext,
 
             sem.acquire()
 
-            val startTime = when(op) {
-                is Operation.Mutation -> context.metrics.mutations.time()
-                is Operation.SelectStatement -> context.metrics.selects.time()
-                is Operation.Deletion -> context.metrics.deletions.time()
-            }
+//            val startTime = when(op) {
+//                is Operation.Mutation -> context.metrics.mutations.time()
+//                is Operation.SelectStatement -> context.metrics.selects.time()
+//                is Operation.Deletion -> context.metrics.deletions.time()
+//            }
 
             val future = context.session.executeAsync(op.bound)
             Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
