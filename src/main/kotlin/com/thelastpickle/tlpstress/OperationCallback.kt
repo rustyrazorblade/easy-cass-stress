@@ -16,7 +16,6 @@ import java.util.concurrent.Semaphore
  */
 class OperationCallback(val context: StressContext,
                         val semaphore: Semaphore,
-                        val startTime: Timer.Context,
                         val runner: IStressRunner,
                         val op: Operation,
                         val paginate: Boolean = false) : FutureCallback<ResultSet> {
@@ -43,7 +42,7 @@ class OperationCallback(val context: StressContext,
         }
 
         semaphore.release()
-        val time = startTime.stop()
+        val time = op.startTime.stop()
 
         // we log to the HDR histogram and do the callback for mutations
         // might extend this to select, but I can't see a reason for it now

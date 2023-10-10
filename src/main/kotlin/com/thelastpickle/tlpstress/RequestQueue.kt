@@ -8,15 +8,17 @@ import java.util.concurrent.ThreadLocalRandom
 import kotlin.concurrent.thread
 
 /**
- * Need to accept the rate limiter
+ * Request adds ability to set a proper rate limiter and addresses
+ * the issue of coordinated omission.
  */
-class RequestQueue(val partitionKeyGenerator: PartitionKeyGenerator,
-                   context: StressContext,
-                   totalValues: Long,
-                   duration: Long,
-                   runner: IStressRunner,
-                   readRate: Double,
-                   deleteRate: Double
+class RequestQueue(
+    private val partitionKeyGenerator: PartitionKeyGenerator,
+    context: StressContext,
+    totalValues: Long,
+    duration: Long,
+    runner: IStressRunner,
+    readRate: Double,
+    deleteRate: Double
 
     ) {
 
@@ -60,6 +62,12 @@ class RequestQueue(val partitionKeyGenerator: PartitionKeyGenerator,
         }
     }
 
+    fun getNextOperation() = sequence<Operation> {
+        while (generatorThread.isAlive) {
+            yield(queue.take())
+        }
+    }
+
     fun start() {
         generatorThread.start()
     }
@@ -69,7 +77,7 @@ class RequestQueue(val partitionKeyGenerator: PartitionKeyGenerator,
     }
 
     fun stop() {
-
+        generatorThread.interrupt()
     }
 
 }

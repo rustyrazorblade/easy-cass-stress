@@ -95,11 +95,8 @@ class ProfileRunner(val context: StressContext,
      * Used for both pre-populating data and for performing the actual runner
      */
     private fun executeOperations(iterations: Long, duration: Long) {
-
-        val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
-        var operations = 0
         // create a semaphore local to the thread to limit the query concurrency
-        val sem = Semaphore(context.permits)
+        val sem = Semaphore(context.permits) // TODO REMOVE
 
         val runner = profile.getRunner(context)
 
@@ -109,38 +106,11 @@ class ProfileRunner(val context: StressContext,
         val queue = RequestQueue(partitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
         queue.start()
 
-
         // pull requests off the queue instead of using generateKey
         // move the getNextOperation into the queue thing
-        for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
-            if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {
-                break
-            }
-            // get next thing from the profile
-            // thing could be a statement, or it could be a failure command
-            // certain profiles will want to deterministically inject failures
-            // others can be randomly injected by the runner
-            // I should be able to just tell the runner to inject gossip failures in any test
-            // without having to write that code in the profile
-            val nextOp = ThreadLocalRandom.current().nextInt(0, 100)
-            val op : Operation = getNextOperation(nextOp, runner, key)
-
-            // if we're using the rate limiter (unlikely) grab a permit
-            context.rateLimiter?.run {
-                acquire(1)
-            }
-
-            sem.acquire()
-
-//            val startTime = when(op) {
-//                is Operation.Mutation -> context.metrics.mutations.time()
-//                is Operation.SelectStatement -> context.metrics.selects.time()
-//                is Operation.Deletion -> context.metrics.deletions.time()
-//            }
-
+        for (op in queue.getNextOperation()) {
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
-            operations++
+            Futures.addCallback(future, OperationCallback(context, sem, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
         }
 
         // block until all the queries are finished
@@ -174,9 +144,10 @@ class ProfileRunner(val context: StressContext,
             }
             sem.acquire()
 
-            val startTime = context.metrics.populate.time()
+            op.apply { context.metrics.populate.time() }
+
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op), MoreExecutors.directExecutor())
+            Futures.addCallback(future, OperationCallback(context, sem, runner, op), MoreExecutors.directExecutor())
         }
 
         when(profile.getPopulateOption(context.mainArguments)) {
