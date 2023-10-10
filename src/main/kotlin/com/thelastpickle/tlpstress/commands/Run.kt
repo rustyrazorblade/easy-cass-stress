@@ -110,8 +110,8 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--drop"], description = "Drop the keyspace before starting.")
     var dropKeyspace = false
 
-    @Parameter(names = ["--cl"], description = "Consistency level for reads/writes (Defaults to LOCAL_ONE).", converter = ConsistencyLevelConverter::class)
-    var consistencyLevel = ConsistencyLevel.LOCAL_ONE
+    @Parameter(names = ["--cl"], description = "Consistency level for reads/writes (Defaults to LOCAL_ONE, set custom default with TLP_STRESS_CONSISTENCY_LEVEL).", converter = ConsistencyLevelConverter::class)
+    var consistencyLevel = System.getenv("TLP_STRESS_CONSISTENCY_LEVEL")?.let{ ConsistencyLevelConverter().convert(it)} ?:  ConsistencyLevel.LOCAL_ONE
 
     @Parameter(names = ["--cql"], description = "Additional CQL to run after the schema is created.  Use for DDL modifications such as creating indexes.", splitter = NoSplitter::class)
     var additionalCQL = mutableListOf<String>()
