@@ -2,12 +2,9 @@ package com.thelastpickle.tlpstress
 
 import com.datastax.driver.core.ResultSet
 import com.google.common.util.concurrent.FutureCallback
-import java.util.*
-import com.codahale.metrics.Timer
 import com.thelastpickle.tlpstress.profiles.IStressRunner
 import com.thelastpickle.tlpstress.profiles.Operation
 import org.apache.logging.log4j.kotlin.logger
-import java.util.concurrent.Semaphore
 
 /**
  * Callback after a mutation or select

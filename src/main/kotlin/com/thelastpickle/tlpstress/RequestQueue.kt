@@ -3,7 +3,7 @@ package com.thelastpickle.tlpstress
 import com.thelastpickle.tlpstress.profiles.IStressRunner
 import com.thelastpickle.tlpstress.profiles.Operation
 import com.codahale.metrics.Timer
-import java.lang.Exception
+import org.apache.logging.log4j.kotlin.logger
 import java.time.LocalDateTime
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadLocalRandom
@@ -14,31 +14,38 @@ import kotlin.concurrent.thread
  * the issue of coordinated omission.
  */
 class RequestQueue(
+
     private val partitionKeyGenerator: PartitionKeyGenerator,
     context: StressContext,
-    totalValues: Long, // total number of operations
+    totalValues: Long,
     duration: Long,
     runner: IStressRunner,
     readRate: Double,
     deleteRate: Double,
-    populatePhase: Boolean = false
-
+    populatePhase: Boolean = false,
     ) {
 
     val queue = ArrayBlockingQueue<Operation>(context.mainArguments.queueDepth.toInt(), true);
     var generatorThread : Thread
+
+    companion object {
+        val log = logger()
+    }
 
     init {
 
         generatorThread = thread(start=false) {
             val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
             var executed = 0L
+            log.info("populate=$populatePhase total values: $totalValues, duration: $duration")
             for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
                 if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {
+                    log.info("Reached duration, ending")
                     break
                 }
 
-                if (executed == totalValues) {
+                if (totalValues > 0 && executed == totalValues) {
+                    log.info("Reached total values $totalValues")
                     break
                 }
                 // check if we hit our limit
@@ -81,6 +88,14 @@ class RequestQueue(
                 }
                 executed++
             }
+
+            // wait for the queue to drain
+
+            log.info("Finished queuing requests, waiting for queue to empty. $executed executed")
+            Thread.sleep(1000)
+            while (queue.size > 0) {
+                Thread.sleep(1000)
+            }
             queue.add(Operation.Stop())
         }
     }
@@ -97,10 +112,4 @@ class RequestQueue(
     fun start() {
         generatorThread.start()
     }
-
-    fun stop() {
-        generatorThread.interrupt()
-        generatorThread.stop()
-    }
-
 }

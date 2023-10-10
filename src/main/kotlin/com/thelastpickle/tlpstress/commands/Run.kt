@@ -359,25 +359,22 @@ class Run(val command: String) : IStressCommand {
 
                 // calling it on the runner
                 val threads = mutableListOf<Thread>()
-                try {
-                    runners.forEach {
-                        val tmp = thread(start = true, isDaemon = false, name = "populate-X") {
-                            it.populate(populate)
-                        }
-                        threads.add(tmp)
+
+                runners.forEach {
+                    val tmp = thread(start = true, isDaemon = false, name = "populate-X") {
+                        it.populate(populate)
                     }
-                } catch (_: OperationStopException) {
-                    Thread.sleep(1000)
-                    for (thread in threads) {
-                        thread.join()
-                    }
-                } finally {
-                    // have we really reached 100%?
-                    Thread.sleep(1000)
-                    // stop outputting the progress bar
-                    timer.cancel()
-                    // allow the time to die out
+                    threads.add(tmp)
                 }
+                Thread.sleep(1000)
+                for (thread in threads) {
+                    thread.join()
+                }
+                // have we really reached 100%?
+                Thread.sleep(1000)
+                // stop outputting the progress bar
+                timer.cancel()
+                // allow the time to die out
 
             }
             Thread.sleep(1000)

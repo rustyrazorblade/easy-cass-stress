@@ -110,7 +110,7 @@ class ProfileRunner(val context: StressContext,
             val future = context.session.executeAsync(op.bound)
             Futures.addCallback(future, OperationCallback(context, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
         }
-        queue.stop()
+
     }
 
 
@@ -128,12 +128,23 @@ class ProfileRunner(val context: StressContext,
         queue.start()
 
         // TODO add back support for custom population iteration
-        for (op in queue.getNextOperation()) {
-            val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, runner, op, false), MoreExecutors.directExecutor())
+        try {
+            for (op in queue.getNextOperation()) {
+                val future = context.session.executeAsync(op.bound)
+                Futures.addCallback(
+                    future,
+                    OperationCallback(context, runner, op, false),
+                    MoreExecutors.directExecutor()
+                )
+            }
+        } catch (_: OperationStopException) {
+            log.info("Received Stop signal")
+            Thread.sleep(3000)
+        } catch (e: Exception) {
+            log.warn("Received unknown exception ${e.message}")
+            throw e
         }
 
-        queue.stop()
 
 //
 //        when(profile.getPopulateOption(context.mainArguments)) {
