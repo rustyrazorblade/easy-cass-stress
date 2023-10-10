@@ -24,7 +24,6 @@ import me.tongfei.progressbar.ProgressBarStyle
 import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.io.PrintStream
-import java.lang.RuntimeException
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.thread
 
@@ -79,10 +78,9 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--readrate", "--reads", "-r"], description = "Read Rate, 0-1.  Workloads may have their own defaults.  Default is dependent on workload.")
     var readRate : Double? = null
 
-    @Parameter(names = ["--concurrency", "-c"], description = "Concurrent queries allowed.  Increase for larger clusters.", converter = HumanReadableConverter::class)
+    @Deprecated("Deprecated, use --rate for more predictable testing.")
+    @Parameter(names = ["--concurrency", "-c"], description = "DEPRECATED.  Concurrent queries allowed.  Increase for larger clusters.  This flag is deprecated and does nothing.", converter = HumanReadableConverter::class)
     var concurrency = 100L
-
-
 
     @Parameter(names = ["--populate"], description = "Pre-population the DB with N rows before starting load test.", converter = HumanReadableConverter::class)
     var populate = 0L
@@ -391,7 +389,7 @@ class Run(val command: String) : IStressCommand {
     private fun createRunners(plugin: Plugin, metrics: Metrics, fieldRegistry: Registry, rateLimiter: RateLimiter?): List<ProfileRunner> {
         val runners = IntRange(0, threads - 1).map {
             println("Connecting")
-            val context = StressContext(session, this, it, metrics, concurrency.toInt(), fieldRegistry, rateLimiter)
+            val context = StressContext(session, this, it, metrics, fieldRegistry, rateLimiter)
             ProfileRunner.create(context, plugin.instance)
         }
 
