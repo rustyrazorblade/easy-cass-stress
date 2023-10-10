@@ -87,7 +87,10 @@ class RequestQueue(
 
     fun getNextOperation() = sequence<Operation> {
         while (generatorThread.isAlive) {
-            yield(queue.take())
+            when (val tmp = queue.take()) {
+                is Operation.Stop -> break
+                else -> yield(tmp)
+            }
         }
     }
 

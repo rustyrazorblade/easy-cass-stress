@@ -368,20 +368,19 @@ class Run(val command: String) : IStressCommand {
                         }
                         threads.add(tmp)
                     }
-
+                } catch (_: OperationStopException) {
                     Thread.sleep(1000)
                     for (thread in threads) {
                         thread.join()
                     }
-                } catch (_: OperationStopException) {
-
+                } finally {
+                    // have we really reached 100%?
+                    Thread.sleep(1000)
+                    // stop outputting the progress bar
+                    timer.cancel()
+                    // allow the time to die out
                 }
 
-                // have we really reached 100%?
-                Thread.sleep(1000)
-                // stop outputting the progress bar
-                timer.cancel()
-                // allow the time to die out
             }
             Thread.sleep(1000)
             println("\nPre-populate complete.")
