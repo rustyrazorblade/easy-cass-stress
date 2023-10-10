@@ -15,7 +15,6 @@ import java.util.concurrent.Semaphore
  * as well as reduce clutter
  */
 class OperationCallback(val context: StressContext,
-                        val semaphore: Semaphore,
                         val runner: IStressRunner,
                         val op: Operation,
                         val paginate: Boolean = false) : FutureCallback<ResultSet> {
@@ -25,9 +24,7 @@ class OperationCallback(val context: StressContext,
     }
 
     override fun onFailure(t: Throwable) {
-        semaphore.release()
         context.metrics.errors.mark()
-
         log.error { t }
 
     }
@@ -41,7 +38,6 @@ class OperationCallback(val context: StressContext,
             }
         }
 
-        semaphore.release()
         val time = op.startTime.stop()
 
         // we log to the HDR histogram and do the callback for mutations
@@ -58,6 +54,9 @@ class OperationCallback(val context: StressContext,
 
             is Operation.SelectStatement -> {
                 context.metrics.selectHistogram.recordValue(time)
+            }
+            is Operation.Stop -> {
+                throw OperationStopException()
             }
         }
 

@@ -82,8 +82,7 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--concurrency", "-c"], description = "Concurrent queries allowed.  Increase for larger clusters.", converter = HumanReadableConverter::class)
     var concurrency = 100L
 
-    @Parameter(names = ["--queue"], description = "Queue Depth")
-    var queueDepth = 1000
+
 
     @Parameter(names = ["--populate"], description = "Pre-population the DB with N rows before starting load test.", converter = HumanReadableConverter::class)
     var populate = 0L
@@ -108,7 +107,10 @@ class Run(val command: String) : IStressCommand {
     var fields = mutableMapOf<String, String>()
 
     @Parameter(names = ["--rate"], description = "Rate limiter, accepts human numbers. 0 = disabled", converter = HumanReadableConverter::class)
-    var rate = 0L
+    var rate = 5000L
+
+    @Parameter(names = ["--queue"], description = "Queue Depth.  2x the rate by default.")
+    var queueDepth : Long = rate * 2
 
     @Parameter(names = ["--drop"], description = "Drop the keyspace before starting.")
     var dropKeyspace = false
@@ -359,16 +361,20 @@ class Run(val command: String) : IStressCommand {
 
                 // calling it on the runner
                 val threads = mutableListOf<Thread>()
-                runners.forEach {
-                    val tmp = thread(start=true, isDaemon = false, name = "populate-X") {
-                        it.populate(populate)
+                try {
+                    runners.forEach {
+                        val tmp = thread(start = true, isDaemon = false, name = "populate-X") {
+                            it.populate(populate)
+                        }
+                        threads.add(tmp)
                     }
-                    threads.add(tmp)
-                }
 
-                Thread.sleep(1000)
-                for (thread in threads) {
-                    thread.join()
+                    Thread.sleep(1000)
+                    for (thread in threads) {
+                        thread.join()
+                    }
+                } catch (_: OperationStopException) {
+
                 }
 
                 // have we really reached 100%?

@@ -96,8 +96,6 @@ class ProfileRunner(val context: StressContext,
      */
     private fun executeOperations(iterations: Long, duration: Long) {
         // create a semaphore local to the thread to limit the query concurrency
-        val sem = Semaphore(context.permits) // TODO REMOVE
-
         val runner = profile.getRunner(context)
 
         // we use MAX_VALUE since it's essentially infinite if we give a duration
@@ -110,22 +108,11 @@ class ProfileRunner(val context: StressContext,
         // move the getNextOperation into the queue thing
         for (op in queue.getNextOperation()) {
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
+            Futures.addCallback(future, OperationCallback(context, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
         }
-
-        // block until all the queries are finished
-        sem.acquireUninterruptibly(context.permits)
+        queue.stop()
     }
 
-    private fun getNextOperation(nextOp: Int, runner: IStressRunner, key: PartitionKey): Operation {
-        return if (readRate * 100 > nextOp) {
-            runner.getNextSelect(key)
-        } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
-            runner.getNextDelete(key)
-        } else {
-            runner.getNextMutation(key)
-        }
-    }
 
     /**
      * Prepopulates the database with numRows
@@ -136,49 +123,27 @@ class ProfileRunner(val context: StressContext,
     fun populate(numRows: Long) {
 
         val runner = profile.getRunner(context)
-        val sem = Semaphore(context.permits)
 
-        fun executePopulate(op: Operation) {
-            context.rateLimiter?.run {
-                acquire(1)
-            }
-            sem.acquire()
+        val queue = RequestQueue(partitionKeyGenerator, context, numRows, 0, runner, 0.0, deleteRate, populatePhase = true)
+        queue.start()
 
-            op.apply { context.metrics.populate.time() }
-
+        // TODO add back support for custom population iteration
+        for (op in queue.getNextOperation()) {
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, runner, op), MoreExecutors.directExecutor())
+            Futures.addCallback(future, OperationCallback(context, runner, op, false), MoreExecutors.directExecutor())
         }
 
-        when(profile.getPopulateOption(context.mainArguments)) {
-            is PopulateOption.Custom -> {
-                log.info { "Starting a custom population" }
+        queue.stop()
 
-                for (op in runner.customPopulateIter()) {
-                    executePopulate(op)
-                }
-            }
-            is PopulateOption.Standard -> {
-
-                log.info("Populating Cassandra with $numRows rows")
-
-                // we follow the same access pattern as normal writes when pre-populating
-                for (key in partitionKeyGenerator.generateKey(numRows, context.mainArguments.partitionValues)) {
-                    // we should be inserting tombstones at the --deletes rate
-                    val nextOp = ThreadLocalRandom.current().nextInt(0, 100)
-
-                    // populate should populate with tombstones in the case of --deletes being set
-                    val op = if (deleteRate * 100 > nextOp) {
-                        runner.getNextDelete(key)
-                    } else {
-                        runner.getNextMutation(key)
-                    }
-                    executePopulate(op)
-                }
-
-            }
-        }
-        sem.acquireUninterruptibly(context.permits)
+//
+//        when(profile.getPopulateOption(context.mainArguments)) {
+//            is PopulateOption.Custom -> {
+//                log.info { "Starting a custom population" }
+//
+//                for (op in runner.customPopulateIter()) {
+//                    executePopulate(op)
+//                }
+//            }
     }
 
 

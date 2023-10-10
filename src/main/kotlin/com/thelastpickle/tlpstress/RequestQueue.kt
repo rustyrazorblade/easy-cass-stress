@@ -2,8 +2,10 @@ package com.thelastpickle.tlpstress
 
 import com.thelastpickle.tlpstress.profiles.IStressRunner
 import com.thelastpickle.tlpstress.profiles.Operation
+import com.codahale.metrics.Timer
+import java.lang.Exception
 import java.time.LocalDateTime
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.concurrent.thread
 
@@ -14,24 +16,33 @@ import kotlin.concurrent.thread
 class RequestQueue(
     private val partitionKeyGenerator: PartitionKeyGenerator,
     context: StressContext,
-    totalValues: Long,
+    totalValues: Long, // total number of operations
     duration: Long,
     runner: IStressRunner,
     readRate: Double,
-    deleteRate: Double
+    deleteRate: Double,
+    populatePhase: Boolean = false
 
     ) {
 
-    val queue = LinkedBlockingQueue<Operation>(context.mainArguments.queueDepth);
+    val queue = ArrayBlockingQueue<Operation>(context.mainArguments.queueDepth.toInt(), true);
     var generatorThread : Thread
 
     init {
+
         generatorThread = thread(start=false) {
             val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
+            var executed = 0L
             for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
                 if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {
                     break
                 }
+
+                if (executed == totalValues) {
+                    break
+                }
+                // check if we hit our limit
+
                 // get next thing from the profile
                 // thing could be a statement, or it could be a failure command
                 // certain profiles will want to deterministically inject failures
@@ -45,20 +56,32 @@ class RequestQueue(
                     acquire(1)
                 }
 
-                val op = if (readRate * 100 > nextOp) {
-                    runner.getNextSelect(key).apply { startTime=context.metrics.selects.time() }
-                } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
+                fun getTimer(operation: Operation) : Timer {
+                    return if (populatePhase)
+                        context.metrics.populate
+                    else when (operation) {
+                        is Operation.SelectStatement -> context.metrics.selects
+                        is Operation.Mutation -> context.metrics.mutations
+                        is Operation.Deletion -> context.metrics.deletions
+                        is Operation.Stop -> throw OperationStopException()
+                    }
+                }
 
-                    runner.getNextDelete(key).apply { startTime=context.metrics.deletions.time() }
+                // we only do the mutations in non-populate run
+                val op = if ( !populatePhase && readRate * 100 > nextOp) {
+                    runner.getNextSelect(key).apply { startTime=getTimer(this).time() }
+                } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
+                    runner.getNextDelete(key).apply { startTime=getTimer(this).time()}
                 } else {
-                    runner.getNextMutation(key).apply { startTime=context.metrics.mutations.time() }
+                    runner.getNextMutation(key).apply { startTime=getTimer(this).time()}
                 }
 
                 if(!queue.offer(op)) {
                     context.metrics.errors.mark()
                 }
-
+                executed++
             }
+            queue.add(Operation.Stop())
         }
     }
 
@@ -72,12 +95,9 @@ class RequestQueue(
         generatorThread.start()
     }
 
-    fun add() {
-
-    }
-
     fun stop() {
         generatorThread.interrupt()
+        generatorThread.stop()
     }
 
 }
