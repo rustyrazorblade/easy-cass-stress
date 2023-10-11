@@ -48,6 +48,6 @@ class RateLimiterOptimizerTest {
         every { optimizer.getCurrentAndMaxLatency() } returns Pair(1.0, maxLatency)
 
         val newRate = optimizer.execute()
-        assertThat(newRate).isGreaterThan(20.0)
+        assertThat(newRate).isGreaterThan(14.0)
     }
 }

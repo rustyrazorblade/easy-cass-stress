@@ -3,6 +3,8 @@ package com.thelastpickle.tlpstress
 import com.google.common.util.concurrent.RateLimiter
 import org.apache.logging.log4j.kotlin.logger
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
+import kotlin.math.sqrt
 
 /**
  *
@@ -27,6 +29,7 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
             log.info("Optimizer has nothing to do")
             return newLimit
         }
+
         log.info("Updating rate limiter from ${rateLimiter.rate} to ${newLimit}")
         rateLimiter.rate = newLimit
         return rateLimiter.rate
@@ -61,17 +64,17 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
     fun getNextValue(currentRateLimiterValue: Double, currentLatency: Double, maxLatency: Long): Double {
         // if we're at 99% of max we sit sight
         if (currentLatency > maxLatency) {
-            log.info("Current Latency ($currentLatency) over Max Latency reducing throughput by 25%")
+            log.info("Current Latency ($currentLatency) over Max Latency ($maxLatency) reducing throughput by 25%")
             return currentRateLimiterValue * .75
         }
-        else if (currentLatency >= maxLatency * .99) {
-            log.info("Current latency ($currentLatency) within 99% of max $maxLatency")
-            return currentRateLimiterValue * .75
-        } else if (currentLatency / maxLatency.toDouble() > .95) {
-            log.info("Current latency ($currentLatency) within 95% of max ($maxLatency)")
-            return currentRateLimiterValue + 1
-        } else {
-            val adjustmentFactor = Math.min((maxLatency.toDouble() / Math.max(1.0, currentLatency)) * .75, 1.5)
+        else if (currentLatency / maxLatency.toDouble() > .95) {
+            log.info("Current latency ($currentLatency) within 95% of max ($maxLatency), not adjusting")
+            return currentRateLimiterValue
+        }
+        else {
+            // increase a reasonable amount
+            // should provide a very gentle increase when we get close to the right number
+            val adjustmentFactor = (1 + sqrt(maxLatency.toDouble() - currentLatency) / maxLatency.toDouble()).coerceAtMost(1.25)
             val newLimit = currentRateLimiterValue * adjustmentFactor
             log.info("Current limiter: $currentRateLimiterValue latency $currentLatency, max: $maxLatency adjustment factor: $adjustmentFactor, new limit: $newLimit")
             return newLimit
