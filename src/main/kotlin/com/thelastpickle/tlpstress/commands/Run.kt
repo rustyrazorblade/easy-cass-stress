@@ -24,6 +24,7 @@ import me.tongfei.progressbar.ProgressBarStyle
 import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.io.PrintStream
+import java.time.Duration
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.thread
 
@@ -336,9 +337,12 @@ class Run(val command: String) : IStressCommand {
     }
 
 
-    private fun getRateLimiter() = if(rate > 0) {
-            RateLimiter.create(rate.toDouble())
+    private fun getRateLimiter(): RateLimiter? {
+        return if(rate > 0) {
+            val rateLimiter = RateLimiter.create(rate.toDouble(), Duration.ofSeconds(10))
+            rateLimiter
         } else null
+    }
 
 
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {
