@@ -25,7 +25,9 @@ import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.io.PrintStream
 import java.time.Duration
+import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
+import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
 
 class NoSplitter : IParameterSplitter {
@@ -107,6 +109,12 @@ class Run(val command: String) : IStressCommand {
 
     @Parameter(names = ["--rate"], description = "Rate limiter, accepts human numbers. 0 = disabled", converter = HumanReadableConverter::class)
     var rate = 5000L
+
+    @Parameter(names = ["--maxrlat"], description = "Max Read Latency")
+    var maxReadLatency: Long? = null
+
+    @Parameter(names = ["--maxwlat"])
+    var maxWriteLatency: Long? = null
 
     @Parameter(names = ["--queue"], description = "Queue Depth.  2x the rate by default.")
     var queueDepth : Long = rate * 2
@@ -280,6 +288,17 @@ class Run(val command: String) : IStressCommand {
 
         // Both of the following are set in the try block, so this is OK
         val metrics = createMetrics()
+
+        // set up the rate limiter optimizer and put it on a schedule
+        if (maxReadLatency != null || maxWriteLatency != null) {
+            println("Enabling Latency Optimizer, starting at ${rateLimiter.rate}")
+            val optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
+            val timer = Timer().schedule(60000, 30000) {
+                optimizer.execute()
+            }
+        }
+
+
         var runnersExecuted = 0L
 
         try {
@@ -297,6 +316,7 @@ class Run(val command: String) : IStressCommand {
                 val t = thread(start = true, isDaemon = true) {
                     runner.run()
                 }
+                runnersExecuted++
 
                 threads.add(t)
             }
@@ -331,18 +351,15 @@ class Run(val command: String) : IStressCommand {
             // without this cleanup we could have the metrics runner still running and it will cause subsequent tests to fail
             metrics.shutdown()
             Thread.sleep(1000)
+
             println("Stress complete, $runnersExecuted.")
         }
 
     }
 
 
-    private fun getRateLimiter(): RateLimiter? {
-        return if(rate > 0) {
-            val rateLimiter = RateLimiter.create(rate.toDouble(), Duration.ofSeconds(10))
-            rateLimiter
-        } else null
-    }
+    private fun getRateLimiter() =
+        RateLimiter.create(rate.toDouble())
 
 
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {
@@ -451,6 +468,7 @@ class Run(val command: String) : IStressCommand {
             if (dropKeyspace) {
                 println("Dropping $keyspace")
                 session.execute("DROP KEYSPACE IF EXISTS $keyspace")
+                Thread.sleep(5000)
             }
 
             val createKeyspace = """CREATE KEYSPACE
