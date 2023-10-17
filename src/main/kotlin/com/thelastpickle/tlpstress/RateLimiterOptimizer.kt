@@ -2,8 +2,8 @@ package com.thelastpickle.tlpstress
 
 import com.google.common.util.concurrent.RateLimiter
 import org.apache.logging.log4j.kotlin.logger
+import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.math.max
 import kotlin.math.sqrt
 
 /**
@@ -16,34 +16,58 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
     companion object {
         val log = logger()
     }
-    val durationFactor = 1.0 / TimeUnit.MILLISECONDS.toNanos(1);
+    val durationFactor = 1.0 / TimeUnit.MILLISECONDS.toNanos(1)
 
     /**
      * Updates the rate limiter to use the new value and returns the new rate limit
      */
     fun execute(): Double {
         // determine the latency number that's closest to it's limit
-        val currentLatency = getCurrentAndMaxLatency()
-        val newLimit = getNextValue(rateLimiter.rate, currentLatency.first, currentLatency.second)
-        if (newLimit == rateLimiter.rate) {
-            log.info("Optimizer has nothing to do")
-            return newLimit
-        }
+        getCurrentAndMaxLatency().map {
+            val newLimit = getNextValue(rateLimiter.rate, it.first, it.second)
+            return@map if (newLimit == rateLimiter.rate) {
+                log.info("Optimizer has nothing to do")
+                newLimit
+            } else {
+                log.info("Updating rate limiter from ${rateLimiter.rate} to ${newLimit}")
+                rateLimiter.rate = newLimit
+                rateLimiter.rate
+            }
+        }.orElse(
+            return rateLimiter.rate
+        )
+    }
 
-        log.info("Updating rate limiter from ${rateLimiter.rate} to ${newLimit}")
-        rateLimiter.rate = newLimit
-        return rateLimiter.rate
+    /**
+     * Added to prevent the rate limiter from acting when queries aren't running, generally during populate phase
+     */
+    fun getTotalOperations() : Long {
+        return metrics.mutations.count + metrics.selects.count
     }
 
     /**
      * Returns current, target Pair
      */
-    fun getCurrentAndMaxLatency() : Pair<Double, Long> {
+    fun getCurrentAndMaxLatency() : Optional<Pair<Double, Long>> {
+        if (maxWriteLatency == null && maxReadLatency == null) {
+            return Optional.empty()
+        }
+        // if we're in the populate phase
+        if (metrics.mutations.count == 0L &&
+            metrics.selects.count == 0L &&
+            metrics.deletions.count == 0L &&
+            metrics.populate.count > 0L )
+            if (maxWriteLatency != null) {
+                log.info("In populate phase, using populate latency")
+                return Optional.of(Pair(getPopulateLatency(), maxWriteLatency))
+            } else {
+                return Optional.empty<Pair<Double, Long>>()
+        }
         if (maxReadLatency == null) {
-            return Pair(getWriteLatency(), maxWriteLatency!!)
+            return Optional.of(Pair(getWriteLatency(), maxWriteLatency!!))
         }
         if (maxWriteLatency == null) {
-            return Pair(getReadLatency(), maxReadLatency)
+            return Optional.of(Pair(getReadLatency(), maxReadLatency))
         }
 
         val rLatP = getReadLatency() / maxReadLatency
@@ -51,8 +75,8 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
 
         // if either is over, return the one that's the most % over
         return if (rLatP > wLatP) {
-            Pair(getReadLatency(), maxReadLatency)
-        } else Pair(getWriteLatency(), maxWriteLatency)
+            Optional.of(Pair(getReadLatency(), maxReadLatency))
+        } else Optional.of(Pair(getWriteLatency(), maxWriteLatency))
     }
 
     /**
@@ -88,6 +112,7 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
     fun getWriteLatency() =
         metrics.mutations.snapshot.get99thPercentile() * durationFactor
 
-
+    fun getPopulateLatency() =
+        metrics.populate.snapshot.get99thPercentile() * durationFactor
 
 }

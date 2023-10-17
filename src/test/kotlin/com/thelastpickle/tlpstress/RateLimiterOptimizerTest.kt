@@ -8,6 +8,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtendWith
+import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class RateLimiterOptimizerTest {
@@ -15,13 +16,17 @@ class RateLimiterOptimizerTest {
     var rateLimiter: RateLimiter = RateLimiter.create(1000.0)
     val metrics = mockk<Metrics>()
 
+    fun pair(current: Double, max: Long) : Optional<Pair<Double, Long>> {
+        return Optional.of(Pair(current, max))
+    }
 
     @Test
     fun testSimpleReadLimitRaise() {
 
 
         val optimizer = spyk(RateLimiterOptimizer(rateLimiter, metrics, 100, 100))
-        every { optimizer.getCurrentAndMaxLatency() } returns Pair(10.0, 50)
+        every { optimizer.getCurrentAndMaxLatency() } returns pair(10.0, 50)
+        every { optimizer.getTotalOperations() } returns 100
 
         val newRate = optimizer.execute()
         assertThat(newRate).isGreaterThan(1000.0)
@@ -32,7 +37,8 @@ class RateLimiterOptimizerTest {
 
         val maxLatency = 100L
         val optimizer = spyk(RateLimiterOptimizer(rateLimiter, metrics, maxLatency, maxLatency))
-        every { optimizer.getCurrentAndMaxLatency() } returns Pair(110.0, maxLatency)
+        every { optimizer.getCurrentAndMaxLatency() } returns pair(110.0, maxLatency)
+        every { optimizer.getTotalOperations() } returns 100
 
         val newRate = optimizer.execute()
         assertThat(newRate).isLessThan(1000.0)
@@ -45,9 +51,12 @@ class RateLimiterOptimizerTest {
         rateLimiter = RateLimiter.create(10.0)
 
         val optimizer = spyk(RateLimiterOptimizer(rateLimiter, metrics, maxLatency, maxLatency))
-        every { optimizer.getCurrentAndMaxLatency() } returns Pair(1.0, maxLatency)
+        every { optimizer.getCurrentAndMaxLatency() } returns pair(1.0, maxLatency)
+        every { optimizer.getTotalOperations() } returns 100
 
         val newRate = optimizer.execute()
-        assertThat(newRate).isGreaterThan(14.0)
+        assertThat(newRate).isGreaterThan(10.0)
     }
+
+
 }

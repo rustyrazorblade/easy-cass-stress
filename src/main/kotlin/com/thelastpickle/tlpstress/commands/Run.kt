@@ -26,6 +26,7 @@ import java.io.File
 import java.io.PrintStream
 import java.time.Duration
 import java.util.Timer
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
@@ -306,7 +307,7 @@ class Run(val command: String) : IStressCommand {
             val runners = createRunners(plugin, metrics, fieldRegistry, rateLimiter)
 
             populateData(plugin, runners, metrics)
-
+            metrics.resetErrors()
             metrics.startReporting()
 
             println("Starting main runner")
@@ -359,7 +360,7 @@ class Run(val command: String) : IStressCommand {
 
 
     private fun getRateLimiter() =
-        RateLimiter.create(rate.toDouble())
+        RateLimiter.create(rate.toDouble(), 1, TimeUnit.SECONDS)
 
 
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {

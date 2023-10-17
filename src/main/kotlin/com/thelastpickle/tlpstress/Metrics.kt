@@ -11,7 +11,7 @@ import io.prometheus.client.exporter.HTTPServer
 
 import org.HdrHistogram.SynchronizedHistogram
 
-class Metrics(metricRegistry: MetricRegistry, val reporters: List<ScheduledReporter>, val httpPort : Int) {
+class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledReporter>, val httpPort : Int) {
 
     val server: HTTPServer
 
@@ -29,6 +29,11 @@ class Metrics(metricRegistry: MetricRegistry, val reporters: List<ScheduledRepor
         }
     }
 
+    fun resetErrors() {
+        metricRegistry.remove("errors")
+        errors = metricRegistry.meter("errors")
+    }
+
     init {
         CollectorRegistry.defaultRegistry.register(DropwizardExports(metricRegistry))
         server = HTTPServer(httpPort)
@@ -36,7 +41,7 @@ class Metrics(metricRegistry: MetricRegistry, val reporters: List<ScheduledRepor
     }
 
 
-    val errors = metricRegistry.meter("errors")
+    var errors = metricRegistry.meter("errors")
     val mutations = metricRegistry.timer("mutations")
     val selects = metricRegistry.timer("selects")
     val deletions = metricRegistry.timer("deletions")

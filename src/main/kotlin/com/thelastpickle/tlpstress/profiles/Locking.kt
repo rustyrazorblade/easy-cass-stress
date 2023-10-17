@@ -11,7 +11,7 @@ import org.apache.logging.log4j.kotlin.logger
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- *
+ * Note: currently broken :(
  * Warning: this workload is under development and should not be used as a reference across multiple tlp-stress runs with
  * different versions of tlp-stress as the implementation may change!
  *
@@ -95,7 +95,6 @@ class Locking : IStressProfile {
                 }
 
             }
-
 
 
         }
