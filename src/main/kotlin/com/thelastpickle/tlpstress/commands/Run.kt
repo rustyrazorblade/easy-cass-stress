@@ -366,8 +366,13 @@ class Run(val command: String) : IStressCommand {
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {
 
         val max = when(val option = plugin.instance.getPopulateOption(this)) {
-            is PopulateOption.Standard -> populate
-            is PopulateOption.Custom -> option.rows
+            is PopulateOption.Standard -> {
+                populate
+            }
+            is PopulateOption.Custom -> {
+                println("Using workload specific populate options of ${option.rows}")
+                option.rows
+            }
         } * threads
 
         log.info { "Prepopulating data with $max records per thread" }
@@ -384,7 +389,7 @@ class Run(val command: String) : IStressCommand {
 
                 runners.forEach {
                     val tmp = thread(start = true, isDaemon = false, name = "populate-X") {
-                        it.populate(populate)
+                        it.populate(max)
                     }
                     threads.add(tmp)
                 }
