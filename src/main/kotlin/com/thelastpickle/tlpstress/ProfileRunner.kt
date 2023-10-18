@@ -101,7 +101,10 @@ class ProfileRunner(val context: StressContext,
         // we use MAX_VALUE since it's essentially infinite if we give a duration
         val totalValues = if (duration > 0) Long.MAX_VALUE else iterations
 
-        val queue = RequestQueue(partitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
+        // if we have a custom generator for the populate phase we'll use that
+        val populatePartitionKeyGenerator = profile.getPopulatePartitionKeyGenerator().orElse(partitionKeyGenerator)
+
+        val queue = RequestQueue(populatePartitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
         queue.start()
 
         // pull requests off the queue instead of using generateKey
@@ -144,17 +147,6 @@ class ProfileRunner(val context: StressContext,
             log.warn("Received unknown exception ${e.message}")
             throw e
         }
-
-
-//
-//        when(profile.getPopulateOption(context.mainArguments)) {
-//            is PopulateOption.Custom -> {
-//                log.info { "Starting a custom population" }
-//
-//                for (op in runner.customPopulateIter()) {
-//                    executePopulate(op)
-//                }
-//            }
     }
 
 

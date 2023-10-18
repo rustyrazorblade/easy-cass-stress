@@ -75,13 +75,20 @@ class RequestQueue(
                 }
 
                 // we only do the mutations in non-populate run
+
                 val op = if ( !populatePhase && readRate * 100 > nextOp) {
-                    runner.getNextSelect(key).apply { startTime=getTimer(this).time() }
+                    runner.getNextSelect(key)
                 } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
-                    runner.getNextDelete(key).apply { startTime=getTimer(this).time()}
+                    // we might be in a populate phase but only if the user specifically requested it
+                    runner.getNextDelete(key)
+                } else if (populatePhase) {
+                    // at this point we're either populating or we're in a normal run
+                    runner.getNextPopulate(key)
                 } else {
-                    runner.getNextMutation(key).apply { startTime=getTimer(this).time()}
+                    runner.getNextMutation(key)
                 }
+
+                op.startTime=getTimer(op).time()
 
                 if(!queue.offer(op)) {
                     context.metrics.errors.mark()

@@ -38,7 +38,7 @@ class Locking : IStressProfile {
         insert = session.prepare("INSERT INTO lwtupdates (item_id, name, status) VALUES (?, ?, 0)")
         update = session.prepare("UPDATE lwtupdates set status = ? WHERE item_id = ? IF status = ?")
         select = session.prepare("SELECT * from lwtupdates where item_id = ?")
-        delete = session.prepare("DELETE from lwtupdates where item_id = ?")
+        delete = session.prepare("DELETE from lwtupdates where item_id = ? IF EXISTS")
     }
 
     override fun schema(): List<String> {
@@ -86,15 +86,12 @@ class Locking : IStressProfile {
                 return Operation.Deletion(bound)
             }
 
-            override fun customPopulateIter() = iterator {
-
-                val generator = ProfileRunner.getGenerator(context, "sequence")
-                for(partitionKey in generator.generateKey(context.mainArguments.partitionValues, context.mainArguments.partitionValues)) {
-                    val bound = insert.bind(partitionKey.getText(), "test")
-                    yield(Operation.Mutation(bound))
-                }
-
+            override fun getNextPopulate(partitionKey: PartitionKey): Operation {
+                val bound = insert.bind(partitionKey.getText(), "test")
+                return Operation.Mutation(bound)
             }
+
+
 
 
         }
