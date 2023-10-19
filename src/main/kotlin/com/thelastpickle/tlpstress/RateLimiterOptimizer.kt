@@ -2,6 +2,7 @@ package com.thelastpickle.tlpstress
 
 import com.google.common.util.concurrent.RateLimiter
 import org.apache.logging.log4j.kotlin.logger
+import java.lang.Math.cbrt
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.sqrt
@@ -86,19 +87,22 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
      * if we're under, we increase by up to 2x
      */
     fun getNextValue(currentRateLimiterValue: Double, currentLatency: Double, maxLatency: Long): Double {
-        // if we're at 99% of max we sit sight
+        // we set our max increase relative to the total latency we can tolerate, at most increasing by 5%
+        // small latency requirements (< 3ms) should barely adjust the throughput b/c it's so sensitive
+        var maxIncrease = cbrt(maxLatency.toDouble()).coerceAtMost(1.05)
+
         if (currentLatency > maxLatency) {
-            log.info("Current Latency ($currentLatency) over Max Latency ($maxLatency) reducing throughput by 25%")
-            return currentRateLimiterValue * .75
+            log.info("Current Latency ($currentLatency) over Max Latency ($maxLatency) reducing throughput by 20%")
+            return currentRateLimiterValue * .80
         }
-        else if (currentLatency / maxLatency.toDouble() > .95) {
+        else if (currentLatency / maxLatency.toDouble() > .90) {
             log.info("Current latency ($currentLatency) within 95% of max ($maxLatency), not adjusting")
             return currentRateLimiterValue
         }
         else {
             // increase a reasonable amount
             // should provide a very gentle increase when we get close to the right number
-            val adjustmentFactor = (1 + sqrt(maxLatency.toDouble() - currentLatency) / maxLatency.toDouble()).coerceAtMost(1.25)
+            val adjustmentFactor = (1 + cbrt(maxLatency.toDouble() - currentLatency) / maxLatency.toDouble()).coerceAtMost(maxIncrease)
             val newLimit = currentRateLimiterValue * adjustmentFactor
             log.info("Current limiter: $currentRateLimiterValue latency $currentLatency, max: $maxLatency adjustment factor: $adjustmentFactor, new limit: $newLimit")
             return newLimit

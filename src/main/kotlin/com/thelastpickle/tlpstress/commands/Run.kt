@@ -294,7 +294,7 @@ class Run(val command: String) : IStressCommand {
         if (maxReadLatency != null || maxWriteLatency != null) {
             println("Enabling Latency Optimizer, starting at ${rateLimiter.rate}")
             val optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
-            val timer = Timer().schedule(60000, 30000) {
+            val timer = Timer().schedule(30000, 15000) {
                 optimizer.execute()
             }
         }

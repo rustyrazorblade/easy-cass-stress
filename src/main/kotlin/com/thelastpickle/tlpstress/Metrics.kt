@@ -52,7 +52,4 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     val mutationHistogram = SynchronizedHistogram(2)
     val selectHistogram = SynchronizedHistogram(2)
     val deleteHistogram = SynchronizedHistogram(2)
-
-
-
 }
