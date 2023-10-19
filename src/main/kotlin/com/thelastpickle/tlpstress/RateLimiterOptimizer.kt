@@ -88,12 +88,12 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
      */
     fun getNextValue(currentRateLimiterValue: Double, currentLatency: Double, maxLatency: Long): Double {
         // we set our max increase relative to the total latency we can tolerate, at most increasing by 5%
-        // small latency requirements (< 3ms) should barely adjust the throughput b/c it's so sensitive
-        var maxIncrease = cbrt(maxLatency.toDouble()).coerceAtMost(1.05)
+        // small latency requirements (< 10ms) should barely adjust the throughput b/c it's so sensitive
+        var maxIncrease = (1.0 + sqrt(maxLatency.toDouble()) / 100.0).coerceAtMost(1.05)
 
         if (currentLatency > maxLatency) {
-            log.info("Current Latency ($currentLatency) over Max Latency ($maxLatency) reducing throughput by 20%")
-            return currentRateLimiterValue * .80
+            log.info("Current Latency ($currentLatency) over Max Latency ($maxLatency) reducing throughput by 10%")
+            return currentRateLimiterValue * .90
         }
         else if (currentLatency / maxLatency.toDouble() > .90) {
             log.info("Current latency ($currentLatency) within 95% of max ($maxLatency), not adjusting")
