@@ -38,6 +38,20 @@ class RequestQueue(
             val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
             var executed = 0L
             log.info("populate=$populatePhase total values: $totalValues, duration: $duration")
+
+            // we're using a separate timer for populate phase
+            // regardless of the operation performed
+            fun getTimer(operation: Operation) : Timer {
+                return if (populatePhase)
+                    context.metrics.populate
+                else when (operation) {
+                    is Operation.SelectStatement -> context.metrics.selects
+                    is Operation.Mutation -> context.metrics.mutations
+                    is Operation.Deletion -> context.metrics.deletions
+                    is Operation.Stop -> throw OperationStopException()
+                }
+            }
+
             for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
                 if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {
                     log.info("Reached duration, ending")
@@ -48,8 +62,8 @@ class RequestQueue(
                     log.info("Reached total values $totalValues")
                     break
                 }
-                // check if we hit our limit
 
+                // check if we hit our limit
                 // get next thing from the profile
                 // thing could be a statement, or it could be a failure command
                 // certain profiles will want to deterministically inject failures
@@ -63,19 +77,7 @@ class RequestQueue(
                     acquire(1)
                 }
 
-                fun getTimer(operation: Operation) : Timer {
-                    return if (populatePhase)
-                        context.metrics.populate
-                    else when (operation) {
-                        is Operation.SelectStatement -> context.metrics.selects
-                        is Operation.Mutation -> context.metrics.mutations
-                        is Operation.Deletion -> context.metrics.deletions
-                        is Operation.Stop -> throw OperationStopException()
-                    }
-                }
-
                 // we only do the mutations in non-populate run
-
                 val op = if ( !populatePhase && readRate * 100 > nextOp) {
                     runner.getNextSelect(key)
                 } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
@@ -87,6 +89,8 @@ class RequestQueue(
                 } else {
                     runner.getNextMutation(key)
                 }
+
+
 
                 op.startTime=getTimer(op).time()
 

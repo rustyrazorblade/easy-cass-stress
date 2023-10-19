@@ -362,9 +362,15 @@ class Run(val command: String) : IStressCommand {
     private fun getRateLimiter() =
         RateLimiter.create(rate.toDouble(), 1, TimeUnit.SECONDS)
 
-
+    /**
+     * When we run populate, certain workloads (locking) need to do special things.
+     * Like pre-fill every partition with a known dataset.
+     * So we have to override populate (and in the case of locking the partition generator).
+     * This allows us to do things like sequentially fill every row in the addressable
+     * partition space with initial values.
+     */
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {
-
+        // The --populate flag can be overridden by the profile
         val max = when(val option = plugin.instance.getPopulateOption(this)) {
             is PopulateOption.Standard -> {
                 populate
