@@ -102,9 +102,8 @@ class ProfileRunner(val context: StressContext,
         val totalValues = if (duration > 0) Long.MAX_VALUE else iterations
 
         // if we have a custom generator for the populate phase we'll use that
-        val populatePartitionKeyGenerator = profile.getPopulatePartitionKeyGenerator().orElse(partitionKeyGenerator)
 
-        val queue = RequestQueue(populatePartitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
+        val queue = RequestQueue(partitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
         queue.start()
 
         // pull requests off the queue instead of using generateKey
@@ -123,14 +122,17 @@ class ProfileRunner(val context: StressContext,
      * Records all timers in the populateMutations metrics
      * Can (and should) be graphed separately
      */
-    fun populate(numRows: Long) {
+    fun populate(numRows: Long, deletes:Boolean = true) {
 
         val runner = profile.getRunner(context)
 
-        val queue = RequestQueue(partitionKeyGenerator, context, numRows, 0, runner, 0.0, deleteRate, populatePhase = true)
+        val populatePartitionKeyGenerator = profile.getPopulatePartitionKeyGenerator().orElse(partitionKeyGenerator)
+
+        val queue = RequestQueue(populatePartitionKeyGenerator, context, numRows, 0, runner, 0.0,
+                                    if (deletes) deleteRate else 0.0,
+                                    populatePhase = true)
         queue.start()
 
-        // TODO add back support for custom population iteration
         try {
             for (op in queue.getNextOperation()) {
                 val future = context.session.executeAsync(op.bound)

@@ -2,12 +2,10 @@ package com.thelastpickle.tlpstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import com.thelastpickle.tlpstress.PartitionKey
-import com.thelastpickle.tlpstress.PopulateOption
-import com.thelastpickle.tlpstress.ProfileRunner
-import com.thelastpickle.tlpstress.StressContext
+import com.thelastpickle.tlpstress.*
 import com.thelastpickle.tlpstress.commands.Run
 import org.apache.logging.log4j.kotlin.logger
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -52,8 +50,11 @@ class Locking : IStressProfile {
         return listOf(query)
     }
 
-    override fun getPopulateOption(args: Run) : PopulateOption = PopulateOption.Custom(args.partitionValues)
+    override fun getPopulateOption(args: Run) : PopulateOption = PopulateOption.Custom(args.partitionValues, deletes = false)
 
+    override fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> {
+        return Optional.of(PartitionKeyGenerator.sequence("test"))
+    }
 
 
     override fun getRunner(context: StressContext): IStressRunner {
@@ -70,6 +71,8 @@ class Locking : IStressProfile {
                     0 -> 1
                     else -> 0
                 }
+
+                log.trace{"Updating ${partitionKey.getText()} to $newState"}
 
                 val bound = update.bind(newState, partitionKey.getText(), newState)
                 state[partitionKey.getText()] = newState

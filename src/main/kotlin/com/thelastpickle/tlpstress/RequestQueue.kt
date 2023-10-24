@@ -80,7 +80,7 @@ class RequestQueue(
                 // we only do the mutations in non-populate run
                 val op = if ( !populatePhase && readRate * 100 > nextOp) {
                     runner.getNextSelect(key)
-                } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
+                } else if (deleteRate > 0.0 && (readRate * 100) + (deleteRate * 100) > nextOp) {
                     // we might be in a populate phase but only if the user specifically requested it
                     runner.getNextDelete(key)
                 } else if (populatePhase) {

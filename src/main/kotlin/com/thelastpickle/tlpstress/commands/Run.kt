@@ -371,12 +371,20 @@ class Run(val command: String) : IStressCommand {
      */
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {
         // The --populate flag can be overridden by the profile
-        val max = when(val option = plugin.instance.getPopulateOption(this)) {
+
+        val option = plugin.instance.getPopulateOption(this)
+        var deletes = true
+
+        val max = when(option) {
             is PopulateOption.Standard -> {
                 populate
             }
             is PopulateOption.Custom -> {
                 println("Using workload specific populate options of ${option.rows}")
+                deletes = option.deletes
+                if (!deletes) {
+                    println("Not doing deletes in populate phase")
+                }
                 option.rows
             }
         } * threads
@@ -395,7 +403,7 @@ class Run(val command: String) : IStressCommand {
 
                 runners.forEach {
                     val tmp = thread(start = true, isDaemon = false, name = "populate-X") {
-                        it.populate(max)
+                        it.populate(max, deletes)
                     }
                     threads.add(tmp)
                 }
