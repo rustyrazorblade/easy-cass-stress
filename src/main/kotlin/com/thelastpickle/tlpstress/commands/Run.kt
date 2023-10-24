@@ -24,8 +24,11 @@ import me.tongfei.progressbar.ProgressBarStyle
 import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.io.PrintStream
-import java.lang.RuntimeException
+import java.time.Duration
+import java.util.Timer
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.fixedRateTimer
+import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
 
 class NoSplitter : IParameterSplitter {
@@ -79,7 +82,8 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--readrate", "--reads", "-r"], description = "Read Rate, 0-1.  Workloads may have their own defaults.  Default is dependent on workload.")
     var readRate : Double? = null
 
-    @Parameter(names = ["--concurrency", "-c"], description = "Concurrent queries allowed.  Increase for larger clusters.", converter = HumanReadableConverter::class)
+    @Deprecated("Deprecated, use --rate for more predictable testing.")
+    @Parameter(names = ["--concurrency", "-c"], description = "DEPRECATED.  Concurrent queries allowed.  Increase for larger clusters.  This flag is deprecated and does nothing.", converter = HumanReadableConverter::class)
     var concurrency = 100L
 
     @Parameter(names = ["--populate"], description = "Pre-population the DB with N rows before starting load test.", converter = HumanReadableConverter::class)
@@ -105,7 +109,16 @@ class Run(val command: String) : IStressCommand {
     var fields = mutableMapOf<String, String>()
 
     @Parameter(names = ["--rate"], description = "Rate limiter, accepts human numbers. 0 = disabled", converter = HumanReadableConverter::class)
-    var rate = 0L
+    var rate = 5000L
+
+    @Parameter(names = ["--maxrlat"], description = "Max Read Latency")
+    var maxReadLatency: Long? = null
+
+    @Parameter(names = ["--maxwlat"])
+    var maxWriteLatency: Long? = null
+
+    @Parameter(names = ["--queue"], description = "Queue Depth.  2x the rate by default.")
+    var queueDepth : Long = rate * 2
 
     @Parameter(names = ["--drop"], description = "Drop the keyspace before starting.")
     var dropKeyspace = false
@@ -276,6 +289,17 @@ class Run(val command: String) : IStressCommand {
 
         // Both of the following are set in the try block, so this is OK
         val metrics = createMetrics()
+
+        // set up the rate limiter optimizer and put it on a schedule
+        if (maxReadLatency != null || maxWriteLatency != null) {
+            println("Enabling Latency Optimizer, starting at ${rateLimiter.rate}")
+            val optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
+            val timer = Timer().schedule(30000, 5000) {
+                optimizer.execute()
+            }
+        }
+
+
         var runnersExecuted = 0L
 
         try {
@@ -283,7 +307,7 @@ class Run(val command: String) : IStressCommand {
             val runners = createRunners(plugin, metrics, fieldRegistry, rateLimiter)
 
             populateData(plugin, runners, metrics)
-
+            metrics.resetErrors()
             metrics.startReporting()
 
             println("Starting main runner")
@@ -293,6 +317,7 @@ class Run(val command: String) : IStressCommand {
                 val t = thread(start = true, isDaemon = true) {
                     runner.run()
                 }
+                runnersExecuted++
 
                 threads.add(t)
             }
@@ -327,22 +352,41 @@ class Run(val command: String) : IStressCommand {
             // without this cleanup we could have the metrics runner still running and it will cause subsequent tests to fail
             metrics.shutdown()
             Thread.sleep(1000)
+
             println("Stress complete, $runnersExecuted.")
         }
 
     }
 
 
-    private fun getRateLimiter() = if(rate > 0) {
-            RateLimiter.create(rate.toDouble())
-        } else null
+    private fun getRateLimiter() =
+        RateLimiter.create(rate.toDouble(), 1, TimeUnit.SECONDS)
 
-
+    /**
+     * When we run populate, certain workloads (locking) need to do special things.
+     * Like pre-fill every partition with a known dataset.
+     * So we have to override populate (and in the case of locking the partition generator).
+     * This allows us to do things like sequentially fill every row in the addressable
+     * partition space with initial values.
+     */
     private fun populateData(plugin: Plugin, runners: List<ProfileRunner>, metrics: Metrics) {
+        // The --populate flag can be overridden by the profile
 
-        val max = when(val option = plugin.instance.getPopulateOption(this)) {
-            is PopulateOption.Standard -> populate
-            is PopulateOption.Custom -> option.rows
+        val option = plugin.instance.getPopulateOption(this)
+        var deletes = true
+
+        val max = when(option) {
+            is PopulateOption.Standard -> {
+                populate
+            }
+            is PopulateOption.Custom -> {
+                println("Using workload specific populate options of ${option.rows}")
+                deletes = option.deletes
+                if (!deletes) {
+                    println("Not doing deletes in populate phase")
+                }
+                option.rows
+            }
         } * threads
 
         log.info { "Prepopulating data with $max records per thread" }
@@ -356,23 +400,23 @@ class Run(val command: String) : IStressCommand {
 
                 // calling it on the runner
                 val threads = mutableListOf<Thread>()
+
                 runners.forEach {
-                    val tmp = thread(start=true, isDaemon = false, name = "populate-X") {
-                        it.populate(populate)
+                    val tmp = thread(start = true, isDaemon = false, name = "populate-X") {
+                        it.populate(max, deletes)
                     }
                     threads.add(tmp)
                 }
-
                 Thread.sleep(1000)
                 for (thread in threads) {
                     thread.join()
                 }
-
                 // have we really reached 100%?
                 Thread.sleep(1000)
                 // stop outputting the progress bar
                 timer.cancel()
                 // allow the time to die out
+
             }
             Thread.sleep(1000)
             println("\nPre-populate complete.")
@@ -383,7 +427,7 @@ class Run(val command: String) : IStressCommand {
     private fun createRunners(plugin: Plugin, metrics: Metrics, fieldRegistry: Registry, rateLimiter: RateLimiter?): List<ProfileRunner> {
         val runners = IntRange(0, threads - 1).map {
             println("Connecting")
-            val context = StressContext(session, this, it, metrics, concurrency.toInt(), fieldRegistry, rateLimiter)
+            val context = StressContext(session, this, it, metrics, fieldRegistry, rateLimiter)
             ProfileRunner.create(context, plugin.instance)
         }
 
@@ -444,6 +488,7 @@ class Run(val command: String) : IStressCommand {
             if (dropKeyspace) {
                 println("Dropping $keyspace")
                 session.execute("DROP KEYSPACE IF EXISTS $keyspace")
+                Thread.sleep(5000)
             }
 
             val createKeyspace = """CREATE KEYSPACE

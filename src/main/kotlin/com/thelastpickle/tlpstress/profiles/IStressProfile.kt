@@ -9,21 +9,29 @@ import com.thelastpickle.tlpstress.StressContext
 import com.thelastpickle.tlpstress.commands.Run
 import com.thelastpickle.tlpstress.generators.FieldGenerator
 import com.thelastpickle.tlpstress.generators.Field
+import com.codahale.metrics.Timer.Context
+import com.thelastpickle.tlpstress.PartitionKeyGenerator
+import java.util.*
 
 interface IStressRunner {
     fun getNextMutation(partitionKey: PartitionKey) : Operation
     fun getNextSelect(partitionKey: PartitionKey) : Operation
     fun getNextDelete(partitionKey: PartitionKey) : Operation
+
+    /**
+     * Populate phase will typically just perform regular mutations.
+     * However, certain workloads may need custom setup.
+     * @see Locking
+    **/
+    fun getNextPopulate(partitionKey: PartitionKey) : Operation {
+        return getNextMutation(partitionKey)
+    }
     /**
      * Callback after a query executes successfully.
      * Will be used for state tracking on things like LWTs as well as provides an avenue for future work
      * doing post-workload correctness checks
      */
     fun onSuccess(op: Operation.Mutation, result: ResultSet?) { }
-
-    fun customPopulateIter() : Iterator<Operation.Mutation> {
-        return listOf<Operation.Mutation>().iterator()
-    }
 
 }
 
@@ -41,7 +49,8 @@ interface IStressProfile {
     fun prepare(session: Session)
     /**
      * returns a bunch of DDL statements
-     * this can be create table, index, materialized view, etc
+     * this can be any valid DDL such as
+     * CREATE table, index, materialized view, etc
      * for most tests this is probably a single table
      * it's OK to put a clustering order in, but otherwise the schema
      * should not specify any other options here because they can all
@@ -78,26 +87,27 @@ interface IStressProfile {
 
     fun getDefaultReadRate() : Double { return .01 }
 
-    fun getCustomArguments() : Map<String, String> { return mapOf() }
-
     fun getPopulateOption(args: Run)  : PopulateOption = PopulateOption.Standard()
 
-
+    fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> =
+        Optional.empty()
 
 
 }
 
 
-sealed class Operation(val bound: BoundStatement) {
+sealed class Operation(val bound: BoundStatement?) {
     // we're going to track metrics on the mutations differently
     // inserts will also carry data that might be saved for later validation
     // clustering keys won't be realistic to compute in the framework
+    lateinit var startTime: Context
 
-    class Mutation(bound: BoundStatement, val callbackPayload: Any? = null ) : Operation(bound)
+    class Mutation(bound: BoundStatement, val callbackPayload: Any? = null) : Operation(bound)
 
     class SelectStatement(bound: BoundStatement): Operation(bound)
 
     class Deletion(bound: BoundStatement): Operation(bound)
 
+    class Stop : Operation(null)
 
 }

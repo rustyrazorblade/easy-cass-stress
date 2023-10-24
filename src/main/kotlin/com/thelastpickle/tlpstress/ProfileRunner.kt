@@ -95,61 +95,26 @@ class ProfileRunner(val context: StressContext,
      * Used for both pre-populating data and for performing the actual runner
      */
     private fun executeOperations(iterations: Long, duration: Long) {
-
-        val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
-        var operations = 0
         // create a semaphore local to the thread to limit the query concurrency
-        val sem = Semaphore(context.permits)
-
         val runner = profile.getRunner(context)
 
         // we use MAX_VALUE since it's essentially infinite if we give a duration
         val totalValues = if (duration > 0) Long.MAX_VALUE else iterations
 
-        for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
-            if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {
-                break
-            }
-            // get next thing from the profile
-            // thing could be a statement, or it could be a failure command
-            // certain profiles will want to deterministically inject failures
-            // others can be randomly injected by the runner
-            // I should be able to just tell the runner to inject gossip failures in any test
-            // without having to write that code in the profile
-            val nextOp = ThreadLocalRandom.current().nextInt(0, 100)
-            val op : Operation = getNextOperation(nextOp, runner, key)
-            
-            // if we're using the rate limiter (unlikely) grab a permit
-            context.rateLimiter?.run {
-                acquire(1)
-            }
+        // if we have a custom generator for the populate phase we'll use that
 
-            sem.acquire()
+        val queue = RequestQueue(partitionKeyGenerator, context, totalValues, duration, runner, readRate, deleteRate)
+        queue.start()
 
-            val startTime = when(op) {
-                is Operation.Mutation -> context.metrics.mutations.time()
-                is Operation.SelectStatement -> context.metrics.selects.time()
-                is Operation.Deletion -> context.metrics.deletions.time()
-            }
-
+        // pull requests off the queue instead of using generateKey
+        // move the getNextOperation into the queue thing
+        for (op in queue.getNextOperation()) {
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
-            operations++
+            Futures.addCallback(future, OperationCallback(context, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
         }
 
-        // block until all the queries are finished
-        sem.acquireUninterruptibly(context.permits)
     }
 
-    private fun getNextOperation(nextOp: Int, runner: IStressRunner, key: PartitionKey): Operation {
-        return if (readRate * 100 > nextOp) {
-            runner.getNextSelect(key)
-        } else if ((readRate * 100) + (deleteRate * 100) > nextOp) {
-            runner.getNextDelete(key)
-        } else {
-            runner.getNextMutation(key)
-        }
-    }
 
     /**
      * Prepopulates the database with numRows
@@ -157,51 +122,33 @@ class ProfileRunner(val context: StressContext,
      * Records all timers in the populateMutations metrics
      * Can (and should) be graphed separately
      */
-    fun populate(numRows: Long) {
+    fun populate(numRows: Long, deletes:Boolean = true) {
 
         val runner = profile.getRunner(context)
-        val sem = Semaphore(context.permits)
 
-        fun executePopulate(op: Operation) {
-            context.rateLimiter?.run {
-                acquire(1)
+        val populatePartitionKeyGenerator = profile.getPopulatePartitionKeyGenerator().orElse(partitionKeyGenerator)
+
+        val queue = RequestQueue(populatePartitionKeyGenerator, context, numRows, 0, runner, 0.0,
+                                    if (deletes) deleteRate else 0.0,
+                                    populatePhase = true)
+        queue.start()
+
+        try {
+            for (op in queue.getNextOperation()) {
+                val future = context.session.executeAsync(op.bound)
+                Futures.addCallback(
+                    future,
+                    OperationCallback(context, runner, op, false),
+                    MoreExecutors.directExecutor()
+                )
             }
-            sem.acquire()
-
-            val startTime = context.metrics.populate.time()
-            val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, sem, startTime, runner, op), MoreExecutors.directExecutor())
+        } catch (_: OperationStopException) {
+            log.info("Received Stop signal")
+            Thread.sleep(3000)
+        } catch (e: Exception) {
+            log.warn("Received unknown exception ${e.message}")
+            throw e
         }
-
-        when(profile.getPopulateOption(context.mainArguments)) {
-            is PopulateOption.Custom -> {
-                log.info { "Starting a custom population" }
-
-                for (op in runner.customPopulateIter()) {
-                    executePopulate(op)
-                }
-            }
-            is PopulateOption.Standard -> {
-
-                log.info("Populating Cassandra with $numRows rows")
-
-                // we follow the same access pattern as normal writes when pre-populating
-                for (key in partitionKeyGenerator.generateKey(numRows, context.mainArguments.partitionValues)) {
-                    // we should be inserting tombstones at the --deletes rate
-                    val nextOp = ThreadLocalRandom.current().nextInt(0, 100)
-
-                    // populate should populate with tombstones in the case of --deletes being set
-                    val op = if (deleteRate * 100 > nextOp) {
-                        runner.getNextDelete(key)
-                    } else {
-                        runner.getNextMutation(key)
-                    }
-                    executePopulate(op)
-                }
-
-            }
-        }
-        sem.acquireUninterruptibly(context.permits)
     }
 
 

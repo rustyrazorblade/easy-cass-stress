@@ -22,3 +22,7 @@ tlp-stress.iws
 /*.rpm
 buildSrc/.gradle/
 buildSrc/build/
+.jira-url
+*.ipr
+*.iws
+.sdkmanrc

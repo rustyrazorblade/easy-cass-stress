@@ -2,16 +2,14 @@ package com.thelastpickle.tlpstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import com.thelastpickle.tlpstress.PartitionKey
-import com.thelastpickle.tlpstress.PopulateOption
-import com.thelastpickle.tlpstress.ProfileRunner
-import com.thelastpickle.tlpstress.StressContext
+import com.thelastpickle.tlpstress.*
 import com.thelastpickle.tlpstress.commands.Run
 import org.apache.logging.log4j.kotlin.logger
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- *
+ * Note: currently broken :(
  * Warning: this workload is under development and should not be used as a reference across multiple tlp-stress runs with
  * different versions of tlp-stress as the implementation may change!
  *
@@ -38,7 +36,7 @@ class Locking : IStressProfile {
         insert = session.prepare("INSERT INTO lwtupdates (item_id, name, status) VALUES (?, ?, 0)")
         update = session.prepare("UPDATE lwtupdates set status = ? WHERE item_id = ? IF status = ?")
         select = session.prepare("SELECT * from lwtupdates where item_id = ?")
-        delete = session.prepare("DELETE from lwtupdates where item_id = ?")
+        delete = session.prepare("DELETE from lwtupdates where item_id = ? IF EXISTS")
     }
 
     override fun schema(): List<String> {
@@ -52,8 +50,11 @@ class Locking : IStressProfile {
         return listOf(query)
     }
 
-    override fun getPopulateOption(args: Run) : PopulateOption = PopulateOption.Custom(args.partitionValues)
+    override fun getPopulateOption(args: Run) : PopulateOption = PopulateOption.Custom(args.partitionValues, deletes = false)
 
+    override fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> {
+        return Optional.of(PartitionKeyGenerator.sequence("test"))
+    }
 
 
     override fun getRunner(context: StressContext): IStressRunner {
@@ -71,6 +72,8 @@ class Locking : IStressProfile {
                     else -> 0
                 }
 
+                log.trace{"Updating ${partitionKey.getText()} to $newState"}
+
                 val bound = update.bind(newState, partitionKey.getText(), newState)
                 state[partitionKey.getText()] = newState
                 return Operation.Mutation(bound)
@@ -86,15 +89,11 @@ class Locking : IStressProfile {
                 return Operation.Deletion(bound)
             }
 
-            override fun customPopulateIter() = iterator {
-
-                val generator = ProfileRunner.getGenerator(context, "sequence")
-                for(partitionKey in generator.generateKey(context.mainArguments.partitionValues, context.mainArguments.partitionValues)) {
-                    val bound = insert.bind(partitionKey.getText(), "test")
-                    yield(Operation.Mutation(bound))
-                }
-
+            override fun getNextPopulate(partitionKey: PartitionKey): Operation {
+                val bound = insert.bind(partitionKey.getText(), "test")
+                return Operation.Mutation(bound)
             }
+
 
 
 
