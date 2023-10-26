@@ -36,7 +36,7 @@ class DSESearch : IStressProfile {
 
     override fun prepare(session: Session) {
         insert = session.prepare("INSERT INTO $TABLE (key, c, value_text) VALUES (?, ?, ?)")
-        select = session.prepare("SELECT * from $TABLE WHERE solr_query = ?")
+        select = session.prepare("SELECT key, c, value_text from $TABLE WHERE solr_query = ?")
 
         delete = session.prepare("DELETE from $TABLE WHERE key = ? and c = ?")
     }
@@ -48,12 +48,13 @@ class DSESearch : IStressProfile {
                     value_text text,
                     PRIMARY KEY (key, c)
             )""".trimIndent(),
-            """CREATE SEARCH INDEX ON $TABLE WITH COLUMNS value_text
+            """CREATE SEARCH INDEX IF NOT EXISTS ON $TABLE WITH COLUMNS value_text
             """.trimIndent())
     }
 
     override fun getRunner(context: StressContext): IStressRunner {
         val value = context.registry.getGenerator(TABLE, "value_text")
+        val regex = "[^a-zA-Z0-9]".toRegex()
 
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         data class SolrQuery(
@@ -72,12 +73,17 @@ class DSESearch : IStressProfile {
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val valueValue = value.getText().substringBefore(" ")
-                val query = SolrQuery(q= "value_text:$valueValue",
+                val valueValue = value.getText().substringBeforeLast(" ")
+                                                .replace(regex, " ")
+                                                .trim()
+
+
+                val query = SolrQuery(q= "value_text:($valueValue)",
                     fq = if (!global) "key:${partitionKey.getText()}" else ""
                 )
 
                 val queryString = mapper.writeValueAsString(query)
+
                 val bound = select.bind(queryString)
                 return Operation.SelectStatement(bound)
             }
