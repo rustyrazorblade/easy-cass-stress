@@ -35,6 +35,8 @@ class RequestQueue(
     init {
 
         generatorThread = thread(start=false) {
+            // hack to ensure we don't start before the process is ready
+
             val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
             var executed = 0L
             log.info("populate=$populatePhase total values: $totalValues, duration: $duration")

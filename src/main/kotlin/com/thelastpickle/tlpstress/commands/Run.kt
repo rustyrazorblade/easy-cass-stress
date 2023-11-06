@@ -361,8 +361,12 @@ class Run(val command: String) : IStressCommand {
     }
 
 
-    private fun getRateLimiter() =
-        RateLimiter.create(rate.toDouble(), 1, TimeUnit.SECONDS)
+    private fun getRateLimiter() : RateLimiter {
+        val tmp = RateLimiter.create(rate.toDouble())
+        tmp.acquire(rate.toInt())
+        return tmp
+    }
+
 
     /**
      * When we run populate, certain workloads (locking) need to do special things.
