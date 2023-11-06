@@ -297,6 +297,8 @@ class Run(val command: String) : IStressCommand {
             val timer = Timer().schedule(30000, 5000) {
                 optimizer.execute()
             }
+        } else {
+            println("Starting with fixed rate scheduler at ${rateLimiter.rate} rps")
         }
 
 
