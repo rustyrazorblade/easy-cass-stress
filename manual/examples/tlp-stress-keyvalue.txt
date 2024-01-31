@@ -1,4 +1,5 @@
 $ bin/tlp-stress run KeyValue -n 10000
+WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 Creating tlp_stress: 
 CREATE KEYSPACE
  IF NOT EXISTS tlp_stress
@@ -14,15 +15,14 @@ CREATE TABLE IF NOT EXISTS keyvalue (
                         ) WITH caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'} AND default_time_to_live = 0
 Preparing queries
 Initializing metrics
+Starting with fixed rate scheduler at 5000.0 rps
 Connecting
 Creating generator random
-Preparing statements.
 1 threads prepared.
 Starting main runner
-Running
 [Thread 0]: Running the profile for 10000 iterations...
                  Writes                                  Reads                                  Deletes                       Errors
   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  1min (errors/s)
-   5101          56.02             0 |    4899          28.78             0 |       0              0             0 |       0                0
-   5101          56.02             0 |    4899          28.78             0 |       0              0             0 |       0                0
+   5014           29.7             0 |    4986           35.4             0 |       0              0             0 |       0                0
+   5014           29.7             0 |    4986           35.4             0 |       0              0             0 |       0                0
 Stress complete, 1.

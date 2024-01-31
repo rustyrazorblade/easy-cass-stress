@@ -1,4 +1,5 @@
 $ bin/tlp-stress
+WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 Usage: tlp-stress [options] [command] [command options]
   Options:
     --help, -h
@@ -9,28 +10,33 @@ Usage: tlp-stress [options] [command] [command options]
       Usage: run [options]
         Options:
           --cl
-            Consistency level for reads/writes (Defaults to LOCAL_ONE).
+            Consistency level for reads/writes (Defaults to LOCAL_ONE, set 
+            custom default with TLP_STRESS_CONSISTENCY_LEVEL).
             Default: LOCAL_ONE
             Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --compaction
-            Compaction option to use.  Double quotes will auto convert to
-            single for convenience.  A shorthand is also available: stcs, lcs,
+            Compaction option to use.  Double quotes will auto convert to 
+            single for convenience.  A shorthand is also available: stcs, lcs, 
             twcs.  See the full documentation for all possibilities.
             Default: <empty string>
           --compression
             Compression options
             Default: <empty string>
           --concurrency, -c
-            Concurrent queries allowed.  Increase for larger clusters.
+            DEPRECATED.  Concurrent queries allowed.  Increase for larger 
+            clusters.  This flag is deprecated and does nothing.
             Default: 100
           --coordinatoronly, --co
-            Coordinator only made.  This will cause tlp-stress to round robin
-            between nodes without tokens.  Requires using -Djoin_ring=false in
-            cassandra-env.sh.  When using this option you must only provide a
+            Coordinator only made.  This will cause tlp-stress to round robin 
+            between nodes without tokens.  Requires using -Djoin_ring=false in 
+            cassandra-env.sh.  When using this option you must only provide a 
             coordinator to --host.
             Default: false
+          --core-connections
+            Sets the number of core connections per host
+            Default: 4
           --cql
-            Additional CQL to run after the schema is created.  Use for DDL
+            Additional CQL to run after the schema is created.  Use for DDL 
             modifications such as creating indexes.
             Default: []
           --csv
@@ -40,7 +46,7 @@ Usage: tlp-stress [options] [command] [command options]
             The data center to which requests should be sent
             Default: <empty string>
           --deleterate, --deletes
-            Deletion Rate, 0-1.  Workloads may have their own defaults.
+            Deletion Rate, 0-1.  Workloads may have their own defaults.  
             Default is dependent on workload.
           --drop
             Drop the keyspace before starting.
@@ -49,17 +55,19 @@ Usage: tlp-stress [options] [command] [command options]
             Duration of the stress test.  Expressed in format 1d 3h 15m
             Default: 0
           --field.
-            Override a field's data generator.  Example usage:
-            --field.tablename.fieldname='book(100,200)'
+            Override a field's data generator.  Example usage: 
+            --field.tablename.fieldname='book(100,200)' 
             Syntax: --field.key=value
             Default: {}
+          --hdr
+            Print HDR Histograms using this prefix
+            Default: <empty string>
           -h, --help
             Show this help
           --host
-
             Default: 127.0.0.1
           --id
-            Identifier for this run, will be used in partition keys.  Make
+            Identifier for this run, will be used in partition keys.  Make 
             unique for when starting concurrent runners.
             Default: 001
           --iterations, -i, -n
@@ -71,29 +79,32 @@ Usage: tlp-stress [options] [command] [command options]
           --keyspace
             Keyspace to use
             Default: tlp_stress
-          --max-requests
-            Sets the max requests per connection
-            Default: 32768
-          --core-connections
-            Sets the number of core connections per host
-            Default: 4
           --max-connections
             Sets the number of max connections per host
             Default: 8
+          --max-requests
+            Sets the max requests per connection
+            Default: 32768
+          --maxrlat
+            Max Read Latency
+          --maxwlat
+
           --no-schema
             Skips schema creation
+            Default: false
+          --paginate
+            Paginate through the entire partition before completing
             Default: false
           --paging
             Override the driver's default page size.
           --partitiongenerator, --pg
-            Method of generating partition keys.  Supports random, normal
+            Method of generating partition keys.  Supports random, normal 
             (gaussian), and sequence.
             Default: random
           --partitions, -p
             Max value of integer component of first partition key.
             Default: 1000000
           --password, -P
-
             Default: cassandra
           --populate
             Pre-population the DB with N rows before starting load test.
@@ -104,11 +115,14 @@ Usage: tlp-stress [options] [command] [command options]
           --prometheusport
             Override the default prometheus port.
             Default: 9500
+          --queue
+            Queue Depth.  2x the rate by default.
+            Default: 10000
           --rate
             Rate limiter, accepts human numbers. 0 = disabled
-            Default: 0
+            Default: 5000
           --readrate, --reads, -r
-            Read Rate, 0-1.  Workloads may have their own defaults.  Default
+            Read Rate, 0-1.  Workloads may have their own defaults.  Default 
             is dependent on workload.
           --replication
             Replication options
@@ -126,7 +140,6 @@ Usage: tlp-stress [options] [command] [command options]
             Table level TTL, 0 to disable.
             Default: 0
           --username, -U
-
             Default: cassandra
           --workload., -w.
             Override workload specific parameters.
@@ -141,3 +154,5 @@ Usage: tlp-stress [options] [command] [command options]
 
     fields      null
       Usage: fields
+
+

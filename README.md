@@ -6,8 +6,6 @@ GH Actions in progress.
 
 [![CircleCI](https://circleci.com/gh/thelastpickle/tlp-stress.svg?style=svg)](https://circleci.com/gh/thelastpickle/tlp-stress)
 
-Please see our [Google Group](https://groups.google.com/d/forum/tlp-dev-tools) for discussion.
-
 cassandra-stress is a configuration-based tool for doing benchmarks and testing simple datamodels for Apache Cassandra.  Unfortunately it can be difficult to configure a workload.  There are faily common data models and workloads seen on Apache Cassandra, this tool aims to provide a means of executing configurable, pre-defined profiles.
 
 Full docs are here: http://thelastpickle.com/tlp-stress/
@@ -53,3 +51,7 @@ Time series workload with Cassandra Authentication enabled:
     bin/tlp-stress run BasicTimeSeries -d '30m' -U '<username>' -P '<password>'
     **Note**: The quotes are mandatory around the username/password
     if they contain special chararacters, which is pretty common for password
+
+# Generating docs
+
+Docs are served out of /docs and can be rebuild using `./gradlew docs`.

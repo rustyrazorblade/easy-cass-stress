@@ -1,16 +1,17 @@
 = tlp-stress
-Jon Haddad <jon@thelastpickle.com>
+Jon Haddad <jon@rustyrazorblade.com>
 Anthony Grasso <anthony@thelastpickle.com>
 :toc: left
 :icon: font
 
-tlp-stress is a workload-centric stress tool, written in Kotlin.
-Workloads are easy to write and because they are written in code, you
-have the ultimate flexibility. Workloads can be tweaked via command line
+tlp-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
+Workloads are easy to write and because they are written in code. You
+have the ultimate flexibility to build whatever you want without having to learn and
+operate around the restrictions of a configuration DSL. Workloads can be tweaked via command line
 parameters to make them fit your environment more closely.
 
 One of the goals of tlp-stress is to provide enough pre-designed
-workloads _out of the box_ so it’s unnecessary to code up a workload for
+workloads _out of the box,_ so it’s unnecessary to code up a workload for
 most use cases. For instance, it’s very common to have a key value
 workload, and want to test that. tlp-stress allows you to customize a
 pre-configured key-value workload, using simple parameters to modify the
@@ -34,6 +35,9 @@ The goal of this project is to be testing common workloads (time series, key val
 
 ==== Installing a Package
 
+*Note*: Installing from packages has not been migrated since I (Jon Haddad) began maintaining my own fork.  I'll be updating this section soon.
+
+////
 The easiest way to get started is to use your favorite package manager.
 
 The current version is {TLP_STRESS_VERSION}.
@@ -71,7 +75,6 @@ Further information can be found on the https://bintray.com/beta/#/thelastpickle
 
 ==== Tarball Install
 
-If you're using mac, for now you'll need to grab our tarball using:
 
 [subs="attributes"]
 ```
@@ -79,9 +82,15 @@ $ curl -L -O "https://dl.bintray.com/thelastpickle/tlp-tools-tarball/tlp-stress-
 $ tar -xzf tlp-stress-{TLP_STRESS_VERSION}.tar
 ```
 
+////
+
 === Building / Using the Stress Tool from Source
 
+This is currently the only way to use the latest version of tlp-stress.  I'm working on getting the packages updated.
+
+////
 This is advisable only if you're comfortable debugging the bash scripts, gradle, and Kotlin yourself and want to be either on the bleeding edge or add a feature.  If not, that's OK, we recommend using one of the above packages instead.
+////
 
 First you'll need to clone and build the repo.  You can grab the source here and build via the included gradle script:
 
@@ -93,6 +102,14 @@ $ ./gradlew shadowJar
 ```
 
 You can now run the stress tool via the `bin/tlp-stress` script.  This is not the same script you'll be running if you've installed from a package or the tarball.
+
+You can also create a zip, tar, or deb package by doing the following:
+
+```bash
+$ ./gradlew distZip
+$ ./gradlew distTar
+$ ./gradlew deb
+```
 
 === Run Your First Stress Workload
 
@@ -270,7 +287,7 @@ workload to specify which fields can be used this way.
 
 `tlp-stress` uses the https://logging.apache.org/[Log4J 2] logging framework.
 
-You can find the default log4j config in https://github.com/thelastpickle/tlp-stress/tree/master/src/main/resources/log4j2.yaml[`conf`, window="_blank"].  This should be suitable for most use cases.
+You can find the default log4j config inhttps://github.com/rustyrazorblade/tlp-stress/blob/main/src/main/resources/log4j2.yaml[`conf`, window="_blank"].  This should be suitable for most use cases.
 
 To use your own logging configuration, simply set the shell variable `TLP_STRESS_LOG4J` to the path of the new logging configuration before running `tlp-stress` to point to the config file of your choice.
 
