@@ -112,7 +112,7 @@ task docs(type:Exec) {
     dependsOn("shadowJar")
     dependsOn("generateExamples")
 
-    environment "TLP_STRESS_VERSION", "${version}"
+    environment "EASY_CASS_STRESS_VERSION", "${version}"
     commandLine 'docker-compose', 'up', 'docs'
     group = "Documentation"
     description = "Build website documentation"

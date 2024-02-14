@@ -1,19 +1,1 @@
 $ bin/tlp-stress list
-WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Available Workloads:
-
-AllowFiltering 
-BasicTimeSeries 
-CountersWide 
-DSESearch 
-KeyValue 
-LWT 
-Locking 
-Maps 
-MaterializedViews 
-RandomPartitionAccess 
-SAI 
-Sets 
-UdtTimeSeries 
-
-You can run any of these workloads by running tlp-cluster run WORKLOAD.

@@ -581,33 +581,7 @@ run the following command to execute 10,000 queries:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-bash" data-lang="bash">WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Creating tlp_stress:
-CREATE KEYSPACE
- IF NOT EXISTS tlp_stress
- WITH replication = {'class': 'SimpleStrategy', 'replication_factor':3 }
-
-Creating schema
-Executing 10000 operations with consistency level LOCAL_ONE
-Connected
-Creating Tables
-CREATE TABLE IF NOT EXISTS keyvalue (
-                        key text PRIMARY KEY,
-                        value text
-                        ) WITH caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'} AND default_time_to_live = 0
-Preparing queries
-Initializing metrics
-Starting with fixed rate scheduler at 5000.0 rps
-Connecting
-Creating generator random
-1 threads prepared.
-Starting main runner
-[Thread 0]: Running the profile for 10000 iterations...
-                 Writes                                  Reads                                  Deletes                       Errors
-  Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  1min (errors/s)
-   5014           29.7             0 |    4986           35.4             0 |       0              0             0 |       0                0
-   5014           29.7             0 |    4986           35.4             0 |       0              0             0 |       0                0
-Stress complete, 1.</code></pre>
+<pre class="highlight nowrap"><code class="language-bash" data-lang="bash"></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -629,162 +603,7 @@ Stress complete, 1.</code></pre>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">$ bin/tlp-stress
-WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Usage: tlp-stress [options] [command] [command options]
-  Options:
-    --help, -h
-      Shows this help.
-      Default: false
-  Commands:
-    run      Run a tlp-stress profile
-      Usage: run [options]
-        Options:
-          --cl
-            Consistency level for reads/writes (Defaults to LOCAL_ONE, set
-            custom default with TLP_STRESS_CONSISTENCY_LEVEL).
-            Default: LOCAL_ONE
-            Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
-          --compaction
-            Compaction option to use.  Double quotes will auto convert to
-            single for convenience.  A shorthand is also available: stcs, lcs,
-            twcs.  See the full documentation for all possibilities.
-            Default: &lt;empty string&gt;
-          --compression
-            Compression options
-            Default: &lt;empty string&gt;
-          --concurrency, -c
-            DEPRECATED.  Concurrent queries allowed.  Increase for larger
-            clusters.  This flag is deprecated and does nothing.
-            Default: 100
-          --coordinatoronly, --co
-            Coordinator only made.  This will cause tlp-stress to round robin
-            between nodes without tokens.  Requires using -Djoin_ring=false in
-            cassandra-env.sh.  When using this option you must only provide a
-            coordinator to --host.
-            Default: false
-          --core-connections
-            Sets the number of core connections per host
-            Default: 4
-          --cql
-            Additional CQL to run after the schema is created.  Use for DDL
-            modifications such as creating indexes.
-            Default: []
-          --csv
-            Write metrics to this file in CSV format.
-            Default: &lt;empty string&gt;
-          --dc
-            The data center to which requests should be sent
-            Default: &lt;empty string&gt;
-          --deleterate, --deletes
-            Deletion Rate, 0-1.  Workloads may have their own defaults.
-            Default is dependent on workload.
-          --drop
-            Drop the keyspace before starting.
-            Default: false
-          --duration, -d
-            Duration of the stress test.  Expressed in format 1d 3h 15m
-            Default: 0
-          --field.
-            Override a field's data generator.  Example usage:
-            --field.tablename.fieldname='book(100,200)'
-            Syntax: --field.key=value
-            Default: {}
-          --hdr
-            Print HDR Histograms using this prefix
-            Default: &lt;empty string&gt;
-          -h, --help
-            Show this help
-          --host
-            Default: 127.0.0.1
-          --id
-            Identifier for this run, will be used in partition keys.  Make
-            unique for when starting concurrent runners.
-            Default: 001
-          --iterations, -i, -n
-            Number of operations to run.
-            Default: 0
-          --keycache
-            Key cache setting
-            Default: ALL
-          --keyspace
-            Keyspace to use
-            Default: tlp_stress
-          --max-connections
-            Sets the number of max connections per host
-            Default: 8
-          --max-requests
-            Sets the max requests per connection
-            Default: 32768
-          --maxrlat
-            Max Read Latency
-          --maxwlat
-
-          --no-schema
-            Skips schema creation
-            Default: false
-          --paginate
-            Paginate through the entire partition before completing
-            Default: false
-          --paging
-            Override the driver's default page size.
-          --partitiongenerator, --pg
-            Method of generating partition keys.  Supports random, normal
-            (gaussian), and sequence.
-            Default: random
-          --partitions, -p
-            Max value of integer component of first partition key.
-            Default: 1000000
-          --password, -P
-            Default: cassandra
-          --populate
-            Pre-population the DB with N rows before starting load test.
-            Default: 0
-          --port
-            Override the cql port. Defaults to 9042.
-            Default: 9042
-          --prometheusport
-            Override the default prometheus port.
-            Default: 9500
-          --queue
-            Queue Depth.  2x the rate by default.
-            Default: 10000
-          --rate
-            Rate limiter, accepts human numbers. 0 = disabled
-            Default: 5000
-          --readrate, --reads, -r
-            Read Rate, 0-1.  Workloads may have their own defaults.  Default
-            is dependent on workload.
-          --replication
-            Replication options
-            Default: {'class': 'SimpleStrategy', 'replication_factor':3 }
-          --rowcache
-            Row cache setting
-            Default: NONE
-          --ssl
-            Enable SSL
-            Default: false
-          --threads, -t
-            Threads to run
-            Default: 1
-          --ttl
-            Table level TTL, 0 to disable.
-            Default: 0
-          --username, -U
-            Default: cassandra
-          --workload., -w.
-            Override workload specific parameters.
-            Syntax: --workload.key=value
-            Default: {}
-
-    info      Get details of a specific workload.
-      Usage: info
-
-    list      List all workloads.
-      Usage: list
-
-    fields      null
-      Usage: fields</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">$ bin/tlp-stress</code></pre>
 </div>
 </div>
 </div>
@@ -792,25 +611,7 @@ Usage: tlp-stress [options] [command] [command options]
 <h3 id="_listing_all_workloads">Listing All Workloads</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/tlp-stress list
-WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Available Workloads:
-
-AllowFiltering
-BasicTimeSeries
-CountersWide
-DSESearch
-KeyValue
-LWT
-Locking
-Maps
-MaterializedViews
-RandomPartitionAccess
-SAI
-Sets
-UdtTimeSeries
-
-You can run any of these workloads by running tlp-cluster run WORKLOAD.</code></pre>
+<pre class="highlight"><code>$ bin/tlp-stress list</code></pre>
 </div>
 </div>
 </div>
@@ -821,15 +622,7 @@ You can run any of these workloads by running tlp-cluster run WORKLOAD.</code></
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/tlp-stress info KeyValue
-WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-CREATE TABLE IF NOT EXISTS keyvalue (
-                        key text PRIMARY KEY,
-                        value text
-                        )
-Default read rate: 0.5 (override with -r)
-
-No dynamic workload parameters.</code></pre>
+<pre class="highlight"><code>$ bin/tlp-stress info KeyValue</code></pre>
 </div>
 </div>
 </div>
@@ -1097,7 +890,7 @@ workload to specify which fields can be used this way.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-01-31 22:57:15 UTC
+Last updated 2024-02-14 21:29:59 UTC
 </div>
 </div>
 </body>

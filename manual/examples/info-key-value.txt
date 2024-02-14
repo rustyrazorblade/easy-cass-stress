@@ -1,9 +1,1 @@
 $ bin/tlp-stress info KeyValue
-WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-CREATE TABLE IF NOT EXISTS keyvalue (
-                        key text PRIMARY KEY,
-                        value text
-                        )
-Default read rate: 0.5 (override with -r)
-
-No dynamic workload parameters.
