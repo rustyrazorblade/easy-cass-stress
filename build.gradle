@@ -21,14 +21,14 @@ apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-group 'com.thelastpickle'
+group 'com.rustyrazorblade'
 version '6.0.0'
 
 sourceCompatibility = 11
 
 application {
-    applicationName = "tlp-stress"
-    mainClassName = "com.thelastpickle.tlpstress.MainKt"
+    applicationName = "easy-cass-stress"
+    mainClassName = "com.rustyrazorblade.easycassstress.MainKt"
 }
 
 repositories {
@@ -127,18 +127,18 @@ task generateExamples(type: Exec) {
 
 jib {
     to {
-        image = "thelastpickle/tlp-stress"
+        image = "rustyrazorblade/easy-cass-stress"
         tags = [version, "latest"]
     }
 }
 
 ospackage {
     os = LINUX
-    link("/usr/local/bin/tlp-stress", "/opt/tlp-stress/bin/tlp-stress" )
+    link("/usr/local/bin/easy-cass-stress", "/opt/easy-cass-stress/bin/easy-cass-stress" )
     packager "Jon Haddad"
     maintainer "Jon Haddad"
-    vendor "The Last Pickle"
-    url "http://thelastpickle.com/tlp-stress/"
+    vendor "Rustyrazorblade Consulting"
+    url "http://rustyrazorblade.com/easy-cass-stress/"
     license "Apache License 2.0"
     description "Stress Tool for Apache Cassandra by The Last Pickle"
 }
@@ -173,12 +173,12 @@ task uploadDeb(type: Exec) {
     group = "Publish"
     workingDir 'build/distributions'
 
-    def debPackage = "tlp-stress_${version}_all.deb"
+    def debPackage = "easy-cass-stress_${version}_all.deb"
 
     // get the deb package
 
     logger.info("Uploading DEB $debPackage")
-    commandLine "curl", "-T", debPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-deb/tlp-stress/${version}/$debPackage;deb_distribution=weezy,bionic,jessie,xenial;deb_component=main;deb_architecture=amd64;publish=1"
+    commandLine "curl", "-T", debPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-deb/easy-cass-stress/${version}/$debPackage;deb_distribution=weezy,bionic,jessie,xenial;deb_component=main;deb_architecture=amd64;publish=1"
 
 }
 
@@ -186,19 +186,19 @@ task uploadRpm(type: Exec) {
     group = "Publish"
     workingDir 'build/distributions'
 
-    def rpmPackage = "tlp-stress-${version}.noarch.rpm"
+    def rpmPackage = "easy-cass-stress-${version}.noarch.rpm"
 
     logger.info("Uploading RPM $rpmPackage")
-    commandLine "curl", "-T", rpmPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-rpm/tlp-stress/${version}/$rpmPackage;publish=1"
+    commandLine "curl", "-T", rpmPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-rpm/easy-cass-stress/${version}/$rpmPackage;publish=1"
 }
 
 task uploadTar(type:Exec) {
     group = "Publish"
     workingDir 'build/distributions'
-    def tarball = "tlp-stress-${version}.tar"
+    def tarball = "easy-cass-stress-${version}.tar"
 
     logger.info("Uploading Tar $tarball")
-    commandLine "curl", "-T", tarball, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-tarball/tlp-stress/${version}/$tarball;publish=1"
+    commandLine "curl", "-T", tarball, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-tarball/easy-cass-stress/${version}/$tarball;publish=1"
 }
 
 task uploadAll  {
