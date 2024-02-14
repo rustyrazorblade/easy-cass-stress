@@ -17,8 +17,8 @@ settings.gradle
 /metrics*
 /logs/
 /*.csv
-tlp-stress.ipr
-tlp-stress.iws
+easy-cass-stress.ipr
+easy-cass-stress.iws
 /*.rpm
 buildSrc/.gradle/
 buildSrc/build/

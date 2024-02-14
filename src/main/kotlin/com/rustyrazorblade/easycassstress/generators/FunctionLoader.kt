@@ -34,7 +34,7 @@ class FunctionLoader : Iterable<FunctionDescription> {
     val map : MutableMap<String, Class<out FieldGenerator>> = mutableMapOf()
 
     init {
-        val r = Reflections("com.rustyrazorblade.easy-cass-stress")
+        val r = Reflections("com.rustyrazorblade.easycassstress")
         log.debug { "Getting FieldGenerator subtypes" }
         val modules = r.getSubTypesOf(FieldGenerator::class.java)
 

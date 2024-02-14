@@ -1,1 +1,1 @@
-$ bin/tlp-stress
+$ bin/easy-cass-stress

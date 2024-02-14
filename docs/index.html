@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.20">
 <meta name="author" content="Jon Haddad">
-<title>tlp-stress</title>
+<title>easy-cass-stress</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -436,7 +436,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>tlp-stress</h1>
+<h1>easy-cass-stress</h1>
 <div class="details">
 <span id="author" class="author">Jon Haddad</span><br>
 <span id="email" class="email"><a href="mailto:jon@rustyrazorblade.com">jon@rustyrazorblade.com</a></span><br>
@@ -477,17 +477,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>tlp-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
+<p>easy-cass-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
 Workloads are easy to write and because they are written in code. You
 have the ultimate flexibility to build whatever you want without having to learn and
 operate around the restrictions of a configuration DSL. Workloads can be tweaked via command line
 parameters to make them fit your environment more closely.</p>
 </div>
 <div class="paragraph">
-<p>One of the goals of tlp-stress is to provide enough pre-designed
+<p>One of the goals of easy-cass-stress is to provide enough pre-designed
 workloads <em>out of the box,</em> so it’s unnecessary to code up a workload for
 most use cases. For instance, it’s very common to have a key value
-workload, and want to test that. tlp-stress allows you to customize a
+workload, and want to test that. easy-cass-stress allows you to customize a
 pre-configured key-value workload, using simple parameters to modify the
 workload to fit your needs. Several workloads are included, such as:</p>
 </div>
@@ -535,20 +535,20 @@ automatically captured by the Dropwizard metrics library.</p>
 <div class="sect2">
 <h3 id="_building_using_the_stress_tool_from_source">Building / Using the Stress Tool from Source</h3>
 <div class="paragraph">
-<p>This is currently the only way to use the latest version of tlp-stress.  I&#8217;m working on getting the packages updated.</p>
+<p>This is currently the only way to use the latest version of easy-cass-stress.  I&#8217;m working on getting the packages updated.</p>
 </div>
 <div class="paragraph">
 <p>First you&#8217;ll need to clone and build the repo.  You can grab the source here and build via the included gradle script:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">$ git clone https://github.com/thelastpickle/tlp-stress.git
-$ cd tlp-stress
+<pre class="highlight"><code class="language-bash" data-lang="bash">$ git clone https://github.com/thelastpickle/easy-cass-stress.git
+$ cd easy-cass-stress
 $ ./gradlew shadowJar</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>You can now run the stress tool via the <code>bin/tlp-stress</code> script.  This is not the same script you&#8217;ll be running if you&#8217;ve installed from a package or the tarball.</p>
+<p>You can now run the stress tool via the <code>bin/easy-cass-stress</code> script.  This is not the same script you&#8217;ll be running if you&#8217;ve installed from a package or the tarball.</p>
 </div>
 <div class="paragraph">
 <p>You can also create a zip, tar, or deb package by doing the following:</p>
@@ -568,12 +568,12 @@ $ ./gradlew deb</code></pre>
 locally, you can run this quickstart.</p>
 </div>
 <div class="paragraph">
-<p>Either add the <code>bin</code> directory to your PATH or from within tlp-stress
+<p>Either add the <code>bin</code> directory to your PATH or from within easy-cass-stress
 run the following command to execute 10,000 queries:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/tlp-stress run KeyValue -n 10000</code></pre>
+<pre class="highlight"><code>$ bin/easy-cass-stress run KeyValue -n 10000</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -581,7 +581,33 @@ run the following command to execute 10,000 queries:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight nowrap"><code class="language-bash" data-lang="bash"></code></pre>
+<pre class="highlight nowrap"><code class="language-bash" data-lang="bash">WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
+Creating tlp_stress:
+CREATE KEYSPACE
+ IF NOT EXISTS tlp_stress
+ WITH replication = {'class': 'SimpleStrategy', 'replication_factor':3 }
+
+Creating schema
+Executing 10000 operations with consistency level LOCAL_ONE
+Connected
+Creating Tables
+CREATE TABLE IF NOT EXISTS keyvalue (
+                        key text PRIMARY KEY,
+                        value text
+                        ) WITH caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'} AND default_time_to_live = 0
+Preparing queries
+Initializing metrics
+Starting with fixed rate scheduler at 5000.0 rps
+Connecting
+Creating generator random
+1 threads prepared.
+Starting main runner
+[Thread 0]: Running the profile for 10000 iterations...
+                 Writes                                  Reads                                  Deletes                       Errors
+  Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  1min (errors/s)
+   5013          72.22             0 |    4987          93.94             0 |       0              0             0 |       0                0
+   5013          72.22             0 |    4987          93.94             0 |       0              0             0 |       0                0
+Stress complete, 1.</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -594,16 +620,171 @@ run the following command to execute 10,000 queries:</p>
 <h2 id="_usage">Usage</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You&#8217;ll probably want to do a bit more than simply run a few thousand queries against a KeyValue table with default settings.  The nice part about tlp-stress is that it not only comes with a variety of workloads that you can run to test your cluster, but that it allows you to change many of the parameters.  In the quickstart example we used the <code>-n</code> flag to change the total number of operations <code>tlp-stress</code> will execute against the database.  There are many more options available, this section will cover some of them.</p>
+<p>You&#8217;ll probably want to do a bit more than simply run a few thousand queries against a KeyValue table with default settings.  The nice part about easy-cass-stress is that it not only comes with a variety of workloads that you can run to test your cluster, but that it allows you to change many of the parameters.  In the quickstart example we used the <code>-n</code> flag to change the total number of operations <code>easy-cass-stress</code> will execute against the database.  There are many more options available, this section will cover some of them.</p>
 </div>
 <div class="sect2">
 <h3 id="_general_help">General Help</h3>
 <div class="paragraph">
-<p><code>tlp-stress</code> will display the help if the <code>tlp-stress</code> command is run without any arguments or if the <code>--help</code> flag is passed:</p>
+<p><code>easy-cass-stress</code> will display the help if the <code>easy-cass-stress</code> command is run without any arguments or if the <code>--help</code> flag is passed:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">$ bin/tlp-stress</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">$ bin/easy-cass-stress
+WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
+Usage: easy-cass-stress [options] [command] [command options]
+  Options:
+    --help, -h
+      Shows this help.
+      Default: false
+  Commands:
+    run      Run a easy-cass-stress profile
+      Usage: run [options]
+        Options:
+          --cl
+            Consistency level for reads/writes (Defaults to LOCAL_ONE, set
+            custom default with TLP_STRESS_CONSISTENCY_LEVEL).
+            Default: LOCAL_ONE
+            Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
+          --compaction
+            Compaction option to use.  Double quotes will auto convert to
+            single for convenience.  A shorthand is also available: stcs, lcs,
+            twcs.  See the full documentation for all possibilities.
+            Default: &lt;empty string&gt;
+          --compression
+            Compression options
+            Default: &lt;empty string&gt;
+          --concurrency, -c
+            DEPRECATED.  Concurrent queries allowed.  Increase for larger
+            clusters.  This flag is deprecated and does nothing.
+            Default: 100
+          --coordinatoronly, --co
+            Coordinator only made.  This will cause easy-cass-stress to round
+            robin between nodes without tokens.  Requires using
+            -Djoin_ring=false in cassandra-env.sh.  When using this option you
+            must only provide a coordinator to --host.
+            Default: false
+          --core-connections
+            Sets the number of core connections per host
+            Default: 4
+          --cql
+            Additional CQL to run after the schema is created.  Use for DDL
+            modifications such as creating indexes.
+            Default: []
+          --csv
+            Write metrics to this file in CSV format.
+            Default: &lt;empty string&gt;
+          --dc
+            The data center to which requests should be sent
+            Default: &lt;empty string&gt;
+          --deleterate, --deletes
+            Deletion Rate, 0-1.  Workloads may have their own defaults.
+            Default is dependent on workload.
+          --drop
+            Drop the keyspace before starting.
+            Default: false
+          --duration, -d
+            Duration of the stress test.  Expressed in format 1d 3h 15m
+            Default: 0
+          --field.
+            Override a field's data generator.  Example usage:
+            --field.tablename.fieldname='book(100,200)'
+            Syntax: --field.key=value
+            Default: {}
+          --hdr
+            Print HDR Histograms using this prefix
+            Default: &lt;empty string&gt;
+          -h, --help
+            Show this help
+          --host
+            Default: 127.0.0.1
+          --id
+            Identifier for this run, will be used in partition keys.  Make
+            unique for when starting concurrent runners.
+            Default: 001
+          --iterations, -i, -n
+            Number of operations to run.
+            Default: 0
+          --keycache
+            Key cache setting
+            Default: ALL
+          --keyspace
+            Keyspace to use
+            Default: tlp_stress
+          --max-connections
+            Sets the number of max connections per host
+            Default: 8
+          --max-requests
+            Sets the max requests per connection
+            Default: 32768
+          --maxrlat
+            Max Read Latency
+          --maxwlat
+
+          --no-schema
+            Skips schema creation
+            Default: false
+          --paginate
+            Paginate through the entire partition before completing
+            Default: false
+          --paging
+            Override the driver's default page size.
+          --partitiongenerator, --pg
+            Method of generating partition keys.  Supports random, normal
+            (gaussian), and sequence.
+            Default: random
+          --partitions, -p
+            Max value of integer component of first partition key.
+            Default: 1000000
+          --password, -P
+            Default: cassandra
+          --populate
+            Pre-population the DB with N rows before starting load test.
+            Default: 0
+          --port
+            Override the cql port. Defaults to 9042.
+            Default: 9042
+          --prometheusport
+            Override the default prometheus port.
+            Default: 9500
+          --queue
+            Queue Depth.  2x the rate by default.
+            Default: 10000
+          --rate
+            Rate limiter, accepts human numbers. 0 = disabled
+            Default: 5000
+          --readrate, --reads, -r
+            Read Rate, 0-1.  Workloads may have their own defaults.  Default
+            is dependent on workload.
+          --replication
+            Replication options
+            Default: {'class': 'SimpleStrategy', 'replication_factor':3 }
+          --rowcache
+            Row cache setting
+            Default: NONE
+          --ssl
+            Enable SSL
+            Default: false
+          --threads, -t
+            Threads to run
+            Default: 1
+          --ttl
+            Table level TTL, 0 to disable.
+            Default: 0
+          --username, -U
+            Default: cassandra
+          --workload., -w.
+            Override workload specific parameters.
+            Syntax: --workload.key=value
+            Default: {}
+
+    info      Get details of a specific workload.
+      Usage: info
+
+    list      List all workloads.
+      Usage: list
+
+    fields      null
+      Usage: fields</code></pre>
 </div>
 </div>
 </div>
@@ -611,7 +792,25 @@ run the following command to execute 10,000 queries:</p>
 <h3 id="_listing_all_workloads">Listing All Workloads</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/tlp-stress list</code></pre>
+<pre class="highlight"><code>$ bin/easy-cass-stress list
+WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
+Available Workloads:
+
+AllowFiltering
+BasicTimeSeries
+CountersWide
+DSESearch
+KeyValue
+LWT
+Locking
+Maps
+MaterializedViews
+RandomPartitionAccess
+SAI
+Sets
+UdtTimeSeries
+
+You can run any of these workloads by running easy-cass-stress run WORKLOAD.</code></pre>
 </div>
 </div>
 </div>
@@ -622,7 +821,15 @@ run the following command to execute 10,000 queries:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/tlp-stress info KeyValue</code></pre>
+<pre class="highlight"><code>$ bin/easy-cass-stress info KeyValue
+WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
+CREATE TABLE IF NOT EXISTS keyvalue (
+                        key text PRIMARY KEY,
+                        value text
+                        )
+Default read rate: 0.5 (override with -r)
+
+No dynamic workload parameters.</code></pre>
 </div>
 </div>
 </div>
@@ -677,15 +884,15 @@ For example, running a test for 1 hours and 30 minutes will be done as follows:<
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ tlp-stress run KeyValue -d "1h 30m"</code></pre>
+<pre class="highlight"><code>$ easy-cass-stress run KeyValue -d "1h 30m"</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To run a test for 1 days, 3 hours and 15 minutes (why not?), run tlp-stress as follows:</p>
+<p>To run a test for 1 days, 3 hours and 15 minutes (why not?), run easy-cass-stress as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ tlp-stress run KeyValue -d "1d 3h 15m"</code></pre>
+<pre class="highlight"><code>$ easy-cass-stress run KeyValue -d "1d 3h 15m"</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -808,7 +1015,7 @@ use case. Let’s use random sections from various books:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ tlp-stress run KeyValue --field.keyvalue.value='book(20,40)`</code></pre>
+<pre class="highlight"><code>$ easy-cass-stress run KeyValue --field.keyvalue.value='book(20,40)`</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -825,13 +1032,13 @@ workload to specify which fields can be used this way.</p>
 <div class="sect2">
 <h3 id="_logging">Logging</h3>
 <div class="paragraph">
-<p><code>tlp-stress</code> uses the <a href="https://logging.apache.org/">Log4J 2</a> logging framework.</p>
+<p><code>easy-cass-stress</code> uses the <a href="https://logging.apache.org/">Log4J 2</a> logging framework.</p>
 </div>
 <div class="paragraph">
-<p>You can find the default log4j config inhttps://github.com/rustyrazorblade/tlp-stress/blob/main/src/main/resources/log4j2.yaml[<code>conf</code>, window="_blank"].  This should be suitable for most use cases.</p>
+<p>You can find the default log4j config inhttps://github.com/rustyrazorblade/easy-cass-stress/blob/main/src/main/resources/log4j2.yaml[<code>conf</code>, window="_blank"].  This should be suitable for most use cases.</p>
 </div>
 <div class="paragraph">
-<p>To use your own logging configuration, simply set the shell variable <code>TLP_STRESS_LOG4J</code> to the path of the new logging configuration before running <code>tlp-stress</code> to point to the config file of your choice.</p>
+<p>To use your own logging configuration, simply set the shell variable <code>TLP_STRESS_LOG4J</code> to the path of the new logging configuration before running <code>easy-cass-stress</code> to point to the config file of your choice.</p>
 </div>
 <div class="paragraph">
 <p>For more information on how to configure Log4J 2 please see the <a href="https://logging.apache.org/log4j/2.x/manual/configuration.html">configuration</a> documentation.</p>
@@ -839,14 +1046,14 @@ workload to specify which fields can be used this way.</p>
 <div class="sect3">
 <h4 id="_debian_package">Debian Package</h4>
 <div class="paragraph">
-<p>The Debian package installs a basic configuration file to <code>/etc/tlp-stress/log4j2.yaml</code>.</p>
+<p>The Debian package installs a basic configuration file to <code>/etc/easy-cass-stress/log4j2.yaml</code>.</p>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_exporting_metrics">Exporting Metrics</h3>
 <div class="paragraph">
-<p>tlp-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.</p>
+<p>easy-cass-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.</p>
 </div>
 </div>
 <div class="sect2">
@@ -882,7 +1089,7 @@ workload to specify which fields can be used this way.</p>
 <div class="sect2">
 <h3 id="_writing_a_custom_workload">Writing a Custom Workload</h3>
 <div class="paragraph">
-<p><code>tlp-stress</code> is a work in progress.  Writing a stress workload isn&#8217;t documented yet as it is still changing.</p>
+<p><code>easy-cass-stress</code> is a work in progress.  Writing a stress workload isn&#8217;t documented yet as it is still changing.</p>
 </div>
 </div>
 </div>
@@ -890,7 +1097,7 @@ workload to specify which fields can be used this way.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-02-14 21:29:59 UTC
+Last updated 2024-02-14 21:33:52 UTC
 </div>
 </div>
 </body>

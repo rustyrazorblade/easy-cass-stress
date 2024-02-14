@@ -30,7 +30,7 @@ data class Plugin (val name: String,
         val log = logger()
 
         fun getPlugins() : Map<String, Plugin> {
-            val r = Reflections("com.rustyrazorblade.easy-cass-stress")
+            val r = Reflections("com.rustyrazorblade.easycassstress")
             val modules = r.getSubTypesOf(IStressProfile::class.java)
 
 
