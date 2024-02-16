@@ -20,7 +20,7 @@ annotation class AllPlugins
  */
 class AllPluginsBasicTest {
 
-    val ip = System.getenv("TLP_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
+    val ip = System.getenv("EASY_CASS_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
 
     val connection = Cluster.builder()
             .addContactPoint(ip)
@@ -44,7 +44,7 @@ class AllPluginsBasicTest {
 
     @BeforeEach
     fun cleanup() {
-        connection.execute("DROP KEYSPACE IF EXISTS tlp_stress")
+        connection.execute("DROP KEYSPACE IF EXISTS easy_cass_stress")
         run = Run("placeholder")
     }
 

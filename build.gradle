@@ -168,46 +168,46 @@ applicationDistribution.from("LICENSE.txt") {
     into ""
 }
 
-
-task uploadDeb(type: Exec) {
-    group = "Publish"
-    workingDir 'build/distributions'
-
-    def debPackage = "easy-cass-stress_${version}_all.deb"
-
-    // get the deb package
-
-    logger.info("Uploading DEB $debPackage")
-    commandLine "curl", "-T", debPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-deb/easy-cass-stress/${version}/$debPackage;deb_distribution=weezy,bionic,jessie,xenial;deb_component=main;deb_architecture=amd64;publish=1"
-
-}
-
-task uploadRpm(type: Exec) {
-    group = "Publish"
-    workingDir 'build/distributions'
-
-    def rpmPackage = "easy-cass-stress-${version}.noarch.rpm"
-
-    logger.info("Uploading RPM $rpmPackage")
-    commandLine "curl", "-T", rpmPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-rpm/easy-cass-stress/${version}/$rpmPackage;publish=1"
-}
-
-task uploadTar(type:Exec) {
-    group = "Publish"
-    workingDir 'build/distributions'
-    def tarball = "easy-cass-stress-${version}.tar"
-
-    logger.info("Uploading Tar $tarball")
-    commandLine "curl", "-T", tarball, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/thelastpickle/tlp-tools-tarball/easy-cass-stress/${version}/$tarball;publish=1"
-}
-
-task uploadAll  {
-    group = "Publish"
-    dependsOn "jib"
-    dependsOn "uploadDeb"
-    dependsOn "uploadRpm"
-    dependsOn "uploadTar"
-}
+//
+//task uploadDeb(type: Exec) {
+//    group = "Publish"
+//    workingDir 'build/distributions'
+//
+//    def debPackage = "easy-cass-stress_${version}_all.deb"
+//
+//    // get the deb package
+//
+//    logger.info("Uploading DEB $debPackage")
+//    commandLine "curl", "-T", debPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/rustyrazorblade/tlp-tools-deb/easy-cass-stress/${version}/$debPackage;deb_distribution=weezy,bionic,jessie,xenial;deb_component=main;deb_architecture=amd64;publish=1"
+//
+//}
+//
+//task uploadRpm(type: Exec) {
+//    group = "Publish"
+//    workingDir 'build/distributions'
+//
+//    def rpmPackage = "easy-cass-stress-${version}.noarch.rpm"
+//
+//    logger.info("Uploading RPM $rpmPackage")
+//    commandLine "curl", "-T", rpmPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/rustyrazorblade/tlp-tools-rpm/easy-cass-stress/${version}/$rpmPackage;publish=1"
+//}
+//
+//task uploadTar(type:Exec) {
+//    group = "Publish"
+//    workingDir 'build/distributions'
+//    def tarball = "easy-cass-stress-${version}.tar"
+//
+//    logger.info("Uploading Tar $tarball")
+//    commandLine "curl", "-T", tarball, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/rustyrazorblade/tlp-tools-tarball/easy-cass-stress/${version}/$tarball;publish=1"
+//}
+//
+//task uploadAll  {
+//    group = "Publish"
+//    dependsOn "jib"
+//    dependsOn "uploadDeb"
+//    dependsOn "uploadRpm"
+//    dependsOn "uploadTar"
+//}
 
 wrapper {
     distributionType = Wrapper.DistributionType.ALL

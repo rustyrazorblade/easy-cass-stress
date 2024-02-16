@@ -45,7 +45,7 @@ class NoSplitter : IParameterSplitter {
 class Run(val command: String) : IStressCommand {
 
     @Parameter(names = ["--host"])
-    var host = System.getenv("TLP_STRESS_CASSANDRA_HOST") ?: "127.0.0.1"
+    var host = System.getenv("EASY_CASS_STRESS_CASSANDRA_HOST") ?: "127.0.0.1"
 
     @Parameter(names = ["--port"], description = "Override the cql port. Defaults to 9042.")
     var cqlPort = 9042
@@ -66,7 +66,7 @@ class Run(val command: String) : IStressCommand {
     var compression = ""
 
     @Parameter(names = ["--keyspace"], description = "Keyspace to use")
-    var keyspace = "tlp_stress"
+    var keyspace = "easy_cass_stress"
 
     @Parameter(names = ["--id"], description = "Identifier for this run, will be used in partition keys.  Make unique for when starting concurrent runners.")
     var id = "001"
@@ -121,8 +121,8 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--drop"], description = "Drop the keyspace before starting.")
     var dropKeyspace = false
 
-    @Parameter(names = ["--cl"], description = "Consistency level for reads/writes (Defaults to LOCAL_ONE, set custom default with TLP_STRESS_CONSISTENCY_LEVEL).", converter = ConsistencyLevelConverter::class)
-    var consistencyLevel = System.getenv("TLP_STRESS_CONSISTENCY_LEVEL")?.let{ ConsistencyLevelConverter().convert(it)} ?:  ConsistencyLevel.LOCAL_ONE
+    @Parameter(names = ["--cl"], description = "Consistency level for reads/writes (Defaults to LOCAL_ONE, set custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).", converter = ConsistencyLevelConverter::class)
+    var consistencyLevel = System.getenv("EASY_CASS_STRESS_CONSISTENCY_LEVEL")?.let{ ConsistencyLevelConverter().convert(it)} ?:  ConsistencyLevel.LOCAL_ONE
 
     @Parameter(names = ["--cql"], description = "Additional CQL to run after the schema is created.  Use for DDL modifications such as creating indexes.", splitter = NoSplitter::class)
     var additionalCQL = mutableListOf<String>()

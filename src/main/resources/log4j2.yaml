@@ -3,7 +3,7 @@ Configuration:
   Properties:
     property:
       - name: logs
-        value: "${env:TLP_STRESS_LOG_DIR:-${sys:user.home}/.easy-cass-stress}"
+        value: "${env:EASY_CASS_STRESS_LOG_DIR:-${sys:user.home}/.easy-cass-stress}"
 
   status: info
   name: StandardConfiguration

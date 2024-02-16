@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
  * Simple tests for various flags that don't required dedicated testing
  */
 class FlagsTest {
-    val ip = System.getenv("TLP_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
+    val ip = System.getenv("EASY_CASS_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
 
     val connection = Cluster.builder()
             .addContactPoint(ip)

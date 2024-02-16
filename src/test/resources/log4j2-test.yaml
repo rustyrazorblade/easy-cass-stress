@@ -28,7 +28,7 @@ Configuration:
 
     logger:
       -
-        name: com.thelastpickle.tlpstress
+        name: com.rustyrazorblade.easycassstress
         level: debug
         AppenderRef:
           - ref: STDOUT

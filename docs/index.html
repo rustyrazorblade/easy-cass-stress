@@ -440,7 +440,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="details">
 <span id="author" class="author">Jon Haddad</span><br>
 <span id="email" class="email"><a href="mailto:jon@rustyrazorblade.com">jon@rustyrazorblade.com</a></span><br>
-<span id="revdate">Anthony Grasso &lt;anthony@thelastpickle.com&gt;</span>
+<span id="revdate">Anthony Grasso &lt;anthony@rustyrazorblade.com&gt;</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -542,7 +542,7 @@ automatically captured by the Dropwizard metrics library.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">$ git clone https://github.com/thelastpickle/easy-cass-stress.git
+<pre class="highlight"><code class="language-bash" data-lang="bash">$ git clone https://github.com/rustyrazorblade/easy-cass-stress.git
 $ cd easy-cass-stress
 $ ./gradlew shadowJar</code></pre>
 </div>
@@ -582,9 +582,9 @@ run the following command to execute 10,000 queries:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight nowrap"><code class="language-bash" data-lang="bash">WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Creating tlp_stress:
+Creating easy_cass_stress:
 CREATE KEYSPACE
- IF NOT EXISTS tlp_stress
+ IF NOT EXISTS easy_cass_stress
  WITH replication = {'class': 'SimpleStrategy', 'replication_factor':3 }
 
 Creating schema
@@ -605,8 +605,8 @@ Starting main runner
 [Thread 0]: Running the profile for 10000 iterations...
                  Writes                                  Reads                                  Deletes                       Errors
   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  1min (errors/s)
-   5013          72.22             0 |    4987          93.94             0 |       0              0             0 |       0                0
-   5013          72.22             0 |    4987          93.94             0 |       0              0             0 |       0                0
+   5021          28.36             0 |    4979          32.51             0 |       0              0             0 |       0                0
+   5021          28.36             0 |    4979          32.51             0 |       0              0             0 |       0                0
 Stress complete, 1.</code></pre>
 </div>
 </div>
@@ -642,7 +642,7 @@ Usage: easy-cass-stress [options] [command] [command options]
         Options:
           --cl
             Consistency level for reads/writes (Defaults to LOCAL_ONE, set
-            custom default with TLP_STRESS_CONSISTENCY_LEVEL).
+            custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).
             Default: LOCAL_ONE
             Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --compaction
@@ -709,7 +709,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             Default: ALL
           --keyspace
             Keyspace to use
-            Default: tlp_stress
+            Default: easy_cass_stress
           --max-connections
             Sets the number of max connections per host
             Default: 8
@@ -1038,7 +1038,7 @@ workload to specify which fields can be used this way.</p>
 <p>You can find the default log4j config inhttps://github.com/rustyrazorblade/easy-cass-stress/blob/main/src/main/resources/log4j2.yaml[<code>conf</code>, window="_blank"].  This should be suitable for most use cases.</p>
 </div>
 <div class="paragraph">
-<p>To use your own logging configuration, simply set the shell variable <code>TLP_STRESS_LOG4J</code> to the path of the new logging configuration before running <code>easy-cass-stress</code> to point to the config file of your choice.</p>
+<p>To use your own logging configuration, simply set the shell variable <code>EASY_CASS_STRESS_LOG4J</code> to the path of the new logging configuration before running <code>easy-cass-stress</code> to point to the config file of your choice.</p>
 </div>
 <div class="paragraph">
 <p>For more information on how to configure Log4J 2 please see the <a href="https://logging.apache.org/log4j/2.x/manual/configuration.html">configuration</a> documentation.</p>
@@ -1097,7 +1097,7 @@ workload to specify which fields can be used this way.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-02-14 21:33:52 UTC
+Last updated 2024-02-14 22:00:01 UTC
 </div>
 </div>
 </body>

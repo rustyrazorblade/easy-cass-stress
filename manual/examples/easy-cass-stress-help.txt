@@ -11,7 +11,7 @@ Usage: easy-cass-stress [options] [command] [command options]
         Options:
           --cl
             Consistency level for reads/writes (Defaults to LOCAL_ONE, set 
-            custom default with TLP_STRESS_CONSISTENCY_LEVEL).
+            custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).
             Default: LOCAL_ONE
             Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --compaction
@@ -78,7 +78,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             Default: ALL
           --keyspace
             Keyspace to use
-            Default: tlp_stress
+            Default: easy_cass_stress
           --max-connections
             Sets the number of max connections per host
             Default: 8
