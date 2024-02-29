@@ -25,7 +25,7 @@ class SchemaBuilder(var baseStatement : String) {
 
     var log = logger()
 
-    val compactionShortcutRegex = """^(stcs|lcs|twcs)((?:,[0-9a-z]+)*)$""".toRegex()
+    val compactionShortcutRegex = """^(stcs|lcs|twcs|ucs)((?:,[0-9a-zA-Z]+)*)$""".toRegex()
 
     enum class WindowUnit(val s : String) {
         MINUTES("MINUTES"),
@@ -78,6 +78,12 @@ class SchemaBuilder(var baseStatement : String) {
                     mutableMapOf<String, String?>("class" to "TimeWindowCompactionStrategy",
                             "compaction_window_unit" to (windowUnit?.s ?: "") )
                             .putInt("compaction_window_size", windowSize)
+        }
+
+        data class UCS(val scalingParameters: String): Compaction() {
+            override fun getOptions() =
+                mutableMapOf<String, String?>("class" to "UnifiedCompactionStrategy",
+                    "scaling_parameters" to scalingParameters)
         }
 
         data class Unknown(val raw: String) : Compaction() {
@@ -174,6 +180,7 @@ class SchemaBuilder(var baseStatement : String) {
     fun parseCompaction(compaction: String) : Compaction {
         val parsed = compactionShortcutRegex.find(compaction)
         if(parsed == null) {
+            log.error("Unknown compaction option: $compaction")
             return Compaction.Unknown(compaction)
         }
         val groups = parsed.groupValues
@@ -208,6 +215,30 @@ lcs,<sstable_size_in_mb>,<fanout_size>: leveled, override the default sstable si
                     2 -> Compaction.TWCS(options[0].toInt(), WindowUnit.get(options[1]) )
                     else -> Compaction.Unknown(compaction)
                 }
+            }
+            "ucs" -> {
+                /*
+                Since we're using commas in the strategy's scaling parameters,
+                we're just going to support the simple version, which is something like this:
+                ucs,T10,T8
+
+                If a user wants to use all the params, they're going to have to supply the entire strategy.
+
+                ALTER TABLE your_table WITH compaction = { 'class': 'UnifiedCompactionStrategy',
+                'scaling_parameters': 'T8, T4, N, L4' };
+                target_sstable_size
+                base_shard_count
+                expired_sstable_check_frequency_seconds
+
+                examples:
+                * ucs,T10
+                * ucs,T4,L20
+                * ucs,
+                 */
+
+                Compaction.UCS(
+                    options.joinToString(",")
+                )
             }
             else -> Compaction.Unknown(compaction)
         }

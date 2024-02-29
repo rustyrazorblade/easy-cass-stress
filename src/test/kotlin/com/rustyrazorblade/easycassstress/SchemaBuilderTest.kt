@@ -139,6 +139,19 @@ internal class SchemaBuilderTest {
     }
 
     @Test
+    fun testParseUCS() {
+        val compaction = createTable.parseCompaction("ucs,T4")
+        when (compaction) {
+            is SchemaBuilder.Compaction.UCS -> {
+                assertThat(compaction.scalingParameters).isEqualTo("T4")
+            }
+            else -> {
+                fail("Expecting UC Got $compaction")
+            }
+        }
+    }
+
+    @Test
     fun tesstFullCompactionShortcut() {
         val result = createTable.withCompaction("lcs").build()
         assertThat(result).contains("LeveledCompactionStrategy")
