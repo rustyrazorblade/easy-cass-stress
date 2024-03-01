@@ -24,7 +24,7 @@ import me.tongfei.progressbar.ProgressBarStyle
 import org.apache.logging.log4j.kotlin.logger
 import java.io.File
 import java.io.PrintStream
-import java.util.Timer
+import java.util.*
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
@@ -289,16 +289,12 @@ class Run(val command: String) : IStressCommand {
         val metrics = createMetrics()
 
         // set up the rate limiter optimizer and put it on a schedule
-        if (maxReadLatency != null || maxWriteLatency != null) {
-            println("Enabling Latency Optimizer, starting at ${rateLimiter.rate}")
-            val optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
-            val timer = Timer().schedule(30000, 5000) {
-                optimizer.execute()
-            }
-        } else {
-            println("Starting with fixed rate scheduler at ${rateLimiter.rate} rps")
-        }
+        var optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
+        optimizer.reset()
 
+        val timer = Timer().schedule(10000, 5000) {
+            optimizer.execute()
+        }
 
         var runnersExecuted = 0L
 
@@ -308,6 +304,11 @@ class Run(val command: String) : IStressCommand {
 
             populateData(plugin, runners, metrics)
             metrics.resetErrors()
+
+            // since the populate workload is going to be substantially different
+            // from the test workload, we need to reset the optimizer
+            optimizer.reset()
+
             metrics.startReporting()
 
             println("Starting main runner")

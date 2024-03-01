@@ -3,6 +3,7 @@ package com.rustyrazorblade.easycassstress
 import com.google.common.util.concurrent.RateLimiter
 import org.apache.logging.log4j.kotlin.logger
 import java.lang.Math.cbrt
+import java.lang.Math.min
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.sqrt
@@ -19,10 +20,30 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
     }
     val durationFactor = 1.0 / TimeUnit.MILLISECONDS.toNanos(1)
 
+    val initial: Double = rateLimiter.rate
+    val stepValue = initial / 10.0
+    var isStepPhase = true
+
+    init {
+        println("Stepping rate limiter by $stepValue to $initial")
+    }
+
     /**
      * Updates the rate limiter to use the new value and returns the new rate limit
      */
     fun execute(): Double {
+        if (isStepPhase) {
+            log.info("Stepping rate limiter by $stepValue")
+            val newValue = min(rateLimiter.rate + stepValue, initial)
+            if (newValue == initial) {
+                log.info("Moving to optimization phase")
+                isStepPhase = false
+            }
+            rateLimiter.rate = newValue
+            log.info("New rate limiter value: ${rateLimiter.rate}")
+            return rateLimiter.rate
+        }
+
         // determine the latency number that's closest to it's limit
         getCurrentAndMaxLatency().map {
             val newLimit = getNextValue(rateLimiter.rate, it.first, it.second)
@@ -30,6 +51,18 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
                 log.info("Optimizer has nothing to do")
                 newLimit
             } else {
+                // don't increase the rate limiter if we're not within 20% of the target
+                val currentThroughput = getCurrentTotalThroughput()
+                if (newLimit > rateLimiter.rate && currentThroughput < rateLimiter.rate * .9) {
+
+                    log.info("Not increasing rate limiter, not within 10% of the current limit (current: ${currentThroughput} vs actual:${rateLimiter.rate})")
+                    return@map rateLimiter.rate
+                }
+                // if we're decreasing the limit, we want to make sure we don't lower it too quickly,
+                // overwise we oscillate between too high and too low
+                if (newLimit < rateLimiter.rate && currentThroughput < rateLimiter.rate * .9) {
+                    log.info("Not decreasing rate limiter, current throughput is above current limit (current: ${currentThroughput} vs actual: ${rateLimiter.rate})")
+                }
                 log.info("Updating rate limiter from ${rateLimiter.rate} to ${newLimit}")
                 rateLimiter.rate = newLimit
                 rateLimiter.rate
@@ -44,6 +77,13 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
      */
     fun getTotalOperations() : Long {
         return metrics.mutations.count + metrics.selects.count
+    }
+
+    fun getCurrentTotalThroughput() : Double {
+        return metrics.mutations.oneMinuteRate +
+                metrics.selects.oneMinuteRate +
+                metrics.deletions.oneMinuteRate +
+                metrics.populate.oneMinuteRate
     }
 
     /**
@@ -118,5 +158,10 @@ class RateLimiterOptimizer(val rateLimiter: RateLimiter,
 
     fun getPopulateLatency() =
         metrics.populate.snapshot.get99thPercentile() * durationFactor
+
+    fun reset() {
+        isStepPhase = true
+        rateLimiter.rate = stepValue
+    }
 
 }
