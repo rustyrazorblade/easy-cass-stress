@@ -149,7 +149,7 @@ class Run(val command: String) : IStressCommand {
     var keyCache = "ALL"
 
     @Parameter(names = ["--prometheusport"], description = "Override the default prometheus port.")
-    var prometheusPort = 9500
+    var prometheusPort = System.getenv("EASY_CASS_STRESS_PROM_PORT")?.toInt() ?: 9500
 
     @Parameter(names = ["--ssl"], description = "Enable SSL")
     var ssl = false

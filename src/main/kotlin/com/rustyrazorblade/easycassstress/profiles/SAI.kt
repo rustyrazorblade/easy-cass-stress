@@ -8,9 +8,12 @@ import  com.rustyrazorblade.easycassstress.WorkloadParameter
 import  com.rustyrazorblade.easycassstress.generators.Field
 import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
 import  com.rustyrazorblade.easycassstress.generators.functions.Book
+import com.rustyrazorblade.easycassstress.generators.functions.LastName
 import  com.rustyrazorblade.easycassstress.generators.functions.Random
 import org.apache.logging.log4j.kotlin.logger
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.ThreadPoolExecutor
 
 /**
  * Executes a SAI workload with queries restricted to a single partition,
@@ -18,8 +21,8 @@ import java.util.concurrent.ThreadLocalRandom
  */
 
 const val TABLE : String = "sai"
-const val MIN_VALUE_TEXT_SIZE=5
-const val MAX_VALUE_TEXT_SIZE=10
+const val MIN_VALUE_TEXT_SIZE=1
+const val MAX_VALUE_TEXT_SIZE=2
 
 class SAI : IStressProfile {
 
@@ -61,17 +64,7 @@ class SAI : IStressProfile {
 
         val parts = mutableListOf<String>()
 
-        // IMPORTANT - fields are added in this order: value_text, value_int (new fields added here)
-        if (searchFieldsSet.contains("value_text")) {
-            parts.add("value_text = ?")
-        }
-        if (searchFieldsSet.contains("value_int")) {
-            parts.add("value_int $intCompare ? ")
-        }
-
-        parts.clear()
-
-        // if we're doing a global query we can skip the partition key
+        // if we're doing a global query we skip the partition key
         if (!global) {
             parts.add("partition_id = ?")
         }
@@ -80,7 +73,7 @@ class SAI : IStressProfile {
             parts.add("value_text = ?")
         }
         if (searchFieldsSet.contains("value_int")) {
-            parts.add("value_int = ?")
+            parts.add("value_int $intCompare ?")
         }
 
         val selectQuery = "SELECT * from $TABLE WHERE " + parts.joinToString(" $operator ")
@@ -154,7 +147,7 @@ class SAI : IStressProfile {
     }
 
     override fun getFieldGenerators(): Map<Field, FieldGenerator> {
-        return mapOf(Field(TABLE, "value_text") to Book().apply{ min= MIN_VALUE_TEXT_SIZE; max= MAX_VALUE_TEXT_SIZE},
+        return mapOf(Field(TABLE, "value_text") to LastName(),
             Field(TABLE, "value_int") to Random().apply{ min=0; max=10000})
     }
 }

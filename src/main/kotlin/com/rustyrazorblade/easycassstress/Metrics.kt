@@ -10,10 +10,12 @@ import io.prometheus.client.dropwizard.DropwizardExports
 import io.prometheus.client.exporter.HTTPServer
 
 import org.HdrHistogram.SynchronizedHistogram
+import java.util.Optional
+import javax.swing.text.html.Option
 
-class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledReporter>, val httpPort : Int) {
+class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledReporter>, httpPort : Int) {
 
-    val server: HTTPServer
+    val server: Optional<HTTPServer>
 
 
     fun startReporting() {
@@ -22,7 +24,7 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     }
 
     fun shutdown() {
-        server.close()
+        server.map { it.close() }
         
         for(reporter in reporters) {
             reporter.stop()
@@ -35,8 +37,13 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     }
 
     init {
-        CollectorRegistry.defaultRegistry.register(DropwizardExports(metricRegistry))
-        server = HTTPServer(httpPort)
+        server = if (httpPort > 0) {
+            CollectorRegistry.defaultRegistry.register(DropwizardExports(metricRegistry))
+            Optional.of(HTTPServer(httpPort))
+        } else {
+            println("Not setting up prometheus endpoint.")
+            Optional.empty()
+        }
 
     }
 
