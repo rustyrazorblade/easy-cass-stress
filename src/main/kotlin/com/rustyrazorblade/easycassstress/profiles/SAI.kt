@@ -44,6 +44,9 @@ class SAI : IStressProfile {
     @WorkloadParameter(description = "Fields to search, comma separated")
     var searchFields = "value_text"
 
+    @WorkloadParameter(description = "Limit count.")
+    var limit = 0
+
     lateinit var insert: PreparedStatement
     lateinit var select: PreparedStatement
     lateinit var delete: PreparedStatement
@@ -76,7 +79,8 @@ class SAI : IStressProfile {
             parts.add("value_int $intCompare ?")
         }
 
-        val selectQuery = "SELECT * from $TABLE WHERE " + parts.joinToString(" $operator ")
+        val limitClause = if (limit > 0) " LIMIT $limit " else ""
+        val selectQuery = "SELECT * from $TABLE WHERE " + parts.joinToString(" $operator ") + limitClause
         println("Preparing $selectQuery")
         select = session.prepare(selectQuery)
 

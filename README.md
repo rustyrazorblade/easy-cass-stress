@@ -6,12 +6,12 @@ cassandra-stress is a configuration-based tool for doing benchmarks and testing 
 Unfortunately, it can be challenging to configure a workload. There are fairly common data models and workloads seen on Apache Cassandra.  
 This tool aims to provide a means of executing configurable, pre-defined profiles.
 
-Full docs are here: http://rustyrazorblade.com/easy-cass-stress
+Full docs are here: https://rustyrazorblade.github.io/easy-cass-stress/
 
 # Installation
 
 The easiest way to get started on Linux is to use system packages.
-Instructions for installation can be found here: http://rustyrazorblade.com/easy-cass-stress/#_installation
+Instructions for installation can be found here: https://rustyrazorblade.github.io/easy-cass-stress/#_installation
 
 
 # Building

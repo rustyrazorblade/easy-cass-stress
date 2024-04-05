@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS keyvalue (
                         ) WITH caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'} AND default_time_to_live = 0
 Preparing queries
 Initializing metrics
-Starting with fixed rate scheduler at 5000.0 rps
+Stepping rate limiter by 500.0 to 5000.0
 Connecting
 Creating generator random
 1 threads prepared.
@@ -23,6 +23,10 @@ Starting main runner
 [Thread 0]: Running the profile for 10000 iterations...
                  Writes                                  Reads                                  Deletes                       Errors
   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  Latency (p99)  1min (req/s) |   Count  1min (errors/s)
-   5021          28.36             0 |    4979          32.51             0 |       0              0             0 |       0                0
-   5021          28.36             0 |    4979          32.51             0 |       0              0             0 |       0                0
+    624          35.88             0 |     597          34.79             0 |       0              0             0 |       0                0
+   1345          11.63           218 |    1375           8.61         224.4 |       0              0             0 |       0                0
+   2143           0.75           218 |    2075           0.67         224.4 |       0              0             0 |       0                0
+   3378           0.62        221.29 |    3342           0.64        225.71 |       0              0             0 |       0                0
+   4862           0.64        243.13 |    4858           0.57        247.99 |       0              0             0 |       0                0
+   4998           0.63        243.13 |    5002           0.62        247.99 |       0              0             0 |       0                0
 Stress complete, 1.
