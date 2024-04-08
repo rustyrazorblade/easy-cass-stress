@@ -130,7 +130,7 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--partitiongenerator", "--pg"], description = "Method of generating partition keys.  Supports random, normal (gaussian), and sequence.")
     var partitionKeyGenerator: String = "random"
 
-    @Parameter(names = ["--coordinatoronly", "--co"], description = "Coordinator only made.  This will cause easy-cass-stress to round robin between nodes without tokens.  Requires using -Djoin_ring=false in cassandra-env.sh.  When using this option you must only provide a coordinator to --host.")
+    @Parameter(names = ["--coordinatoronly", "--co"], description = "Coordinator only mode.  This will cause easy-cass-stress to round robin between nodes without tokens.  Requires using -Djoin_ring=false in cassandra-env.sh.  When using this option you must only provide a coordinator to --host.")
     var coordinatorOnlyMode = false
 
     @Parameter(names = ["--csv"], description = "Write metrics to this file in CSV format.")
