@@ -106,7 +106,7 @@ class Run(val command: String) : IStressCommand {
     @DynamicParameter(names = ["--field."], description = "Override a field's data generator.  Example usage: --field.tablename.fieldname='book(100,200)'")
     var fields = mutableMapOf<String, String>()
 
-    @Parameter(names = ["--rate"], description = "Rate limiter, accepts human numbers. 0 = disabled", converter = HumanReadableConverter::class)
+    @Parameter(names = ["--rate"], description = "Throughput rate, accepts human numbers", converter = HumanReadableConverter::class)
     var rate = 5000L
 
     @Parameter(names = ["--maxrlat"], description = "Max Read Latency")
@@ -123,6 +123,9 @@ class Run(val command: String) : IStressCommand {
 
     @Parameter(names = ["--cl"], description = "Consistency level for reads/writes (Defaults to LOCAL_ONE, set custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).", converter = ConsistencyLevelConverter::class)
     var consistencyLevel = System.getenv("EASY_CASS_STRESS_CONSISTENCY_LEVEL")?.let{ ConsistencyLevelConverter().convert(it)} ?:  ConsistencyLevel.LOCAL_ONE
+
+    @Parameter(names = ["--scl"], description = "Serial consistency level")
+    var serialConsistencyLevel = System.getenv("EASY_CASS_STRESS_SERIAL_CONSISTENCY_LEVEL")?.let{ ConsistencyLevelConverter().convert(it)} ?:  ConsistencyLevel.LOCAL_SERIAL
 
     @Parameter(names = ["--cql"], description = "Additional CQL to run after the schema is created.  Use for DDL modifications such as creating indexes.", splitter = NoSplitter::class)
     var additionalCQL = mutableListOf<String>()
@@ -187,7 +190,7 @@ class Run(val command: String) : IStressCommand {
      * Lazily generate query options
      */
     val options by lazy {
-        val tmp = QueryOptions().setConsistencyLevel(consistencyLevel)
+        val tmp = QueryOptions().setConsistencyLevel(consistencyLevel).setSerialConsistencyLevel(serialConsistencyLevel)
         if(paging != null) {
             println("Using custom paging size of $paging")
             tmp.setFetchSize(paging!!)
@@ -229,7 +232,7 @@ class Run(val command: String) : IStressCommand {
         // get all the initial schema
         println("Creating schema")
 
-        println("Executing $iterations operations with consistency level $consistencyLevel")
+        println("Executing $iterations operations with consistency level $consistencyLevel and serial consistency level $serialConsistencyLevel")
 
         val session = cluster.connect()
 
