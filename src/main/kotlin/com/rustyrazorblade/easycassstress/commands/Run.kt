@@ -395,12 +395,12 @@ class Run(val command: String) : IStressCommand {
                 }
                 option.rows
             }
-        } * threads
+        }
 
-        log.info { "Prepopulating data with $max records per thread" }
+        println("Prepopulating data with $max records per thread ($threads)")
 
         if(max > 0) {
-            ProgressBar("Populate Progress", max, ProgressBarStyle.ASCII).use {
+            ProgressBar("Populate Progress", max * threads, ProgressBarStyle.ASCII).use {
                 // update the timer every second, starting 1 second from now, as a daemon thread
                 val timer = fixedRateTimer("progress-bar", true, 1000, 1000) {
                     it.stepTo(metrics.populate.count)
