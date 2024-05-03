@@ -52,6 +52,8 @@ class ProfileRunner(val context: StressContext,
         else {
             readRate = profile.getDefaultReadRate()
         }
+
+        // check unsupported operations
     }
 
     val deleteRate: Double
@@ -92,6 +94,7 @@ class ProfileRunner(val context: StressContext,
     private fun executeOperations(iterations: Long, duration: Long) {
         // create a semaphore local to the thread to limit the query concurrency
         val runner = profile.getRunner(context)
+
 
         // we use MAX_VALUE since it's essentially infinite if we give a duration
         val totalValues = if (duration > 0) Long.MAX_VALUE else iterations
