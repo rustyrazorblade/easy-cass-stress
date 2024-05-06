@@ -37,16 +37,24 @@ class BasicTimeSeries : IStressProfile {
     lateinit var delete: PreparedStatement
     lateinit var cassandraVersion: VersionNumber
 
+
     @WorkloadParameter("Number of rows to fetch back on SELECT queries")
     var limit = 500
 
     @WorkloadParameter("Deletion range in seconds. Range tombstones will cover all rows older than the given value.")
     var deleteDepth = 30
 
+    @WorkloadParameter("Insert TTL")
+    var ttl = 0
+
     override fun prepare(session: Session) {
         println("Using a limit of $limit for reads and deleting data older than $deleteDepth seconds (if enabled).")
         cassandraVersion = session.cluster.metadata.allHosts.map { host -> host.cassandraVersion }.min()!!
-        prepared = session.prepare("INSERT INTO sensor_data (sensor_id, timestamp, data) VALUES (?, ?, ?)")
+        var ttlStr = if (ttl > 0) {
+            " USING TTL $ttl"
+        } else ""
+
+        prepared = session.prepare("INSERT INTO sensor_data (sensor_id, timestamp, data) VALUES (?, ?, ?) $ttlStr")
         getPartitionHead = session.prepare("SELECT * from sensor_data WHERE sensor_id = ? LIMIT ?")
         if (cassandraVersion.compareTo(VersionNumber.parse("3.0")) >= 0) {
             delete = session.prepare("DELETE from sensor_data WHERE sensor_id = ? and timestamp < maxTimeuuid(?)")
