@@ -236,7 +236,8 @@ class Run(val command: String) : IStressCommand {
 
         val session = cluster.connect()
 
-        println("Connected")
+        // println("Connected")
+        println("Connected to cassandra cluster.")
         session
     }
 
@@ -313,6 +314,7 @@ class Run(val command: String) : IStressCommand {
             optimizer.reset()
 
             metrics.startReporting()
+            println("prometheus metrics are available at http://localhost:$prometheusPort/")
 
             println("Starting main runner")
 
@@ -434,7 +436,8 @@ class Run(val command: String) : IStressCommand {
 
     private fun createRunners(plugin: Plugin, metrics: Metrics, fieldRegistry: Registry, rateLimiter: RateLimiter?): List<ProfileRunner> {
         val runners = IntRange(0, threads - 1).map {
-            println("Connecting")
+            // println("Connecting")
+            println("Connecting to cassandra cluster ...")
             val context = StressContext(session, this, it, metrics, fieldRegistry, rateLimiter)
             ProfileRunner.create(context, plugin.instance)
         }
