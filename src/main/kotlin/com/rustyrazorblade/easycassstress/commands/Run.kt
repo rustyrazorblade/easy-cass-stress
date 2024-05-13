@@ -314,7 +314,7 @@ class Run(val command: String) : IStressCommand {
             optimizer.reset()
 
             metrics.startReporting()
-            println("prometheus metrics are available at http://localhost:$prometheusPort/")
+            println("Prometheus metrics are available at http://localhost:$prometheusPort/")
 
             println("Starting main runner")
 
