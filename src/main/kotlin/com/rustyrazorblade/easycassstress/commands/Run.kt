@@ -237,7 +237,7 @@ class Run(val command: String) : IStressCommand {
         val session = cluster.connect()
 
         // println("Connected")
-        println("Connected to cassandra cluster.")
+        println("Connected to Cassandra cluster.")
         session
     }
 
@@ -437,7 +437,7 @@ class Run(val command: String) : IStressCommand {
     private fun createRunners(plugin: Plugin, metrics: Metrics, fieldRegistry: Registry, rateLimiter: RateLimiter?): List<ProfileRunner> {
         val runners = IntRange(0, threads - 1).map {
             // println("Connecting")
-            println("Connecting to cassandra cluster ...")
+            println("Connecting to Cassandra cluster ...")
             val context = StressContext(session, this, it, metrics, fieldRegistry, rateLimiter)
             ProfileRunner.create(context, plugin.instance)
         }
