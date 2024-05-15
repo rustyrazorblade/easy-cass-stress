@@ -230,13 +230,12 @@ class Run(val command: String) : IStressCommand {
         val cluster = builder.build()
 
         // get all the initial schema
-        println("Creating schema")
+        println("Creating schema ...")
 
-        println("Executing $iterations operations with consistency level $consistencyLevel and serial consistency level $serialConsistencyLevel")
+        println("Executing $iterations operations with consistency level $consistencyLevel and serial consistency level $serialConsistencyLevel.")
 
         val session = cluster.connect()
 
-        // println("Connected")
         println("Connected to Cassandra cluster.")
         session
     }
@@ -286,7 +285,7 @@ class Run(val command: String) : IStressCommand {
 
         val fieldRegistry = createFieldRegistry(plugin)
 
-        println("Preparing queries")
+        println("Preparing queries ...")
         plugin.instance.prepare(session)
 
         // Both of the following are set in the try block, so this is OK
@@ -316,7 +315,7 @@ class Run(val command: String) : IStressCommand {
             metrics.startReporting()
             println("Prometheus metrics are available at http://localhost:$prometheusPort/")
 
-            println("Starting main runner")
+            println("Starting main runner ...")
 
             val threads = mutableListOf<Thread>()
             for (runner in runners) {
@@ -436,14 +435,13 @@ class Run(val command: String) : IStressCommand {
 
     private fun createRunners(plugin: Plugin, metrics: Metrics, fieldRegistry: Registry, rateLimiter: RateLimiter?): List<ProfileRunner> {
         val runners = IntRange(0, threads - 1).map {
-            // println("Connecting")
             println("Connecting to Cassandra cluster ...")
             val context = StressContext(session, this, it, metrics, fieldRegistry, rateLimiter)
             ProfileRunner.create(context, plugin.instance)
         }
 
         val executed = runners.parallelStream().map {
-            println("Preparing statements.")
+            println("Preparing statements ...")
             it.prepare()
         }.count()
 
@@ -452,7 +450,7 @@ class Run(val command: String) : IStressCommand {
     }
 
     private fun createMetrics(): Metrics {
-        println("Initializing metrics")
+        println("Initializing metrics ...")
         val registry = MetricRegistry()
 
         val reporters = mutableListOf<ScheduledReporter>()
@@ -497,7 +495,7 @@ class Run(val command: String) : IStressCommand {
         }
         else {
             if (dropKeyspace) {
-                println("Dropping $keyspace")
+                println("Dropping $keyspace keyspace ...")
                 session.execute("DROP KEYSPACE IF EXISTS $keyspace")
                 Thread.sleep(5000)
             }
@@ -506,7 +504,7 @@ class Run(val command: String) : IStressCommand {
             | IF NOT EXISTS $keyspace
             | WITH replication = $replication""".trimMargin()
 
-            println("Creating $keyspace: \n$createKeyspace\n")
+            println("Creating $keyspace keyspace: \n$createKeyspace ;\n")
             session.execute(createKeyspace)
         }
         session.execute("USE $keyspace")
@@ -522,7 +520,7 @@ class Run(val command: String) : IStressCommand {
     }
 
     fun createSchema(plugin: Plugin) {
-        println("Creating Tables")
+        println("Creating tables and related schema objects ...")
 
         if(noSchema) return
 
@@ -534,7 +532,7 @@ class Run(val command: String) : IStressCommand {
                     .withKeyCache(keyCache)
                     .withDefaultTTL(ttl)
                     .build()
-            println(s)
+            println(s + " ;")
             session.execute(s)
         }
     }
