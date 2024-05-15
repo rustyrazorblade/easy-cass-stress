@@ -26,6 +26,21 @@ Use the shell script wrapper to start and get help:
 
     bin/easy-cass-stress -h
 
+# Compatibility Matrix
+
+easy-cass-stress can be built in one version of Java/OpenJDK and can be run on some other version of Java/OpenJDK.
+
+| easy-cass-stress | Java 1.8.0 | Java 11.0.x | Java 17.0.x | Java 21.0.x |
+|------------------|------------|-------------|-------------|-------------|
+| build            | [x]        | [x]         | [x]         | [ ]         |
+| run              | [x]        | [x]         | [x]         | [ ]         |
+
+easy-cass-stress can connect to many versions of Apache Cassandra clusters.
+
+| easy-cass-stress | Cassandra 3.11.x  | Cassandra 4.0.x | Cassandra 4.1.x | Cassandra 5.x | DSE              |
+|------------------|-------------------|-----------------|-----------------|---------------|------------------|
+| tested on        | 3.11.0 to 3.11.17 | 4.0.0 to 4.0.12 | 4.1.0 to 4.1.4  | 5.0-beta1     | 6.8.37 to 6.8.47 |
+
 # Examples
 
 Time series workload with a billion operations:
