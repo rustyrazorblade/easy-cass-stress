@@ -8,7 +8,7 @@ fun main(argv: Array<String>) {
     val log = logger("main")
 
     log.info { "Parsing $argv" }
-    val parser = com.rustyrazorblade.easycassstress.CommandLineParser.parse(argv)
+    val parser = CommandLineParser.parse(argv)
 
     try {
         parser.execute()
