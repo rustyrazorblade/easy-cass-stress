@@ -258,11 +258,11 @@ a|
 
 |ucs,L4
 a|
-`{'class':'UnifiedCompactionStrategy', 'XXX':'L4'}`
+`{'class':'UnifiedCompactionStrategy', 'scaling_parameters':'L4'}`
 
 |ucs,L4,L10
 a|
-`{'class':'UnifiedCompactionStrategy', 'XXX':'L4', 'YYY':'L10'}`
+`{'class':'UnifiedCompactionStrategy', 'scaling_parameters':'L4,L10'}`
 
 |===
 
