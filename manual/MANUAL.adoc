@@ -252,6 +252,18 @@ a|
 a|
 `{'class':'TimeWindowCompactionStrategy', 'compaction_window_size':'1', 'compaction_window_unit':'DAYS'}`
 
+|ucs
+a|
+`{'class':'UnifiedCompactionStrategy'}`
+
+|ucs,L4
+a|
+`{'class':'UnifiedCompactionStrategy', 'XXX':'L4'}`
+
+|ucs,L4,L10
+a|
+`{'class':'UnifiedCompactionStrategy', 'XXX':'L4', 'YYY':'L10'}`
+
 |===
 
 
