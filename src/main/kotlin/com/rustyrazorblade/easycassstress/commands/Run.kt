@@ -186,6 +186,9 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--hdr"], description = "Print HDR Histograms using this prefix")
     var hdrHistogramPrefix = ""
 
+    @Parameter(names = ["--populate-rate"], description = "Sets the populate rate")
+    var populateRate = rate
+
     /**
      * Lazily generate query options
      */
@@ -293,12 +296,12 @@ class Run(val command: String) : IStressCommand {
         val metrics = createMetrics()
 
         // set up the rate limiter optimizer and put it on a schedule
-        var optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
-        optimizer.reset()
+        // var optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
+        // optimizer.reset()
 
-        val timer = Timer().schedule(10000, 5000) {
-            optimizer.execute()
-        }
+        // val timer = Timer().schedule(10000, 5000) {
+        //     optimizer.execute()
+        // }
 
         var runnersExecuted = 0L
 
@@ -306,12 +309,17 @@ class Run(val command: String) : IStressCommand {
             // run the prepare for each
             val runners = createRunners(plugin, metrics, fieldRegistry, rateLimiter)
 
+            rateLimiter.rate = populateRate.toDouble()
+
             populateData(plugin, runners, metrics)
+
+            rateLimiter.rate = rate.toDouble()
+
             metrics.resetErrors()
 
             // since the populate workload is going to be substantially different
             // from the test workload, we need to reset the optimizer
-            optimizer.reset()
+            // optimizer.reset()
 
             metrics.startReporting()
             println("Prometheus metrics are available at http://localhost:$prometheusPort/")
@@ -349,7 +357,6 @@ class Run(val command: String) : IStressCommand {
                     entry.first.outputPercentileDistribution(PrintStream(fp), 1_000_000.0)
                 }
             }
-
         } catch (e: Exception) {
             println("There was an error with easy-cass-stress.  Please file a bug at https://github.com/rustyrazorblade/easy-cass-stress and report the following exception:\n $e")
             throw e
