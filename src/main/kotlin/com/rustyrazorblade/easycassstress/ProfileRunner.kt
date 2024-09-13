@@ -4,6 +4,10 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
 import  com.rustyrazorblade.easycassstress.profiles.IStressProfile
 import org.apache.logging.log4j.kotlin.logger
+import java.time.Duration
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 class PartitionKeyGeneratorException(e: String) : Exception()
 
@@ -83,7 +87,11 @@ class ProfileRunner(val context: StressContext,
         if (context.mainArguments.duration == 0L) {
             print("Running the profile for ${context.mainArguments.iterations} iterations...")
         } else {
-            print("Running the profile for ${context.mainArguments.duration}min...")
+            val startTime = LocalTime.now()
+            val endTime = startTime.plus(Duration.ofMinutes(context.mainArguments.duration))
+            val formatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+
+            print("Running the profile for ${context.mainArguments.duration}min (start: ${formatter.format(startTime)} end: ${formatter.format(endTime)})")
         }
         executeOperations(context.mainArguments.iterations, context.mainArguments.duration)
     }
