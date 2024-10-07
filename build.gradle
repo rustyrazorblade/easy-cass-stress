@@ -162,6 +162,11 @@ task buildAll {
     dependsOn "distTar"
 }
 
+tasks.distTar {
+    compression = Compression.GZIP
+    archiveExtension.set("tar.gz")
+}
+
 assemble.mustRunAfter clean
 
 applicationDistribution.from("LICENSE.txt") {
