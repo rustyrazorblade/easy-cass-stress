@@ -22,7 +22,6 @@ apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 group 'com.rustyrazorblade'
-version '6.2.0-SNAPSHOT'
 
 sourceCompatibility = 11
 
