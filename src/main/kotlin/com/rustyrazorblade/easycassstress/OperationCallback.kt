@@ -14,7 +14,8 @@ import org.apache.logging.log4j.kotlin.logger
 class OperationCallback(val context: StressContext,
                         val runner: IStressRunner,
                         val op: Operation,
-                        val paginate: Boolean = false) : FutureCallback<ResultSet> {
+                        val paginate: Boolean = false,
+                        val writeHdr: Boolean = true) : FutureCallback<ResultSet> {
 
     companion object {
         val log = logger()
@@ -41,21 +42,26 @@ class OperationCallback(val context: StressContext,
         // might extend this to select, but I can't see a reason for it now
         when (op) {
             is Operation.Mutation -> {
-                context.metrics.mutationHistogram.recordValue(time)
+                if (writeHdr) {
+                    context.metrics.mutationHistogram.recordValue(time)
+                }
                 runner.onSuccess(op, result)
             }
 
             is Operation.Deletion -> {
-                context.metrics.deleteHistogram.recordValue(time)
+                if (writeHdr) {
+                    context.metrics.deleteHistogram.recordValue(time)
+                }
             }
 
             is Operation.SelectStatement -> {
-                context.metrics.selectHistogram.recordValue(time)
+                if (writeHdr) {
+                    context.metrics.selectHistogram.recordValue(time)
+                }
             }
             is Operation.Stop -> {
                 throw OperationStopException()
             }
         }
-
     }
 }
