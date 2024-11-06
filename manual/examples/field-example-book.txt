@@ -6,8 +6,8 @@ CREATE KEYSPACE
  WITH replication = {'class': 'SimpleStrategy', 'replication_factor':3 }
 
 Creating schema
-Executing 1000000 operations with consistency level LOCAL_ONE
-Connected
+Executing 1000000 operations with consistency level LOCAL_ONE and serial consistency level LOCAL_SERIAL
+Connected to Cassandra cluster.
 Creating Tables
 CREATE TABLE IF NOT EXISTS keyvalue (
                         key text PRIMARY KEY,
@@ -17,9 +17,11 @@ keyvalue.value, book(20,40)
 Preparing queries
 Initializing metrics
 Stepping rate limiter by 500.0 to 5000.0
-Connecting
+Connecting to Cassandra cluster ...
 Creating generator random
 1 threads prepared.
+Prepopulating data with 0 records per thread (1)
+Prometheus metrics are available at http://localhost:9500/
 Starting main runner
 [Thread 0]: Running the profile for 1000000 iterations...
                  Writes                                  Reads                                  Deletes                       Errors

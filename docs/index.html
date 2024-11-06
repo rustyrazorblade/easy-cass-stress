@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.20">
+<meta name="generator" content="Asciidoctor 2.0.23">
 <meta name="author" content="Jon Haddad">
 <title>easy-cass-stress</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
@@ -141,7 +141,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #content::before{content:none}
 #header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
 #header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
-#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header>h1:only-child{border-bottom:1px solid #dddddf;padding-bottom:8px}
 #header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:flex;flex-flow:row wrap}
 #header .details span:first-child{margin-left:-.125em}
 #header .details span.email a{color:rgba(0,0,0,.85)}
@@ -163,6 +163,7 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #toctitle{color:#7a2518;font-size:1.2em}
 @media screen and (min-width:768px){#toctitle{font-size:1.375em}
 body.toc2{padding-left:15em;padding-right:0}
+body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
 #toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
 #toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
 #toc.toc2>ul{font-size:.9em;margin-bottom:0}
@@ -328,7 +329,7 @@ a.image{text-decoration:none;display:inline-block}
 a.image object{pointer-events:none}
 sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
 sup.footnote a,sup.footnoteref a{text-decoration:none}
-sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+sup.footnote a:active,sup.footnoteref a:active,#footnotes .footnote a:first-of-type:active{text-decoration:underline}
 #footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
 #footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
 #footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
@@ -588,8 +589,8 @@ CREATE KEYSPACE
  WITH replication = {'class': 'SimpleStrategy', 'replication_factor':3 }
 
 Creating schema
-Executing 10000 operations with consistency level LOCAL_ONE
-Connected
+Executing 10000 operations with consistency level LOCAL_ONE and serial consistency level LOCAL_SERIAL
+Connected to Cassandra cluster.
 Creating Tables
 CREATE TABLE IF NOT EXISTS keyvalue (
                         key text PRIMARY KEY,
@@ -598,9 +599,11 @@ CREATE TABLE IF NOT EXISTS keyvalue (
 Preparing queries
 Initializing metrics
 Stepping rate limiter by 500.0 to 5000.0
-Connecting
+Connecting to Cassandra cluster ...
 Creating generator random
 1 threads prepared.
+Prepopulating data with 0 records per thread (1)
+Prometheus metrics are available at http://localhost:9500/
 Starting main runner
 [Thread 0]: Running the profile for 10000 iterations...
                  Writes                                  Reads                                  Deletes                       Errors
@@ -662,7 +665,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             clusters.  This flag is deprecated and does nothing.
             Default: 100
           --coordinatoronly, --co
-            Coordinator only made.  This will cause easy-cass-stress to round
+            Coordinator only mode.  This will cause easy-cass-stress to round
             robin between nodes without tokens.  Requires using
             -Djoin_ring=false in cassandra-env.sh.  When using this option you
             must only provide a coordinator to --host.
@@ -748,13 +751,14 @@ Usage: easy-cass-stress [options] [command] [command options]
             Override the cql port. Defaults to 9042.
             Default: 9042
           --prometheusport
-            Override the default prometheus port.
+            Override the default prometheus port.  Set the default with
+            EASY_CASS_STRESS_PROM_PORT, or set to 0 to disable.
             Default: 9500
           --queue
             Queue Depth.  2x the rate by default.
             Default: 10000
           --rate
-            Rate limiter, accepts human numbers. 0 = disabled
+            Throughput rate, accepts human numbers
             Default: 5000
           --readrate, --reads, -r
             Read Rate, 0-1.  Workloads may have their own defaults.  Default
@@ -765,6 +769,10 @@ Usage: easy-cass-stress [options] [command] [command options]
           --rowcache
             Row cache setting
             Default: NONE
+          --scl
+            Serial consistency level
+            Default: LOCAL_SERIAL
+            Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --ssl
             Enable SSL
             Default: false
@@ -810,6 +818,7 @@ Locking
 Maps
 MaterializedViews
 RandomPartitionAccess
+RangeScan
 SAI
 Sets
 UdtTimeSeries
@@ -994,6 +1003,24 @@ For example, running a test for 1 hours and 30 minutes will be done as follows:<
 <p><code>{'class':'TimeWindowCompactionStrategy', 'compaction_window_size':'1', 'compaction_window_unit':'DAYS'}</code></p>
 </div></div></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ucs</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>{'class':'UnifiedCompactionStrategy'}</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ucs,L4</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>{'class':'UnifiedCompactionStrategy', 'scaling_parameters':'L4'}</code></p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ucs,L4,L10</p></td>
+<td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
+<p><code>{'class':'UnifiedCompactionStrategy', 'scaling_parameters':'L4,L10'}</code></p>
+</div></div></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -1101,7 +1128,7 @@ workload to specify which fields can be used this way.</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2024-02-16 19:57:46 UTC
+Last updated 2024-11-05 08:13:04 UTC
 </div>
 </div>
 </body>

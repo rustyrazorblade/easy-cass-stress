@@ -1,0 +1,4 @@
+bin/* text eol=lf
+manual/*.sh text eol=lf
+gradlew text eol=lf
+*.jar binary
