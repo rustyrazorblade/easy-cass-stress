@@ -12,6 +12,7 @@ Locking
 Maps 
 MaterializedViews 
 RandomPartitionAccess 
+RangeScan 
 SAI 
 Sets 
 UdtTimeSeries 

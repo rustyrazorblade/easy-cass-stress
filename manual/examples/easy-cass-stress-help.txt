@@ -27,7 +27,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             clusters.  This flag is deprecated and does nothing.
             Default: 100
           --coordinatoronly, --co
-            Coordinator only made.  This will cause easy-cass-stress to round 
+            Coordinator only mode.  This will cause easy-cass-stress to round 
             robin between nodes without tokens.  Requires using 
             -Djoin_ring=false in cassandra-env.sh.  When using this option you 
             must only provide a coordinator to --host.
@@ -113,13 +113,14 @@ Usage: easy-cass-stress [options] [command] [command options]
             Override the cql port. Defaults to 9042.
             Default: 9042
           --prometheusport
-            Override the default prometheus port.
+            Override the default prometheus port.  Set the default with 
+            EASY_CASS_STRESS_PROM_PORT, or set to 0 to disable.
             Default: 9500
           --queue
             Queue Depth.  2x the rate by default.
             Default: 10000
           --rate
-            Rate limiter, accepts human numbers. 0 = disabled
+            Throughput rate, accepts human numbers
             Default: 5000
           --readrate, --reads, -r
             Read Rate, 0-1.  Workloads may have their own defaults.  Default 
@@ -130,6 +131,10 @@ Usage: easy-cass-stress [options] [command] [command options]
           --rowcache
             Row cache setting
             Default: NONE
+          --scl
+            Serial consistency level
+            Default: LOCAL_SERIAL
+            Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --ssl
             Enable SSL
             Default: false
