@@ -117,7 +117,9 @@ class ProfileRunner(val context: StressContext,
         // move the getNextOperation into the queue thing
         for (op in queue.getNextOperation()) {
             val future = context.session.executeAsync(op.bound)
-            Futures.addCallback(future, OperationCallback(context, runner, op, paginate = context.mainArguments.paginate), MoreExecutors.directExecutor())
+            Futures.addCallback(future, OperationCallback(context, runner, op,
+                paginate = context.mainArguments.paginate,
+                writeHdr = context.mainArguments.hdrHistogramPrefix != ""), MoreExecutors.directExecutor())
         }
 
     }
