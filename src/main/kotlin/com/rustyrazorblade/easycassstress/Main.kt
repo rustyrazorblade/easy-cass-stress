@@ -2,9 +2,7 @@ package com.rustyrazorblade.easycassstress
 
 import org.apache.logging.log4j.kotlin.logger
 
-
 fun main(argv: Array<String>) {
-
     val log = logger("main")
 
     log.info { "Parsing $argv" }
@@ -21,6 +19,4 @@ fun main(argv: Array<String>) {
         // I'm sure a reasonable fix exists, but I don't have time to look into it.
         System.exit(0)
     }
-
 }
-

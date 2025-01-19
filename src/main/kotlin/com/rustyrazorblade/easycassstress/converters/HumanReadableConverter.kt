@@ -11,9 +11,9 @@ class HumanReadableConverter : IStringConverter<Long> {
             val value = it[1]?.value
             val label = it[2]
 
-            if(value == null) return 0L
+            if (value == null) return 0L
 
-            when(label?.value?.toLowerCase()) {
+            when (label?.value?.toLowerCase()) {
                 "k" -> 1000L * value.toLong()
                 "m" -> 1000000L * value.toLong()
                 "b" -> 1000000000L * value.toLong()

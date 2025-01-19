@@ -2,14 +2,13 @@ package com.rustyrazorblade.easycassstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.StressContext
-import  com.rustyrazorblade.easycassstress.WorkloadParameter
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.WorkloadParameter
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.roundToLong
 
 class CountersWide : IStressProfile {
-
     lateinit var increment: PreparedStatement
     lateinit var selectOne: PreparedStatement
     lateinit var selectAll: PreparedStatement
@@ -26,27 +25,24 @@ class CountersWide : IStressProfile {
     }
 
     override fun schema(): List<String> {
-        return listOf("""CREATE TABLE IF NOT EXISTS counter_wide (
+        return listOf(
+            """CREATE TABLE IF NOT EXISTS counter_wide (
             | key text,
             | cluster bigint,
             | value counter,
             | primary key(key, cluster))
-        """.trimMargin())
-
+            """.trimMargin(),
+        )
     }
 
     override fun getRunner(context: StressContext): IStressRunner {
-
         // for now i'm just going to hardcode this at 10K items
         // later when a profile can accept dynamic parameters i'll make it configurable
 
-
         return object : IStressRunner {
-
             var iterations = 0L
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
-
                 val clusteringKey = (ThreadLocalRandom.current().nextGaussian() * rowsPerPartition.toDouble()).roundToLong()
                 val tmp = increment.bind(partitionKey.getText(), clusteringKey)
                 return Operation.Mutation(tmp)

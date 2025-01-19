@@ -1,20 +1,14 @@
 package com.rustyrazorblade.easycassstress.profiles
 
-import com.beust.jcommander.Parameter
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.StressContext
-import  com.rustyrazorblade.easycassstress.profiles.IStressProfile
-import  com.rustyrazorblade.easycassstress.profiles.IStressRunner
-import  com.rustyrazorblade.easycassstress.profiles.Operation
-
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.StressContext
 
 class Maps : IStressProfile {
-
-    lateinit var insert : PreparedStatement
-    lateinit var select : PreparedStatement
-    lateinit var delete : PreparedStatement
+    lateinit var insert: PreparedStatement
+    lateinit var select: PreparedStatement
+    lateinit var delete: PreparedStatement
 
     override fun prepare(session: Session) {
         insert = session.prepare("UPDATE map_stress SET data[?] = ? WHERE id = ?")
@@ -26,7 +20,6 @@ class Maps : IStressProfile {
         val query = """ CREATE TABLE IF NOT EXISTS map_stress (id text, data map<text, text>, primary key (id)) """
         return listOf(query)
     }
-
 
     override fun getRunner(context: StressContext): IStressRunner {
         return object : IStressRunner {

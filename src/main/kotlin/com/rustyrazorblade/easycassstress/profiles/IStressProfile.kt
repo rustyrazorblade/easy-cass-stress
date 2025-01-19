@@ -1,38 +1,43 @@
 package com.rustyrazorblade.easycassstress.profiles
 
-import com.datastax.driver.core.Session
+import com.codahale.metrics.Timer.Context
 import com.datastax.driver.core.BoundStatement
 import com.datastax.driver.core.ResultSet
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.PopulateOption
-import  com.rustyrazorblade.easycassstress.StressContext
-import  com.rustyrazorblade.easycassstress.commands.Run
-import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
-import  com.rustyrazorblade.easycassstress.generators.Field
-import com.codahale.metrics.Timer.Context
-import  com.rustyrazorblade.easycassstress.PartitionKeyGenerator
-import java.util.*
+import com.datastax.driver.core.Session
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.PartitionKeyGenerator
+import com.rustyrazorblade.easycassstress.PopulateOption
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.commands.Run
+import com.rustyrazorblade.easycassstress.generators.Field
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import java.util.Optional
 
 interface IStressRunner {
-    fun getNextMutation(partitionKey: PartitionKey) : Operation
-    fun getNextSelect(partitionKey: PartitionKey) : Operation
-    fun getNextDelete(partitionKey: PartitionKey) : Operation
+    fun getNextMutation(partitionKey: PartitionKey): Operation
+
+    fun getNextSelect(partitionKey: PartitionKey): Operation
+
+    fun getNextDelete(partitionKey: PartitionKey): Operation
 
     /**
      * Populate phase will typically just perform regular mutations.
      * However, certain workloads may need custom setup.
      * @see Locking
-    **/
-    fun getNextPopulate(partitionKey: PartitionKey) : Operation {
+     **/
+    fun getNextPopulate(partitionKey: PartitionKey): Operation {
         return getNextMutation(partitionKey)
     }
+
     /**
      * Callback after a query executes successfully.
      * Will be used for state tracking on things like LWTs as well as provides an avenue for future work
      * doing post-workload correctness checks
      */
-    fun onSuccess(op: Operation.Mutation, result: ResultSet?) { }
-
+    fun onSuccess(
+        op: Operation.Mutation,
+        result: ResultSet?,
+    ) { }
 }
 
 /**
@@ -47,6 +52,7 @@ interface IStressProfile {
      * and pass them on to the Runner
      */
     fun prepare(session: Session)
+
     /**
      * returns a bunch of DDL statements
      * this can be any valid DDL such as
@@ -83,18 +89,16 @@ interface IStressProfile {
      * In the case of text fields, this is VERY strongly encouraged to allow for more flexibility with the size
      * of the text payload
      */
-    fun getFieldGenerators() : Map<Field, FieldGenerator> = mapOf()
+    fun getFieldGenerators(): Map<Field, FieldGenerator> = mapOf()
 
-    fun getDefaultReadRate() : Double { return .01 }
+    fun getDefaultReadRate(): Double {
+        return .01
+    }
 
-    fun getPopulateOption(args: Run)  : PopulateOption = PopulateOption.Standard()
+    fun getPopulateOption(args: Run): PopulateOption = PopulateOption.Standard()
 
-    fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> =
-        Optional.empty()
-
-
+    fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> = Optional.empty()
 }
-
 
 sealed class Operation(val bound: BoundStatement?) {
     // we're going to track metrics on the mutations differently
@@ -104,10 +108,9 @@ sealed class Operation(val bound: BoundStatement?) {
 
     class Mutation(bound: BoundStatement, val callbackPayload: Any? = null) : Operation(bound)
 
-    class SelectStatement(bound: BoundStatement): Operation(bound)
+    class SelectStatement(bound: BoundStatement) : Operation(bound)
 
-    class Deletion(bound: BoundStatement): Operation(bound)
+    class Deletion(bound: BoundStatement) : Operation(bound)
 
     class Stop : Operation(null)
-
 }

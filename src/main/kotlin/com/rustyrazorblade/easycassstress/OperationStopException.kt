@@ -1,5 +1,3 @@
 package com.rustyrazorblade.easycassstress
 
-class OperationStopException : Throwable() {
-
-}
+class OperationStopException : Throwable()

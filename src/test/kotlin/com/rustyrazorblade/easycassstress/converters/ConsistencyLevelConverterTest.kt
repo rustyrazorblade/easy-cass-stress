@@ -4,13 +4,9 @@ import com.datastax.driver.core.ConsistencyLevel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-
-import org.junit.jupiter.api.Assertions.*
-
 import kotlin.test.assertFailsWith
 
 internal class ConsistencyLevelConverterTest {
-
     lateinit var converter: ConsistencyLevelConverter
 
     @BeforeEach
@@ -26,6 +22,6 @@ internal class ConsistencyLevelConverterTest {
 
     @Test
     fun convertAndFail() {
-        assertFailsWith<java.lang.IllegalArgumentException> {val cl = converter.convert("LOCAL")}
+        assertFailsWith<java.lang.IllegalArgumentException> { val cl = converter.convert("LOCAL") }
     }
 }

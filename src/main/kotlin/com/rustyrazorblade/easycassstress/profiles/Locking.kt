@@ -2,10 +2,13 @@ package com.rustyrazorblade.easycassstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.*
-import  com.rustyrazorblade.easycassstress.commands.Run
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.PartitionKeyGenerator
+import com.rustyrazorblade.easycassstress.PopulateOption
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.commands.Run
 import org.apache.logging.log4j.kotlin.logger
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -22,9 +25,6 @@ import java.util.concurrent.ConcurrentHashMap
  * 1: temporarily locked
  */
 class Locking : IStressProfile {
-
-
-
     lateinit var insert: PreparedStatement
     lateinit var update: PreparedStatement
     lateinit var select: PreparedStatement
@@ -40,39 +40,39 @@ class Locking : IStressProfile {
     }
 
     override fun schema(): List<String> {
-        val query = """
+        val query =
+            """
             CREATE TABLE IF NOT EXISTS lwtupdates (
                 item_id text primary key,
                 name text,
                 status int
             )
-        """.trimIndent()
+            """.trimIndent()
         return listOf(query)
     }
 
-    override fun getPopulateOption(args: Run) : PopulateOption = PopulateOption.Custom(args.partitionValues, deletes = false)
+    override fun getPopulateOption(args: Run): PopulateOption = PopulateOption.Custom(args.partitionValues, deletes = false)
 
     override fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> {
         return Optional.of(PartitionKeyGenerator.sequence("test"))
     }
 
-
     override fun getRunner(context: StressContext): IStressRunner {
         return object : IStressRunner {
-
             // this test can't do more than 2 billion partition keys
 
-            val state : ConcurrentHashMap<String, Int> = ConcurrentHashMap(context.mainArguments.partitionValues.toInt())
+            val state: ConcurrentHashMap<String, Int> = ConcurrentHashMap(context.mainArguments.partitionValues.toInt())
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val currentState = state.getOrDefault(partitionKey.getText(), 0)
 
-                val newState = when(currentState) {
-                    0 -> 1
-                    else -> 0
-                }
+                val newState =
+                    when (currentState) {
+                        0 -> 1
+                        else -> 0
+                    }
 
-                log.trace{"Updating ${partitionKey.getText()} to $newState"}
+                log.trace { "Updating ${partitionKey.getText()} to $newState" }
 
                 val bound = update.bind(newState, partitionKey.getText(), newState)
                 state[partitionKey.getText()] = newState
@@ -93,12 +93,6 @@ class Locking : IStressProfile {
                 val bound = insert.bind(partitionKey.getText(), "test")
                 return Operation.Mutation(bound)
             }
-
-
-
-
         }
     }
-
-
 }

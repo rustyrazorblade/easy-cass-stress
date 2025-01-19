@@ -1,6 +1,6 @@
 package com.rustyrazorblade.easycassstress.generators
 
-import  com.rustyrazorblade.easycassstress.generators.functions.LastName
+import com.rustyrazorblade.easycassstress.generators.functions.LastName
 import org.apache.logging.log4j.kotlin.logger
 import org.junit.jupiter.api.Test
 

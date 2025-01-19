@@ -1,13 +1,14 @@
 package com.rustyrazorblade.easycassstress.generators.functions
 
-import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
-import  com.rustyrazorblade.easycassstress.generators.Function
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import com.rustyrazorblade.easycassstress.generators.Function
 import java.util.concurrent.ThreadLocalRandom
 
-@Function(name="book",
-        description = "Picks random sections of books.")
+@Function(
+    name = "book",
+    description = "Picks random sections of books.",
+)
 class Book : FieldGenerator {
-
     var min: Int = 20
     var max: Int = 50
 
@@ -16,13 +17,16 @@ class Book : FieldGenerator {
         max = params[1].toInt()
     }
 
-
-    override fun getDescription() = """
+    override fun getDescription() =
+        """
         Uses random sections of open books to provide real world text data.
-    """.trimIndent()
+        """.trimIndent()
 
     companion object {
-        fun create(min: Int, max: Int) : Book {
+        fun create(
+            min: Int,
+            max: Int,
+        ): Book {
             val b = Book()
             b.setParameters(arrayListOf(min.toString(), max.toString()))
             return b
@@ -35,7 +39,7 @@ class Book : FieldGenerator {
     init {
 
         val files = listOf("alice.txt", "moby-dick.txt", "war.txt")
-        for(f in files) {
+        for (f in files) {
             val tmp = this::class.java.getResource("/books/$f").readText()
             val splitContent = tmp.split("\\s+".toRegex())
             content.addAll(splitContent)
@@ -45,7 +49,7 @@ class Book : FieldGenerator {
     override fun getText(): String {
         // first get the length
         val length = ThreadLocalRandom.current().nextInt(min, max)
-        val start = ThreadLocalRandom.current().nextInt(0, content.size-length)
+        val start = ThreadLocalRandom.current().nextInt(0, content.size - length)
 
         return content.subList(start, start + length).joinToString(" ")
     }

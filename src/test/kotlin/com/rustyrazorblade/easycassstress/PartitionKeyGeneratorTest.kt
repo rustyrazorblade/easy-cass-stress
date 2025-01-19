@@ -17,24 +17,19 @@ internal class PartitionKeyGeneratorTest {
         val p = PartitionKeyGenerator.sequence("test")
         val result = p.generateKey(10, 10).first()
         assertThat(result.id).isEqualTo(0L)
-
-
     }
 
     @Test
     fun testRepeatingSequence() {
         val p = PartitionKeyGenerator.sequence("test")
-        val data = p.generateKey(10,2).take(5).toList().map { it.id.toInt() }
-        assertThat(data).isEqualTo(listOf(0,1,2,0,1))
-
+        val data = p.generateKey(10, 2).take(5).toList().map { it.id.toInt() }
+        assertThat(data).isEqualTo(listOf(0, 1, 2, 0, 1))
     }
 
     @Test
     fun testNormal() {
         val p = PartitionKeyGenerator.normal("test")
         for (x in p.generateKey(1000, 1000)) {
-
         }
-
     }
 }

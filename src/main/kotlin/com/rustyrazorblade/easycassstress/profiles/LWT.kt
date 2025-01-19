@@ -3,12 +3,11 @@ package com.rustyrazorblade.easycassstress.profiles
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.ResultSet
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.StressContext
 
 class LWT : IStressProfile {
-
-    lateinit var insert : PreparedStatement
+    lateinit var insert: PreparedStatement
     lateinit var update: PreparedStatement
     lateinit var select: PreparedStatement
     lateinit var delete: PreparedStatement
@@ -26,7 +25,6 @@ class LWT : IStressProfile {
         deletePartition = session.prepare("DELETE from lwt WHERE id = ? IF EXISTS")
     }
 
-
     override fun getRunner(context: StressContext): IStressRunner {
         data class CallbackPayload(val id: String, val value: Int)
 
@@ -37,13 +35,14 @@ class LWT : IStressProfile {
                 val currentValue = state[partitionKey.getText()]
                 val newValue: Int
 
-                val mutation = if(currentValue != null) {
-                    newValue = currentValue + 1
-                    update.bind(0, partitionKey.getText(), newValue)
-                } else {
-                    newValue = 0
-                    insert.bind(partitionKey.getText(), newValue)
-                }
+                val mutation =
+                    if (currentValue != null) {
+                        newValue = currentValue + 1
+                        update.bind(0, partitionKey.getText(), newValue)
+                    } else {
+                        newValue = 0
+                        insert.bind(partitionKey.getText(), newValue)
+                    }
                 val payload = CallbackPayload(partitionKey.getText(), newValue)
                 return Operation.Mutation(mutation, payload)
             }
@@ -56,20 +55,22 @@ class LWT : IStressProfile {
                 val currentValue = state[partitionKey.getText()]
                 val newValue: Int
 
-                val deletion = if(currentValue != null) {
-                    delete.bind(partitionKey.getText(), currentValue)
-                } else {
-                    deletePartition.bind(partitionKey.getText())
-                }
+                val deletion =
+                    if (currentValue != null) {
+                        delete.bind(partitionKey.getText(), currentValue)
+                    } else {
+                        deletePartition.bind(partitionKey.getText())
+                    }
                 return Operation.Deletion(deletion)
             }
 
-            override fun onSuccess(op: Operation.Mutation, result: ResultSet?) {
+            override fun onSuccess(
+                op: Operation.Mutation,
+                result: ResultSet?,
+            ) {
                 val payload = op.callbackPayload!! as CallbackPayload
                 state[payload.id] = payload.value
-
             }
-
         }
     }
 }

@@ -14,7 +14,9 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.9.0"
     id "nebula.ospackage" version "9.1.1"
     id "nebula.ospackage-application"  version "9.1.1"
+    id "org.jlleitschuh.gradle.ktlint" version "12.1.2"
 }
+
 
 apply plugin: 'idea'
 apply plugin: 'java'

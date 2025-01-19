@@ -2,37 +2,40 @@ package com.rustyrazorblade.easycassstress
 
 import com.beust.jcommander.JCommander
 import com.beust.jcommander.Parameter
-import  com.rustyrazorblade.easycassstress.commands.*
+import com.rustyrazorblade.easycassstress.commands.Fields
+import com.rustyrazorblade.easycassstress.commands.IStressCommand
+import com.rustyrazorblade.easycassstress.commands.Info
+import com.rustyrazorblade.easycassstress.commands.ListCommand
+import com.rustyrazorblade.easycassstress.commands.Run
 
 class MainArgs {
-
     @Parameter(names = ["--help", "-h"], description = "Shows this help.")
     var help = false
-
 }
 
-class CommandLineParser(val jCommander: JCommander,
-                        val commands: Map<String, IStressCommand>) {
-
-
+class CommandLineParser(
+    val jCommander: JCommander,
+    val commands: Map<String, IStressCommand>,
+) {
     companion object {
-        fun parse(arguments: Array<String>): com.rustyrazorblade.easycassstress.CommandLineParser {
-
+        fun parse(arguments: Array<String>): CommandLineParser {
             // JCommander set up
             val jcommander = JCommander.newBuilder().programName("easy-cass-stress")
-            val args = com.rustyrazorblade.easycassstress.MainArgs()
+            val args = MainArgs()
 
             // needed to get help
             jcommander.addObject(args)
             // subcommands
 
-            val commands = mapOf(
+            val commands =
+                mapOf(
                     "run" to Run(arguments.joinToString(" ")),
                     "info" to Info(),
                     "list" to ListCommand(),
-                    "fields" to Fields())
+                    "fields" to Fields(),
+                )
 
-            for(x in commands.entries) {
+            for (x in commands.entries) {
                 jcommander.addCommand(x.key, x.value)
             }
 
@@ -43,7 +46,7 @@ class CommandLineParser(val jCommander: JCommander,
                 jc.usage()
                 System.exit(0)
             }
-            return com.rustyrazorblade.easycassstress.CommandLineParser(jc, commands)
+            return CommandLineParser(jc, commands)
         }
     }
 
@@ -51,15 +54,11 @@ class CommandLineParser(val jCommander: JCommander,
         getCommandInstance().execute()
     }
 
-    fun getParsedCommand() : String {
+    fun getParsedCommand(): String {
         return jCommander.parsedCommand
     }
 
-    fun getCommandInstance() : IStressCommand {
+    fun getCommandInstance(): IStressCommand {
         return commands[getParsedCommand()]!!
-
     }
-
-
 }
-

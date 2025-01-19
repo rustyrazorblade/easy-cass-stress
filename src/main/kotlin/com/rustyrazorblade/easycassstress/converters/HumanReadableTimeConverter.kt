@@ -3,7 +3,6 @@ package com.rustyrazorblade.easycassstress.converters
 import com.beust.jcommander.IStringConverter
 import java.time.Duration
 
-
 class HumanReadableTimeConverter : IStringConverter<Long> {
     override fun convert(value: String?): Long {
         var duration = Duration.ofMinutes(0)
@@ -28,8 +27,9 @@ class HumanReadableTimeConverter : IStringConverter<Long> {
                 }
             }
 
-        if (duration.isZero)
-            throw IllegalArgumentException("Value ${value} resulted in 0 time duration")
+        if (duration.isZero) {
+            throw IllegalArgumentException("Value $value resulted in 0 time duration")
+        }
 
         return duration.toMinutes()
     }

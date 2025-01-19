@@ -3,8 +3,10 @@ package com.rustyrazorblade.easycassstress.generators
 import org.apache.logging.log4j.kotlin.logger
 import org.reflections.Reflections
 
-data class FunctionDescription(val name: String,
-                               val description: String)
+data class FunctionDescription(
+    val name: String,
+    val description: String,
+)
 
 class AnnotationMissingException(val name: Class<out FieldGenerator>) : Exception()
 
@@ -12,7 +14,6 @@ class AnnotationMissingException(val name: Class<out FieldGenerator>) : Exceptio
  * Finds all the available functions and tracks them by name
  */
 class FunctionLoader : Iterable<FunctionDescription> {
-
     override fun iterator(): Iterator<FunctionDescription> {
         return object : Iterator<FunctionDescription> {
             val iter = map.iterator()
@@ -25,19 +26,17 @@ class FunctionLoader : Iterable<FunctionDescription> {
 
                 return FunctionDescription(annotation.name, annotation.description)
             }
-
         }
     }
 
     class FunctionNotFound(val name: String) : Exception()
 
-    val map : MutableMap<String, Class<out FieldGenerator>> = mutableMapOf()
+    val map: MutableMap<String, Class<out FieldGenerator>> = mutableMapOf()
 
     init {
         val r = Reflections("com.rustyrazorblade.easycassstress")
         log.debug { "Getting FieldGenerator subtypes" }
         val modules = r.getSubTypesOf(FieldGenerator::class.java)
-
 
         modules.forEach {
             log.debug { "Getting annotations for $it" }
@@ -51,14 +50,12 @@ class FunctionLoader : Iterable<FunctionDescription> {
 
     companion object {
         val log = logger()
-
     }
-
 
     /**
      * Returns an instance of the requested class
      */
-    fun getInstance(name: String) : FieldGenerator {
+    fun getInstance(name: String): FieldGenerator {
         val tmp = map[name]
         val result = tmp?.newInstance() ?: throw FunctionNotFound(name)
         return result
@@ -67,12 +64,9 @@ class FunctionLoader : Iterable<FunctionDescription> {
     /**
      *
      */
-    fun getInstance(func: ParsedFieldFunction) : FieldGenerator {
+    fun getInstance(func: ParsedFieldFunction): FieldGenerator {
         val tmp = getInstance(func.name)
         tmp.setParameters(func.args)
         return tmp
     }
-
-
-
 }

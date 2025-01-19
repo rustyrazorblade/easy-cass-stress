@@ -2,18 +2,17 @@ package com.rustyrazorblade.easycassstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.StressContext
-import  com.rustyrazorblade.easycassstress.generators.Field
-import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
-import  com.rustyrazorblade.easycassstress.generators.functions.Random
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.generators.Field
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import com.rustyrazorblade.easycassstress.generators.functions.Random
 
 class Sets : IStressProfile {
-
-    lateinit var insert : PreparedStatement
-    lateinit var update : PreparedStatement
-    lateinit var select : PreparedStatement
-    lateinit var deleteElement : PreparedStatement
+    lateinit var insert: PreparedStatement
+    lateinit var update: PreparedStatement
+    lateinit var select: PreparedStatement
+    lateinit var deleteElement: PreparedStatement
 
     override fun prepare(session: Session) {
         insert = session.prepare("INSERT INTO sets (key, values) VALUES (?, ?)")
@@ -23,22 +22,24 @@ class Sets : IStressProfile {
     }
 
     override fun schema(): List<String> {
-        return listOf("""
+        return listOf(
+            """
             CREATE TABLE IF NOT EXISTS sets (
             |key text primary key,
             |values set<text>
             |)
-        """.trimMargin())
+            """.trimMargin(),
+        )
     }
 
     override fun getRunner(context: StressContext): IStressRunner {
         val payload = context.registry.getGenerator("sets", "values")
 
         return object : IStressRunner {
-
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val value = payload.getText()
-                val bound = update.bind()
+                val bound =
+                    update.bind()
                         .setSet(0, setOf(value))
                         .setString(1, partitionKey.getText())
 
@@ -54,11 +55,16 @@ class Sets : IStressProfile {
                 val bound = deleteElement.bind(setOf(partitionKey.getText()), partitionKey.getText())
                 return Operation.Deletion(bound)
             }
-
         }
     }
 
     override fun getFieldGenerators(): Map<Field, FieldGenerator> {
-        return mapOf(Field("sets", "values") to Random().apply{ min=6; max=16})
+        return mapOf(
+            Field("sets", "values") to
+                Random().apply {
+                    min = 6
+                    max = 16
+                },
+        )
     }
 }

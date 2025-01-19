@@ -1,32 +1,26 @@
 package com.rustyrazorblade.easycassstress
 
-import java.util.concurrent.TimeUnit
-
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.ScheduledReporter
-
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.dropwizard.DropwizardExports
 import io.prometheus.client.exporter.HTTPServer
-
 import org.HdrHistogram.SynchronizedHistogram
 import java.util.Optional
-import javax.swing.text.html.Option
+import java.util.concurrent.TimeUnit
 
-class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledReporter>, httpPort : Int) {
-
+class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledReporter>, httpPort: Int) {
     val server: Optional<HTTPServer>
 
-
     fun startReporting() {
-        for(reporter in reporters)
+        for (reporter in reporters)
             reporter.start(3, TimeUnit.SECONDS)
     }
 
     fun shutdown() {
         server.map { it.close() }
-        
-        for(reporter in reporters) {
+
+        for (reporter in reporters) {
             reporter.stop()
         }
     }
@@ -37,16 +31,15 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     }
 
     init {
-        server = if (httpPort > 0) {
-            CollectorRegistry.defaultRegistry.register(DropwizardExports(metricRegistry))
-            Optional.of(HTTPServer(httpPort))
-        } else {
-            println("Not setting up prometheus endpoint.")
-            Optional.empty()
-        }
-
+        server =
+            if (httpPort > 0) {
+                CollectorRegistry.defaultRegistry.register(DropwizardExports(metricRegistry))
+                Optional.of(HTTPServer(httpPort))
+            } else {
+                println("Not setting up prometheus endpoint.")
+                Optional.empty()
+            }
     }
-
 
     var errors = metricRegistry.meter("errors")
     val mutations = metricRegistry.timer("mutations")

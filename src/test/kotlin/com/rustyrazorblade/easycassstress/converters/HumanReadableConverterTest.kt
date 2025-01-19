@@ -4,10 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-import org.junit.jupiter.api.Assertions.*
-
 internal class HumanReadableConverterTest {
-
     lateinit var converter: HumanReadableConverter
 
     @BeforeEach

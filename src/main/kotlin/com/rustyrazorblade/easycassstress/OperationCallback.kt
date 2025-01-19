@@ -2,8 +2,8 @@ package com.rustyrazorblade.easycassstress
 
 import com.datastax.driver.core.ResultSet
 import com.google.common.util.concurrent.FutureCallback
-import  com.rustyrazorblade.easycassstress.profiles.IStressRunner
-import  com.rustyrazorblade.easycassstress.profiles.Operation
+import com.rustyrazorblade.easycassstress.profiles.IStressRunner
+import com.rustyrazorblade.easycassstress.profiles.Operation
 import org.apache.logging.log4j.kotlin.logger
 
 /**
@@ -11,12 +11,13 @@ import org.apache.logging.log4j.kotlin.logger
  * This was moved out of the inline ProfileRunner to make populate mode easier
  * as well as reduce clutter
  */
-class OperationCallback(val context: StressContext,
-                        val runner: IStressRunner,
-                        val op: Operation,
-                        val paginate: Boolean = false,
-                        val writeHdr: Boolean = true) : FutureCallback<ResultSet> {
-
+class OperationCallback(
+    val context: StressContext,
+    val runner: IStressRunner,
+    val op: Operation,
+    val paginate: Boolean = false,
+    val writeHdr: Boolean = true,
+) : FutureCallback<ResultSet> {
     companion object {
         val log = logger()
     }
@@ -24,7 +25,6 @@ class OperationCallback(val context: StressContext,
     override fun onFailure(t: Throwable) {
         context.metrics.errors.mark()
         log.error { t }
-
     }
 
     override fun onSuccess(result: ResultSet) {

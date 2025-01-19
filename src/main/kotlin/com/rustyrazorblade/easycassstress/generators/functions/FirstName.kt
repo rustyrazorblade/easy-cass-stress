@@ -1,28 +1,30 @@
 package com.rustyrazorblade.easycassstress.generators.functions
 
-import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
-import  com.rustyrazorblade.easycassstress.generators.Function
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import com.rustyrazorblade.easycassstress.generators.Function
 import java.util.concurrent.ThreadLocalRandom
 
-@Function(name="firstname",
-        description = "First names.")
+@Function(
+    name = "firstname",
+    description = "First names.",
+)
 class FirstName : FieldGenerator {
-
     override fun setParameters(params: List<String>) {
         // nothing to do here
     }
 
-    override fun getDescription() = """
+    override fun getDescription() =
+        """
         Uses common first names, both male and female.
-    """.trimIndent()
-
+        """.trimIndent()
 
     val names = mutableListOf<String>()
 
     init {
 
         for (s in arrayListOf("female", "male")) {
-            val tmp = this::class.java.getResource("/names/female.txt")
+            val tmp =
+                this::class.java.getResource("/names/female.txt")
                     .readText()
                     .split("\n")
                     .map { it.split(" ").first() }
@@ -34,5 +36,4 @@ class FirstName : FieldGenerator {
         val element = ThreadLocalRandom.current().nextInt(0, names.size)
         return names[element]
     }
-
 }

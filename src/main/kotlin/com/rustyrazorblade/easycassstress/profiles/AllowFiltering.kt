@@ -2,24 +2,23 @@ package com.rustyrazorblade.easycassstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.StressContext
-import  com.rustyrazorblade.easycassstress.WorkloadParameter
-import  com.rustyrazorblade.easycassstress.generators.Field
-import  com.rustyrazorblade.easycassstress.generators.FieldFactory
-import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
-import  com.rustyrazorblade.easycassstress.generators.functions.Random
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.WorkloadParameter
+import com.rustyrazorblade.easycassstress.generators.Field
+import com.rustyrazorblade.easycassstress.generators.FieldFactory
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import com.rustyrazorblade.easycassstress.generators.functions.Random
 import java.util.concurrent.ThreadLocalRandom
 
 class AllowFiltering : IStressProfile {
-
     @WorkloadParameter(description = "Number of rows per partition")
     var rows = 100
 
     @WorkloadParameter(description = "Max Value of the value field.  Lower values will return more results.")
     var maxValue = 100
 
-    lateinit var insert : PreparedStatement
+    lateinit var insert: PreparedStatement
     lateinit var select: PreparedStatement
     lateinit var delete: PreparedStatement
 
@@ -30,18 +29,19 @@ class AllowFiltering : IStressProfile {
     }
 
     override fun schema(): List<String> {
-        return listOf("""CREATE TABLE IF NOT EXISTS allow_filtering (
+        return listOf(
+            """CREATE TABLE IF NOT EXISTS allow_filtering (
             |partition_id text,
             |row_id int,
             |value int,
             |payload text,
             |primary key (partition_id, row_id)
             |) 
-        """.trimMargin())
+            """.trimMargin(),
+        )
     }
 
     override fun getRunner(context: StressContext): IStressRunner {
-
         val payload = context.registry.getGenerator("allow_filtering", "payload")
         val random = ThreadLocalRandom.current()
 
@@ -52,7 +52,6 @@ class AllowFiltering : IStressProfile {
 
                 val bound = insert.bind(partitionKey.getText(), rowId, value, payload.getText())
                 return Operation.Mutation(bound)
-
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
@@ -71,7 +70,12 @@ class AllowFiltering : IStressProfile {
 
     override fun getFieldGenerators(): Map<Field, FieldGenerator> {
         val af = FieldFactory("allow_filtering")
-        return mapOf(af.getField("payload") to Random().apply{ min = 0; max = 1})
-
+        return mapOf(
+            af.getField("payload") to
+                Random().apply {
+                    min = 0
+                    max = 1
+                },
+        )
     }
 }

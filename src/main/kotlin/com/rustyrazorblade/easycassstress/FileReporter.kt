@@ -1,25 +1,28 @@
 package com.rustyrazorblade.easycassstress
 
-import com.codahale.metrics.*
+import com.codahale.metrics.Counter
+import com.codahale.metrics.Gauge
+import com.codahale.metrics.Histogram
+import com.codahale.metrics.Meter
+import com.codahale.metrics.MetricFilter
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.ScheduledReporter
 import com.codahale.metrics.Timer
-import java.io.BufferedOutputStream
 import java.io.BufferedWriter
 import java.io.File
-import java.io.FileWriter
-import java.text.SimpleDateFormat
 import java.time.Instant
-import java.util.*
+import java.util.Date
+import java.util.SortedMap
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 
-
-class FileReporter(registry: MetricRegistry, outputFileName: String, command: String) : ScheduledReporter(registry,
-        "file-reporter",
-        MetricFilter.ALL,
-        TimeUnit.SECONDS,
-        TimeUnit.MILLISECONDS
+class FileReporter(registry: MetricRegistry, outputFileName: String, command: String) : ScheduledReporter(
+    registry,
+    "file-reporter",
+    MetricFilter.ALL,
+    TimeUnit.SECONDS,
+    TimeUnit.MILLISECONDS,
 ) {
-
     // date 24h time
     // Thu-14Mar19-13.30.00
     private val startTime = Date()
@@ -28,11 +31,16 @@ class FileReporter(registry: MetricRegistry, outputFileName: String, command: St
     private val errorHeaders = listOf("Count", "1min (errors/s)").joinToString(",")
 
     val outputFile = File(outputFileName)
-    val buffer : BufferedWriter
+    val buffer: BufferedWriter
 
     init {
 
-        buffer = if(outputFileName.endsWith(".gz"))  GZIPOutputStream(outputFile.outputStream()).bufferedWriter() else outputFile.bufferedWriter()
+        buffer =
+            if (outputFileName.endsWith(".gz")) {
+                GZIPOutputStream(outputFile.outputStream()).bufferedWriter()
+            } else {
+                outputFile.bufferedWriter()
+            }
 
         buffer.write("# easy-cass-stress run at $startTime")
         buffer.newLine()
@@ -59,37 +67,42 @@ class FileReporter(registry: MetricRegistry, outputFileName: String, command: St
         return listOf(this.count, duration, this.oneMinuteRate)
     }
 
-    override fun report(gauges: SortedMap<String, Gauge<Any>>?,
-                        counters: SortedMap<String, Counter>?,
-                        histograms: SortedMap<String, Histogram>?,
-                        meters: SortedMap<String, Meter>?,
-                        timers: SortedMap<String, Timer>?) {
-
+    override fun report(
+        gauges: SortedMap<String, Gauge<Any>>?,
+        counters: SortedMap<String, Counter>?,
+        histograms: SortedMap<String, Histogram>?,
+        meters: SortedMap<String, Meter>?,
+        timers: SortedMap<String, Timer>?,
+    ) {
         val timestamp = Instant.now().toString()
         val elapsedTime = Instant.now().minusMillis(startTime.time).toEpochMilli() / 1000
 
         buffer.write(timestamp + "," + elapsedTime + ",")
 
-        val writeRow = timers!!["mutations"]!!
+        val writeRow =
+            timers!!["mutations"]!!
                 .getMetricsList()
                 .joinToString(",", postfix = ",")
 
         buffer.write(writeRow)
 
-        val readRow = timers["selects"]!!
+        val readRow =
+            timers["selects"]!!
                 .getMetricsList()
                 .joinToString(",", postfix = ",")
 
         buffer.write(readRow)
 
-        val deleteRow = timers["deletions"]!!
+        val deleteRow =
+            timers["deletions"]!!
                 .getMetricsList()
                 .joinToString(",", postfix = ",")
 
         buffer.write(deleteRow)
 
         val errors = meters!!["errors"]!!
-        val errorRow = listOf(errors.count, errors.oneMinuteRate)
+        val errorRow =
+            listOf(errors.count, errors.oneMinuteRate)
                 .joinToString(",", postfix = "\n")
 
         buffer.write(errorRow)

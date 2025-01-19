@@ -4,24 +4,24 @@ import org.apache.logging.log4j.kotlin.logger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import kotlin.test.assertFails
 import kotlin.test.fail
 
 internal class SchemaBuilderTest {
     var log = logger()
 
-    lateinit var createTable : SchemaBuilder
+    lateinit var createTable: SchemaBuilder
 
     @BeforeEach
     fun setUp() {
-        val statement = """CREATE TABLE test (
+        val statement =
+            """CREATE TABLE test (
                                 | id int primary key,
                                 | name text
-                                | ) """.trimMargin()
+                                | ) 
+            """.trimMargin()
 
         createTable = SchemaBuilder.create(statement)
     }
-
 
     @Test
     fun compactionTest() {
@@ -40,21 +40,23 @@ internal class SchemaBuilderTest {
 
     @Test
     fun clusteringOrderTest() {
-        val base = """CREATE TABLE IF NOT EXISTS sensor_data (
+        val base =
+            """CREATE TABLE IF NOT EXISTS sensor_data (
                             |sensor_id int,
                             |timestamp timeuuid,
                             |data text,
                             |primary key(sensor_id, timestamp))
                             |WITH CLUSTERING ORDER BY (timestamp DESC)
                             |
-                            |""".trimMargin()
+                            |
+            """.trimMargin()
 
-        val query = SchemaBuilder.create(base)
+        val query =
+            SchemaBuilder.create(base)
                 .withCompression("{'enabled':enabled}")
                 .build()
 
         assertThat(query.toLowerCase()).containsOnlyOnce("with")
-
     }
 
     @Test
@@ -65,7 +67,8 @@ internal class SchemaBuilderTest {
                           data3 text
                         )"""
 
-        val result = SchemaBuilder.create(query)
+        val result =
+            SchemaBuilder.create(query)
                 .withKeyCache("NONE")
                 .build()
 
@@ -90,7 +93,6 @@ internal class SchemaBuilderTest {
         assertThat(result3[1]).isEqualTo("twcs")
     }
 
-
     @Test
     fun ensureRegexMatchesSTCSWithParams() {
         val result = createTable.compactionShortcutRegex.find("stcs,4,48")!!.groupValues
@@ -104,7 +106,6 @@ internal class SchemaBuilderTest {
             else -> {
                 fail("Expecting STCS, Got $compaction")
             }
-
         }
     }
 
@@ -118,10 +119,9 @@ internal class SchemaBuilderTest {
             else -> {
                 fail("Expecting LCS, Got $compaction")
             }
-
         }
-
     }
+
     @Test
     fun testParseTWCS() {
         val compaction = createTable.parseCompaction("twcs,1,days")
@@ -135,7 +135,6 @@ internal class SchemaBuilderTest {
             }
         }
         val cql = compaction.toCQL()
-
     }
 
     @Test
@@ -156,7 +155,6 @@ internal class SchemaBuilderTest {
         val result = createTable.withCompaction("lcs").build()
         assertThat(result).contains("LeveledCompactionStrategy")
         assertThat(result).doesNotContain("null")
-
     }
 
     @Test

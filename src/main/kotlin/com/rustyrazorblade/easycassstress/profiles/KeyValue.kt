@@ -2,20 +2,17 @@ package com.rustyrazorblade.easycassstress.profiles
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.PartitionKey
-import  com.rustyrazorblade.easycassstress.StressContext
-import  com.rustyrazorblade.easycassstress.generators.FieldGenerator
-import  com.rustyrazorblade.easycassstress.generators.Field
-import  com.rustyrazorblade.easycassstress.generators.FieldFactory
-import  com.rustyrazorblade.easycassstress.generators.functions.Random
-
+import com.rustyrazorblade.easycassstress.PartitionKey
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.generators.Field
+import com.rustyrazorblade.easycassstress.generators.FieldFactory
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import com.rustyrazorblade.easycassstress.generators.functions.Random
 
 class KeyValue : IStressProfile {
-
     lateinit var insert: PreparedStatement
     lateinit var select: PreparedStatement
     lateinit var delete: PreparedStatement
-
 
     override fun prepare(session: Session) {
         insert = session.prepare("INSERT INTO keyvalue (key, value) VALUES (?, ?)")
@@ -24,10 +21,13 @@ class KeyValue : IStressProfile {
     }
 
     override fun schema(): List<String> {
-        val table = """CREATE TABLE IF NOT EXISTS keyvalue (
-                        key text PRIMARY KEY,
-                        value text
-                        )""".trimIndent()
+        val table =
+            """
+            CREATE TABLE IF NOT EXISTS keyvalue (
+            key text PRIMARY KEY,
+            value text
+            )
+            """.trimIndent()
         return listOf(table)
     }
 
@@ -36,11 +36,9 @@ class KeyValue : IStressProfile {
     }
 
     override fun getRunner(context: StressContext): IStressRunner {
-
         val value = context.registry.getGenerator("keyvalue", "value")
 
         return object : IStressRunner {
-
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
                 val bound = select.bind(partitionKey.getText())
                 return Operation.SelectStatement(bound)
@@ -48,7 +46,7 @@ class KeyValue : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val data = value.getText()
-                val bound = insert.bind(partitionKey.getText(),  data)
+                val bound = insert.bind(partitionKey.getText(), data)
 
                 return Operation.Mutation(bound)
             }
@@ -62,6 +60,12 @@ class KeyValue : IStressProfile {
 
     override fun getFieldGenerators(): Map<Field, FieldGenerator> {
         val kv = FieldFactory("keyvalue")
-        return mapOf(kv.getField("value") to Random().apply{min=100; max=200})
+        return mapOf(
+            kv.getField("value") to
+                Random().apply {
+                    min = 100
+                    max = 200
+                },
+        )
     }
 }

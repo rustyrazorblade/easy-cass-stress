@@ -1,8 +1,7 @@
 package com.rustyrazorblade.easycassstress
 
-import  com.rustyrazorblade.easycassstress.commands.Run
+import com.rustyrazorblade.easycassstress.commands.Run
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 internal class CommandLineParserTest {

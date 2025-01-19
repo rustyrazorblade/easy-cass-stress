@@ -2,20 +2,17 @@ package com.rustyrazorblade.easycassstress
 
 import com.datastax.driver.core.BoundStatement
 import com.datastax.driver.core.Session
-import  com.rustyrazorblade.easycassstress.profiles.IStressProfile
-import  com.rustyrazorblade.easycassstress.profiles.IStressRunner
-import  com.rustyrazorblade.easycassstress.profiles.Operation
+import com.rustyrazorblade.easycassstress.profiles.IStressProfile
+import com.rustyrazorblade.easycassstress.profiles.IStressRunner
+import com.rustyrazorblade.easycassstress.profiles.Operation
 import io.mockk.mockk
-
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-
 internal class PluginTest {
-
-    lateinit var plugin : Plugin
+    lateinit var plugin: Plugin
 
     @BeforeEach
     fun setPlugin() {
@@ -23,16 +20,16 @@ internal class PluginTest {
     }
 
     class Demo : IStressProfile {
-
         @WorkloadParameter("Number of rows for each")
-        var rows : Int = 100
+        var rows: Int = 100
 
         @WorkloadParameter("First name of person")
-        var name : String = "Jon"
+        var name: String = "Jon"
 
-        var notWorkloadParameter : String = "oh nooo"
+        var notWorkloadParameter: String = "oh nooo"
 
         override fun prepare(session: Session) = Unit
+
         override fun schema(): List<String> = listOf()
 
         override fun getRunner(context: StressContext): IStressRunner {
@@ -53,7 +50,6 @@ internal class PluginTest {
                 }
             }
         }
-
     }
 
     // simple test, but ¯\_(ツ)_/¯
@@ -66,9 +62,11 @@ internal class PluginTest {
 
     @Test
     fun testApplyDynamicSettings() {
-
-        val fields = mapOf("rows" to "10",
-                            "name" to "Anthony")
+        val fields =
+            mapOf(
+                "rows" to "10",
+                "name" to "Anthony",
+            )
 
         plugin.applyDynamicSettings(fields)
 
@@ -77,7 +75,6 @@ internal class PluginTest {
         assertThat(instance.rows).isEqualTo(10)
         assertThat(instance.name).isEqualTo("Anthony")
     }
-
 
     @Test
     fun testGetProperty() {
@@ -97,5 +94,4 @@ internal class PluginTest {
         val params = plugin.getCustomParams()
         println(params)
     }
-
 }

@@ -1,16 +1,11 @@
 package com.rustyrazorblade.easycassstress.converters
 
-import com.datastax.driver.core.ConsistencyLevel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-
-import org.junit.jupiter.api.Assertions.*
-
 import kotlin.test.assertFailsWith
 
 internal class HumanReadableTimeConverterTest {
-
     lateinit var converter: HumanReadableTimeConverter
 
     @BeforeEach
@@ -32,6 +27,6 @@ internal class HumanReadableTimeConverterTest {
 
     @Test
     fun convertAndFail() {
-        assertFailsWith<java.lang.IllegalArgumentException> {val cl = converter.convert("BLAh")}
+        assertFailsWith<java.lang.IllegalArgumentException> { val cl = converter.convert("BLAh") }
     }
 }

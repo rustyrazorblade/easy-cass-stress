@@ -1,12 +1,8 @@
 package com.rustyrazorblade.easycassstress.generators
 
-import org.junit.jupiter.api.Assertions.*
-
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class FunctionLoaderTest {
-
     @Test
     operator fun iterator() {
     }

@@ -5,10 +5,8 @@ import org.apache.logging.log4j.kotlin.logger
 data class Field(val table: String, val field: String)
 
 class FieldFactory(private val table: String) {
-    fun getField(field: String) : Field = Field(table, field)
+    fun getField(field: String): Field = Field(table, field)
 }
-
-
 
 /**
  * Registry for data generators
@@ -20,39 +18,43 @@ class FieldFactory(private val table: String) {
  * Ideally we have enough here to simulate a lot (call it 90%) of common workloads
  *
  */
-class Registry(val defaults: MutableMap<Field, FieldGenerator> = mutableMapOf(),
-               val overrides: MutableMap<Field, FieldGenerator> = mutableMapOf()) {
-
+class Registry(
+    val defaults: MutableMap<Field, FieldGenerator> = mutableMapOf(),
+    val overrides: MutableMap<Field, FieldGenerator> = mutableMapOf(),
+) {
     companion object {
-
         val log = logger()
 
         val functionLoader = FunctionLoader()
 
-        fun create(defaults: MutableMap<Field, FieldGenerator>) : Registry {
+        fun create(defaults: MutableMap<Field, FieldGenerator>): Registry {
             return Registry(defaults)
         }
 
-        fun create() : Registry {
+        fun create(): Registry {
             return Registry()
         }
-
     }
 
-    fun getFunctions() : Iterator<FunctionDescription> =
-        functionLoader.iterator()
+    fun getFunctions(): Iterator<FunctionDescription> = functionLoader.iterator()
 
     /**
      * Sets the default generator for a table / field pair
      * Not all generators work on all fields
      */
-    fun setDefault(table: String, field: String, generator: FieldGenerator) : Registry {
+    fun setDefault(
+        table: String,
+        field: String,
+        generator: FieldGenerator,
+    ): Registry {
         val f = Field(table, field)
         return this.setDefault(f, generator)
     }
 
-
-    fun setDefault(field: Field, generator: FieldGenerator) : Registry {
+    fun setDefault(
+        field: Field,
+        generator: FieldGenerator,
+    ): Registry {
         defaults[field] = generator
         return this
     }
@@ -64,33 +66,44 @@ class Registry(val defaults: MutableMap<Field, FieldGenerator> = mutableMapOf(),
      * @param table table that's affected
      * @param field field that's affected
      */
-    fun setOverride(table: String, field: String, generator: FieldGenerator) : Registry {
-
+    fun setOverride(
+        table: String,
+        field: String,
+        generator: FieldGenerator,
+    ): Registry {
         val f = Field(table, field)
 
         return this.setOverride(f, generator)
     }
 
-    fun setOverride(field: Field, generator: FieldGenerator) : Registry {
+    fun setOverride(
+        field: Field,
+        generator: FieldGenerator,
+    ): Registry {
         overrides[field] = generator
         return this
     }
 
-    fun setOverride(table: String, field: String, parsedField: ParsedFieldFunction) : Registry {
+    fun setOverride(
+        table: String,
+        field: String,
+        parsedField: ParsedFieldFunction,
+    ): Registry {
         val instance = functionLoader.getInstance(parsedField)
         return setOverride(table, field, instance)
     }
 
-    fun getGenerator(table: String, field: String) : FieldGenerator {
+    fun getGenerator(
+        table: String,
+        field: String,
+    ): FieldGenerator {
         log.info("Getting generator for $table.$field")
         val tmp = Field(table, field)
-        if(tmp in overrides)
+        if (tmp in overrides) {
             return overrides[tmp]!!
+        }
         return defaults[tmp]!!
     }
-
 }
 
-class FieldNotFoundException(message: String) : Throwable() {
-
-}
+class FieldNotFoundException(message: String) : Throwable()
