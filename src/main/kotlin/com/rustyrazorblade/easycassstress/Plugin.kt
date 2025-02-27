@@ -1,6 +1,6 @@
 package com.rustyrazorblade.easycassstress
 
-import com.rustyrazorblade.easycassstress.profiles.IStressProfile
+import com.rustyrazorblade.easycassstress.workloads.IStressProfile
 import org.apache.logging.log4j.kotlin.logger
 import org.reflections.Reflections
 import java.util.Optional

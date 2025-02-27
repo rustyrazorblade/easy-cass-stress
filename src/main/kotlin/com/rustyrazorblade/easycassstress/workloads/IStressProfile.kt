@@ -1,4 +1,4 @@
-package com.rustyrazorblade.easycassstress.profiles
+package com.rustyrazorblade.easycassstress.workloads
 
 import com.codahale.metrics.Timer.Context
 import com.datastax.driver.core.BoundStatement
@@ -37,6 +37,11 @@ interface IStressRunner {
     fun onSuccess(
         op: Operation.Mutation,
         result: ResultSet?,
+    ) { }
+
+    fun onSuccess(
+        op: Operation.DDL,
+        result: ResultSet?
     ) { }
 }
 
@@ -79,7 +84,7 @@ interface IStressProfile {
     fun getRunner(context: StressContext): IStressRunner
 
     /**
-     * returns a map of generators cooresponding to the different fields
+     * returns a map of generators corresponding to the different fields
      * it's required to specify all fields that use a generator
      * some fields don't, like TimeUUID or the first partition key
      * This is optional, but encouraged
@@ -100,7 +105,9 @@ interface IStressProfile {
     fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> = Optional.empty()
 }
 
-sealed class Operation(val bound: BoundStatement?) {
+sealed class Operation(val bound: BoundStatement? = null,
+                       val statement: String? = null) {
+
     // we're going to track metrics on the mutations differently
     // inserts will also carry data that might be saved for later validation
     // clustering keys won't be realistic to compute in the framework
@@ -113,4 +120,5 @@ sealed class Operation(val bound: BoundStatement?) {
     class Deletion(bound: BoundStatement) : Operation(bound)
 
     class Stop : Operation(null)
+    class DDL(statement: String) : Operation(null, statement=statement)
 }
