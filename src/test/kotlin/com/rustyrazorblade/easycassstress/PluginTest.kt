@@ -2,9 +2,9 @@ package com.rustyrazorblade.easycassstress
 
 import com.datastax.driver.core.BoundStatement
 import com.datastax.driver.core.Session
-import com.rustyrazorblade.easycassstress.profiles.IStressProfile
-import com.rustyrazorblade.easycassstress.profiles.IStressRunner
-import com.rustyrazorblade.easycassstress.profiles.Operation
+import com.rustyrazorblade.easycassstress.workloads.IStressProfile
+import com.rustyrazorblade.easycassstress.workloads.IStressRunner
+import com.rustyrazorblade.easycassstress.workloads.Operation
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType

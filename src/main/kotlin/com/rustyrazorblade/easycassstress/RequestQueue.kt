@@ -1,8 +1,8 @@
 package com.rustyrazorblade.easycassstress
 
 import com.codahale.metrics.Timer
-import com.rustyrazorblade.easycassstress.profiles.IStressRunner
-import com.rustyrazorblade.easycassstress.profiles.Operation
+import com.rustyrazorblade.easycassstress.workloads.IStressRunner
+import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
 import java.time.LocalDateTime
 import java.util.concurrent.ArrayBlockingQueue
@@ -51,6 +51,8 @@ class RequestQueue(
                             is Operation.Mutation -> context.metrics.mutations
                             is Operation.Deletion -> context.metrics.deletions
                             is Operation.Stop -> throw OperationStopException()
+                            // maybe this should be under DDL, it's a weird case.
+                            is Operation.DDL -> context.metrics.mutations
                         }
                     }
                 }

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.kotlin.logger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.Locale
 import kotlin.test.fail
 
 internal class SchemaBuilderTest {
@@ -28,7 +29,7 @@ internal class SchemaBuilderTest {
         val result = createTable.withCompaction("{ 'class': 'LeveledCompactionStrategy', 'sstable_size_in_mb': 100}").build()
         assertThat(result).contains("sstable_size_in_mb': 100")
         assertThat(result).doesNotContain("compression")
-        assertThat(result.toLowerCase()).containsOnlyOnce("with")
+        assertThat(result.lowercase(Locale.getDefault())).containsOnlyOnce("with")
     }
 
     @Test
@@ -56,7 +57,7 @@ internal class SchemaBuilderTest {
                 .withCompression("{'enabled':enabled}")
                 .build()
 
-        assertThat(query.toLowerCase()).containsOnlyOnce("with")
+        assertThat(query.lowercase(Locale.getDefault())).containsOnlyOnce("with")
     }
 
     @Test

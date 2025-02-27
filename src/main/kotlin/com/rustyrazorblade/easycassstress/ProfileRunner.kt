@@ -2,14 +2,15 @@ package com.rustyrazorblade.easycassstress
 
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.MoreExecutors
-import com.rustyrazorblade.easycassstress.profiles.IStressProfile
+import com.rustyrazorblade.easycassstress.workloads.IStressProfile
+import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
 import java.time.Duration
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-class PartitionKeyGeneratorException(e: String) : Exception()
+class PartitionKeyGeneratorException : Exception()
 
 /**
  * Single threaded profile runner.
@@ -43,7 +44,7 @@ class ProfileRunner(
                     "normal" -> PartitionKeyGenerator.normal(prefix)
                     "random" -> PartitionKeyGenerator.random(prefix)
                     "sequence" -> PartitionKeyGenerator.sequence(prefix)
-                    else -> throw PartitionKeyGeneratorException("not a valid generator")
+                    else -> throw PartitionKeyGeneratorException()
                 }
             return partitionKeyGenerator
         }
@@ -122,19 +123,30 @@ class ProfileRunner(
 
         // pull requests off the queue instead of using generateKey
         // move the getNextOperation into the queue thing
+        var paginate = context.mainArguments.paginate
         for (op in queue.getNextOperation()) {
-            val future = context.session.executeAsync(op.bound)
+            val future = when (op) {
+                is Operation.DDL -> {
+                    paginate = false
+                    context.session.executeAsync(op.statement)
+                }
+                else -> {
+                    context.session.executeAsync(op.bound)
+
+                }
+            }
             Futures.addCallback(
                 future,
                 OperationCallback(
                     context,
                     runner,
                     op,
-                    paginate = context.mainArguments.paginate,
+                    paginate = paginate,
                     writeHdr = context.mainArguments.hdrHistogramPrefix != "",
                 ),
                 MoreExecutors.directExecutor(),
             )
+
         }
     }
 

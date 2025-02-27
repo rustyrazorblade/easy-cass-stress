@@ -44,7 +44,7 @@ dependencies {
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.3'
 
     // https://mvnrepository.com/artifact/com.datastax.cassandra/cassandra-driver-core
-    implementation group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.11.5'
+    implementation "org.apache.cassandra:cassandra-driver-core:3.12.1"
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4'
 
     // https://mvnrepository.com/artifact/org.reflections/reflections
@@ -94,10 +94,10 @@ dependencies {
 }
 
 compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11
 }
 
 sourceSets {
@@ -141,7 +141,7 @@ ospackage {
     vendor "Rustyrazorblade Consulting"
     url "http://rustyrazorblade.com/easy-cass-stress/"
     license "Apache License 2.0"
-    description "Stress Tool for Apache Cassandra by The Last Pickle"
+    description "Stress Tool for Apache Cassandra by Rustyrazorblade Consulting"
 }
 
 buildDeb {
@@ -173,47 +173,6 @@ assemble.mustRunAfter clean
 applicationDistribution.from("LICENSE.txt") {
     into ""
 }
-
-//
-//task uploadDeb(type: Exec) {
-//    group = "Publish"
-//    workingDir 'build/distributions'
-//
-//    def debPackage = "easy-cass-stress_${version}_all.deb"
-//
-//    // get the deb package
-//
-//    logger.info("Uploading DEB $debPackage")
-//    commandLine "curl", "-T", debPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/rustyrazorblade/tlp-tools-deb/easy-cass-stress/${version}/$debPackage;deb_distribution=weezy,bionic,jessie,xenial;deb_component=main;deb_architecture=amd64;publish=1"
-//
-//}
-//
-//task uploadRpm(type: Exec) {
-//    group = "Publish"
-//    workingDir 'build/distributions'
-//
-//    def rpmPackage = "easy-cass-stress-${version}.noarch.rpm"
-//
-//    logger.info("Uploading RPM $rpmPackage")
-//    commandLine "curl", "-T", rpmPackage, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/rustyrazorblade/tlp-tools-rpm/easy-cass-stress/${version}/$rpmPackage;publish=1"
-//}
-//
-//task uploadTar(type:Exec) {
-//    group = "Publish"
-//    workingDir 'build/distributions'
-//    def tarball = "easy-cass-stress-${version}.tar"
-//
-//    logger.info("Uploading Tar $tarball")
-//    commandLine "curl", "-T", tarball, "-u", System.getenv("BINTRAY_USER") + ":" + System.getenv("BINTRAY_KEY"), "https://api.bintray.com/content/rustyrazorblade/tlp-tools-tarball/easy-cass-stress/${version}/$tarball;publish=1"
-//}
-//
-//task uploadAll  {
-//    group = "Publish"
-//    dependsOn "jib"
-//    dependsOn "uploadDeb"
-//    dependsOn "uploadRpm"
-//    dependsOn "uploadTar"
-//}
 
 wrapper {
     distributionType = Wrapper.DistributionType.ALL

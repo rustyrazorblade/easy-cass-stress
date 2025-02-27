@@ -2,8 +2,8 @@ package com.rustyrazorblade.easycassstress
 
 import com.datastax.driver.core.ResultSet
 import com.google.common.util.concurrent.FutureCallback
-import com.rustyrazorblade.easycassstress.profiles.IStressRunner
-import com.rustyrazorblade.easycassstress.profiles.Operation
+import com.rustyrazorblade.easycassstress.workloads.IStressRunner
+import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
 
 /**
@@ -58,6 +58,12 @@ class OperationCallback(
                 if (writeHdr) {
                     context.metrics.selectHistogram.recordValue(time)
                 }
+            }
+            is Operation.DDL -> {
+                if (writeHdr) {
+                    context.metrics.mutationHistogram.recordValue(time)
+                }
+                runner.onSuccess(op, result)
             }
             is Operation.Stop -> {
                 throw OperationStopException()

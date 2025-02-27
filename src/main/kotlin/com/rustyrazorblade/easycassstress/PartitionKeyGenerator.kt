@@ -48,7 +48,7 @@ class PartitionKeyGenerator(
         fun normal(prefix: String = "test"): PartitionKeyGenerator {
             val generator = RandomDataGenerator()
             return PartitionKeyGenerator({ max ->
-                var result = 0L
+                var result: Long
                 while (true) {
                     val mid = (max / 2).toDouble()
                     result = generator.nextGaussian(mid, mid / 4.0).toLong()

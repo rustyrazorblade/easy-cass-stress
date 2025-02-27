@@ -1,4 +1,4 @@
-package com.rustyrazorblade.easycassstress.profiles
+package com.rustyrazorblade.easycassstress.workloads
 
 import com.datastax.driver.core.PreparedStatement
 import com.datastax.driver.core.ResultSet
