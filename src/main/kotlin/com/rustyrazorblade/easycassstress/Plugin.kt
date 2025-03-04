@@ -68,12 +68,26 @@ data class Plugin(
             if (prop.returnType.isSubtypeOf(String::class.createType())) {
                 log.debug("Found the type, we have a String, setting the value")
                 prop.setter.call(instance, value)
+                continue
             }
 
             // Boolean
             if (prop.returnType.isSubtypeOf(Boolean::class.createType())) {
                 log.debug("Found the type, we have a Boolean, setting the value")
                 prop.setter.call(instance, value.toBoolean())
+                continue
+            }
+
+            if (prop.returnType.isSubtypeOf(Float::class.createType())) {
+                log.debug("Found the type, we have a Boolean, setting the value")
+                prop.setter.call(instance, value.toFloat())
+                continue
+            }
+
+            if (prop.returnType.isSubtypeOf(Double::class.createType())) {
+                log.debug("Found the type, we have a Boolean, setting the value")
+                prop.setter.call(instance, value.toDouble())
+                continue
             }
         }
     }
