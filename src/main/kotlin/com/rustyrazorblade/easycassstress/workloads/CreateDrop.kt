@@ -5,6 +5,10 @@ import com.datastax.driver.core.Session
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
+import com.rustyrazorblade.easycassstress.generators.Field
+import com.rustyrazorblade.easycassstress.generators.FieldFactory
+import com.rustyrazorblade.easycassstress.generators.FieldGenerator
+import com.rustyrazorblade.easycassstress.generators.functions.Random
 import org.apache.logging.log4j.kotlin.logger
 import java.util.Timer
 import java.util.concurrent.CountDownLatch
@@ -95,6 +99,8 @@ class CreateDrop : IStressProfile {
         }
         latch.await()
 
+        val field = context.registry.getGenerator("create_drop", "f")
+
         return object : IStressRunner {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
@@ -105,7 +111,7 @@ class CreateDrop : IStressProfile {
 
                 // placeholder for now
                 for (i in 0 until fields) {
-                    boundValues.add("test")
+                    boundValues.add(field.getText())
                 }
 
                 return Operation.Mutation(table.insert.bind(*boundValues.toTypedArray()))
@@ -123,5 +129,14 @@ class CreateDrop : IStressProfile {
         }
     }
 
-
+    override fun getFieldGenerators(): Map<Field, FieldGenerator> {
+        val field = FieldFactory("create_drop")
+        return mapOf(
+            field.getField("f") to
+                Random().apply {
+                    min = 10
+                    max = 20
+                }
+        )
+    }
 }
