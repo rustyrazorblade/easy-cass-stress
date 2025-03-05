@@ -68,17 +68,13 @@ class CreateDrop : IStressProfile {
         val timer = Timer()
         var latch = CountDownLatch(1)
 
-        fun getRandomTable() : Table {
-            if (currentTables.size <= 1) {
-                throw IllegalStateException("Not enough tables to get a random element")
+        fun getRandomTable() : Table =
+            if (currentTables.size == 1) {
+                currentTables.first()
+            } else {
+                val randomIndex = 1 + kotlin.random.Random.nextInt(currentTables.size - 1)
+                currentTables.elementAt(randomIndex)
             }
-            // Skip the first element and get a random one from the remaining elements
-            val startIndex = 1 // Skip first element
-
-            val randomIndex = startIndex + kotlin.random.Random.nextInt(currentTables.size - 1)
-            return currentTables.elementAt(randomIndex)
-        }
-
 
         logger.info("Scheduling DDL every $seconds seconds")
         timer.schedule(0L,
@@ -87,20 +83,28 @@ class CreateDrop : IStressProfile {
             if (currentTables.size < activeTables) {
                 val next = tableCount.addAndGet(1)
                 val name = "create_drop_${context.thread}_${context.mainArguments.id}_$next"
-                val query = """CREATE TABLE IF NOT EXISTS $name ( id text, $createFieldsWithType, primary key (id) )"""
-                context.session.execute(query)
+                try {
+                    val query =
+                        """CREATE TABLE IF NOT EXISTS $name ( id text, $createFieldsWithType, primary key (id) )"""
+                    context.session.execute(query)
 
-                val insert = "INSERT INTO $name (id, $fieldStr) VALUES (?, $placeholders)"
+                    val insert = "INSERT INTO $name (id, $fieldStr) VALUES (?, $placeholders)"
 
-                val insertPrepared = context.session.prepare(insert)
-                val selectPrepared = context.session.prepare("SELECT * from $name WHERE id = ?")
-                val deletePrepared = context.session.prepare("DELETE from $name WHERE id = ?")
+                    val insertPrepared = context.session.prepare(insert)
+                    val selectPrepared = context.session.prepare("SELECT * from $name WHERE id = ?")
+                    val deletePrepared = context.session.prepare("DELETE from $name WHERE id = ?")
 
-                currentTables.addLast(
-                    Table(name,
-                        insert=insertPrepared,
-                        select = selectPrepared,
-                        delete=deletePrepared))
+                    currentTables.addLast(
+                        Table(
+                            name,
+                            insert = insertPrepared,
+                            select = selectPrepared,
+                            delete = deletePrepared
+                        )
+                    )
+                } catch (e: Exception) {
+                    logger.error(e)
+                }
             }
             else {
                 val name = currentTables.removeFirst()
