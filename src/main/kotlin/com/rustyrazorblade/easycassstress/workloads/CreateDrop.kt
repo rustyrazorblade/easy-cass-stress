@@ -68,6 +68,18 @@ class CreateDrop : IStressProfile {
         val timer = Timer()
         var latch = CountDownLatch(1)
 
+        fun getRandomTable() : Table {
+            if (currentTables.size <= 1) {
+                throw IllegalStateException("Not enough tables to get a random element")
+            }
+            // Skip the first element and get a random one from the remaining elements
+            val startIndex = 1 // Skip first element
+
+            val randomIndex = startIndex + kotlin.random.Random.nextInt(currentTables.size - 1)
+            return currentTables.elementAt(randomIndex)
+        }
+
+
         logger.info("Scheduling DDL every $seconds seconds")
         timer.schedule(0L,
             seconds.toLong() * 1000) {
@@ -105,7 +117,7 @@ class CreateDrop : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 // consider removing this to be able to test concurrent schema modifications
-                val table = currentTables.last()
+                val table = getRandomTable()
 
                 val boundValues = mutableListOf(partitionKey.getText())
 
@@ -119,11 +131,11 @@ class CreateDrop : IStressProfile {
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                return Operation.SelectStatement(currentTables.last().select.bind(partitionKey.getText()))
+                return Operation.SelectStatement(getRandomTable().select.bind(partitionKey.getText()))
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                return Operation.Deletion(currentTables.last().delete.bind(partitionKey.getText()))
+                return Operation.Deletion(getRandomTable().delete.bind(partitionKey.getText()))
             }
 
         }
