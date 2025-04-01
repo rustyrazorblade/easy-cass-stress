@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.CqlSession
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -35,7 +35,7 @@ class CreateDrop : IStressProfile {
 
     var logger = logger()
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
     }
 
     override fun schema(): List<String> {
@@ -130,16 +130,28 @@ class CreateDrop : IStressProfile {
                     boundValues.add(field.getText())
                 }
 
-                return Operation.Mutation(table.insert.bind(*boundValues.toTypedArray()))
+                // Build bound statement one parameter at a time in v4
+                val bound = table.insert.bind()
+                bound.setString(0, partitionKey.getText())
+                for (i in 0 until fields) {
+                    bound.setString(i+1, field.getText())
+                }
+                return Operation.Mutation(bound)
 
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                return Operation.SelectStatement(getRandomTable().select.bind(partitionKey.getText()))
+                return Operation.SelectStatement(
+                    getRandomTable().select.bind()
+                        .setString(0, partitionKey.getText())
+                )
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                return Operation.Deletion(getRandomTable().delete.bind(partitionKey.getText()))
+                return Operation.Deletion(
+                    getRandomTable().delete.bind()
+                        .setString(0, partitionKey.getText())
+                )
             }
 
         }

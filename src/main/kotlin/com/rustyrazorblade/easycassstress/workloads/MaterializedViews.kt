@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.CqlSession
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.generators.Field
@@ -13,7 +13,7 @@ import com.rustyrazorblade.easycassstress.generators.functions.USCities
 import java.util.concurrent.ThreadLocalRandom
 
 class MaterializedViews : IStressProfile {
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         insert = session.prepare("INSERT INTO person (name, age, city) values (?, ?, ?)")
         selectBase = session.prepare("SELECT * FROM person WHERE name = ?")
         selectByAge = session.prepare("SELECT * FROM person_by_age WHERE age = ?")
@@ -46,7 +46,12 @@ class MaterializedViews : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val num = ThreadLocalRandom.current().nextInt(1, 110)
-                return Operation.Mutation(insert.bind(partitionKey.getText(), num, cities.getText()))
+                return Operation.Mutation(
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, num)
+                        .setString(2, cities.getText())
+                )
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
@@ -54,16 +59,25 @@ class MaterializedViews : IStressProfile {
                 val result =
                     when (selectCount % 2L) {
                         0L ->
-                            Operation.SelectStatement(selectByAge.bind(num))
+                            Operation.SelectStatement(
+                                selectByAge.bind()
+                                    .setInt(0, num)
+                            )
                         else ->
-                            Operation.SelectStatement(selectByCity.bind("test"))
+                            Operation.SelectStatement(
+                                selectByCity.bind()
+                                    .setString(0, "test")
+                            )
                     }
                 selectCount++
                 return result
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                return Operation.Deletion(deleteBase.bind(partitionKey.getText()))
+                return Operation.Deletion(
+                    deleteBase.bind()
+                        .setString(0, partitionKey.getText())
+                )
             }
         }
     }

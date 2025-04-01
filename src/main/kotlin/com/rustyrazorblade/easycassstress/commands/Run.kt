@@ -6,14 +6,12 @@ import com.beust.jcommander.Parameters
 import com.beust.jcommander.converters.IParameterSplitter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.ScheduledReporter
-import com.datastax.driver.core.Cluster
-import com.datastax.driver.core.ConsistencyLevel
-import com.datastax.driver.core.HostDistance
-import com.datastax.driver.core.PoolingOptions
-import com.datastax.driver.core.QueryOptions
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy
-import com.datastax.driver.core.policies.HostFilterPolicy
-import com.datastax.driver.core.policies.RoundRobinPolicy
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.ConsistencyLevel
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy
 import com.google.common.base.Preconditions
 import com.google.common.util.concurrent.RateLimiter
 import com.rustyrazorblade.easycassstress.CoordinatorHostPredicate
@@ -237,7 +235,7 @@ class Run(val command: String) : IStressCommand {
     var ttl: Long = 0
 
     @Parameter(names = ["--dc"], description = "The data center to which requests should be sent")
-    var dc: String = ""
+    var dc: String = System.getenv("EASY_CASS_STRESS_DEFAULT_DC") ?: ""
 
     @DynamicParameter(names = ["--workload.", "-w."], description = "Override workload specific parameters.")
     var workloadParameters: Map<String, String> = mutableMapOf()
@@ -265,65 +263,67 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--hdr"], description = "Print HDR Histograms using this prefix")
     var hdrHistogramPrefix = ""
 
-    /**
-     * Lazily generate query options
-     */
-    val options by lazy {
-        val tmp = QueryOptions().setConsistencyLevel(consistencyLevel).setSerialConsistencyLevel(serialConsistencyLevel)
+    val session by lazy {
+        // Build a programmatic config
+        var configLoaderBuilder = DriverConfigLoader.programmaticBuilder()
+            // Default consistency levels
+            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, consistencyLevel.toString())
+            .withString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY, serialConsistencyLevel.toString())
+            // connection pooling
+            .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, maxConnections)
+            .withInt(DefaultDriverOption.CONNECTION_POOL_REMOTE_SIZE, maxConnections)
+            .withInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS, maxRequestsPerConnection)
+
+            // might not be practical
+            .withString(DefaultDriverOption.REQUEST_TIMEOUT, "30s")
+            .withString(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT, "10s")
+            .withString(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, "30s")
+
+        // Configure page size if specified
         if (paging != null) {
             println("Using custom paging size of $paging")
-            tmp.setFetchSize(paging!!)
+            configLoaderBuilder = configLoaderBuilder.withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, paging!!)
         }
-        tmp
-    }
 
-    val session by lazy {
+        // Add DC-aware policy if needed
+        if (dc.isNotEmpty()) {
+            // In v4, DC awareness is now part of the default policy, just need to configure it
+            configLoaderBuilder = configLoaderBuilder
+                .withString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, dc)
+                // Remote DCs won't be used at all
+                .withString(DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC, "0")
+        }
 
-        var builder =
-            Cluster.builder()
-                .addContactPoint(host)
-                .withPort(cqlPort)
-                .withCredentials(username, password)
-                .withQueryOptions(options)
-                .withPoolingOptions(
-                    PoolingOptions()
-                        .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, maxConnections)
-                        .setConnectionsPerHost(HostDistance.REMOTE, coreConnections, maxConnections)
-                        .setMaxRequestsPerConnection(HostDistance.LOCAL, maxRequestsPerConnection)
-                        .setMaxRequestsPerConnection(HostDistance.REMOTE, maxRequestsPerConnection),
-                )
+        // Build the CqlSession
+        val sessionBuilder = CqlSession.builder()
+            .addContactPoint(java.net.InetSocketAddress(host, cqlPort))
+            .withAuthCredentials(username, password)
+            .withConfigLoader(configLoaderBuilder.build())
+
+        // Add SSL if needed
         if (ssl) {
-            builder = builder.withSSL()
+            sessionBuilder.withSslContext(javax.net.ssl.SSLContext.getDefault())
         }
 
-        if (dc != "") {
-            builder.withLoadBalancingPolicy(
-                DCAwareRoundRobinPolicy.builder()
-                    .withLocalDc(dc)
-                    .withUsedHostsPerRemoteDc(0)
-                    .build(),
-            )
-        }
-
+        // Configure coordinator-only mode if needed
         if (coordinatorOnlyMode) {
             println("Using experimental coordinator only mode.")
-            val policy = HostFilterPolicy(RoundRobinPolicy(), CoordinatorHostPredicate())
-            builder = builder.withLoadBalancingPolicy(policy)
+            // In v4, we would need a custom implementation of NodeFilterPolicy
+            // This is just a placeholder for now
+            println("WARNING: Coordinator-only mode is not fully implemented with driver v4")
         }
-
-        val cluster = builder.build()
-
-        // get all the initial schema
-        println("Creating schema")
-
+        
+        // Show settings about to be used
         println(
             "Executing $iterations operations with consistency level $consistencyLevel and serial consistency " +
-                "level $serialConsistencyLevel",
+                "level $serialConsistencyLevel"
         )
-
-        val session = cluster.connect()
-
-        // println("Connected")
+        
+        // Build the session
+        val session = sessionBuilder.build()
+        
+        // No post-initialization steps needed with the new driver
+        
         println("Connected to Cassandra cluster.")
         session
     }

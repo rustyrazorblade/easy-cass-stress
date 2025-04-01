@@ -52,4 +52,9 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     val mutationHistogram = SynchronizedHistogram(2)
     val selectHistogram = SynchronizedHistogram(2)
     val deleteHistogram = SynchronizedHistogram(2)
+    
+    // Start timer method for driver v4 compatibility
+    fun startTimer(): com.codahale.metrics.Timer.Context {
+        return mutations.time()
+    }
 }

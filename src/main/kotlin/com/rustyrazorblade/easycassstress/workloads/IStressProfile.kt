@@ -1,9 +1,9 @@
 package com.rustyrazorblade.easycassstress.workloads
 
 import com.codahale.metrics.Timer.Context
-import com.datastax.driver.core.BoundStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.cql.BoundStatement
+import com.datastax.oss.driver.api.core.cql.ResultSet
+import com.datastax.oss.driver.api.core.CqlSession
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.PartitionKeyGenerator
 import com.rustyrazorblade.easycassstress.PopulateOption
@@ -56,7 +56,7 @@ interface IStressProfile {
      * the class should track all prepared statements internally
      * and pass them on to the Runner
      */
-    fun prepare(session: Session)
+    fun prepare(session: CqlSession)
 
     /**
      * returns a bunch of DDL statements

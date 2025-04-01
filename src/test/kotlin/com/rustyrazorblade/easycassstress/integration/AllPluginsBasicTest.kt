@@ -1,8 +1,11 @@
 package com.rustyrazorblade.easycassstress.integration
 
-import com.datastax.driver.core.Cluster
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader
 import com.rustyrazorblade.easycassstress.Plugin
 import com.rustyrazorblade.easycassstress.commands.Run
+import java.net.InetSocketAddress
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
@@ -20,10 +23,17 @@ annotation class AllPlugins
 class AllPluginsBasicTest {
     val ip = System.getenv("EASY_CASS_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
 
-    val connection =
-        Cluster.builder()
-            .addContactPoint(ip)
-            .build().connect()
+    var configLoaderBuilder = DriverConfigLoader.programmaticBuilder()
+        .withString(DefaultDriverOption.REQUEST_TIMEOUT, "30s")
+        .withString(DefaultDriverOption.CONTROL_CONNECTION_TIMEOUT, "10s")
+        .withString(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, "30s")
+
+    private val connection =
+        CqlSession.builder()
+        .addContactPoint(InetSocketAddress(ip, 9042))
+        .withLocalDatacenter("datacenter1")
+        .withConfigLoader(configLoaderBuilder.build())
+        .build()
 
     lateinit var run: Run
 
@@ -40,6 +50,10 @@ class AllPluginsBasicTest {
             }
     }
 
+    init {
+        println("Running tests against $ip")
+    }
+
     @BeforeEach
     fun cleanup() {
         connection.execute("DROP KEYSPACE IF EXISTS easy_cass_stress")
@@ -50,6 +64,10 @@ class AllPluginsBasicTest {
     fun shutdownMetrics() {
     }
 
+    /**
+     * This test is configured to run against a local instance on a laptop, using the default DC name "datacenter1"
+     * To run against a real cluster, we'd need to un-hardcode the test.
+     */
     @AllPlugins
     @ParameterizedTest(name = "run test {0}")
     fun runEachTest(plugin: Plugin) {
@@ -61,6 +79,8 @@ class AllPluginsBasicTest {
             partitionValues = 1000
             prometheusPort = prometheusPort++
             threads = 2
+            replication = "{'class': 'SimpleStrategy', 'replication_factor':1 }"
+            dc = "datacenter1"
         }.execute()
     }
 }

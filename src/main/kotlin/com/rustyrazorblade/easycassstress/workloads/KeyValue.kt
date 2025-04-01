@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.CqlSession
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.generators.Field
@@ -14,7 +14,7 @@ class KeyValue : IStressProfile {
     lateinit var select: PreparedStatement
     lateinit var delete: PreparedStatement
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         insert = session.prepare("INSERT INTO keyvalue (key, value) VALUES (?, ?)")
         select = session.prepare("SELECT * from keyvalue WHERE key = ?")
         delete = session.prepare("DELETE from keyvalue WHERE key = ?")
@@ -40,19 +40,21 @@ class KeyValue : IStressProfile {
 
         return object : IStressRunner {
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = select.bind(partitionKey.getText())
+                val bound = select.bind().setString(0, partitionKey.getText())
                 return Operation.SelectStatement(bound)
             }
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val data = value.getText()
-                val bound = insert.bind(partitionKey.getText(), data)
+                val bound = insert.bind()
+                    .setString(0, partitionKey.getText())
+                    .setString(1, data)
 
                 return Operation.Mutation(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = delete.bind(partitionKey.getText())
+                val bound = delete.bind().setString(0, partitionKey.getText())
                 return Operation.Deletion(bound)
             }
         }
