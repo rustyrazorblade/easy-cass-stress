@@ -1,6 +1,5 @@
 package com.rustyrazorblade.easycassstress
 
-import com.datastax.oss.driver.api.core.cql.ResultSet
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
@@ -19,12 +18,12 @@ class OperationCallback(
     val op: Operation,
     val paginate: Boolean = false,
     val writeHdr: Boolean = true,
-) : BiConsumer<ResultSet?, Throwable?> {
+) : BiConsumer<AsyncResultSet?, Throwable?> {
     companion object {
         val log = logger()
     }
 
-    override fun accept(result: ResultSet?, t: Throwable?) {
+    override fun accept(result: AsyncResultSet?, t: Throwable?) {
         if (t != null) {
             context.metrics.errors.mark()
             log.error { t }
@@ -35,11 +34,10 @@ class OperationCallback(
             return
         }
 
-        // maybe paginate - in driver v4, we need to implement differently
-        if (paginate && result is AsyncResultSet) {
-            // Paginate through all available pages
-            // This would need a new implementation
-            // fetchNextPage().toCompletableFuture().get()
+        // Handle pagination in driver v4
+        if (paginate && result.hasMorePages()) {
+            // Fetch next page - this could be made async but we'll keep it simple for now
+            result.fetchNextPage()
         }
 
         val time = op.startTime.stop()

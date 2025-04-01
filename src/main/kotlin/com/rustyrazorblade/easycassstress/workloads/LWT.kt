@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
 import com.datastax.oss.driver.api.core.cql.PreparedStatement
-import com.datastax.oss.driver.api.core.cql.ResultSet
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.datastax.oss.driver.api.core.CqlSession
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
@@ -61,8 +61,7 @@ class LWT : IStressProfile {
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 val currentValue = state[partitionKey.getText()]
-                val newValue: Int
-
+                
                 val deletion =
                     if (currentValue != null) {
                         delete.bind()
@@ -77,7 +76,7 @@ class LWT : IStressProfile {
 
             override fun onSuccess(
                 op: Operation.Mutation,
-                result: ResultSet?,
+                result: AsyncResultSet?,
             ) {
                 val payload = op.callbackPayload!! as CallbackPayload
                 state[payload.id] = payload.value

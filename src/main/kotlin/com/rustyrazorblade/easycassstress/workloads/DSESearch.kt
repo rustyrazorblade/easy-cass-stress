@@ -104,7 +104,7 @@ class DSESearch : IStressProfile {
     }
 
     override fun getFieldGenerators(): Map<Field, FieldGenerator> {
-        val search = FieldFactory(table)
+        // Create fields for the table
         return mapOf(
             Field(table, "value_text") to
                 Book().apply {

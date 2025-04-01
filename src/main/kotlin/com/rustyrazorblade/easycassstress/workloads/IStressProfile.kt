@@ -2,7 +2,7 @@ package com.rustyrazorblade.easycassstress.workloads
 
 import com.codahale.metrics.Timer.Context
 import com.datastax.oss.driver.api.core.cql.BoundStatement
-import com.datastax.oss.driver.api.core.cql.ResultSet
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.datastax.oss.driver.api.core.CqlSession
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.PartitionKeyGenerator
@@ -36,12 +36,12 @@ interface IStressRunner {
      */
     fun onSuccess(
         op: Operation.Mutation,
-        result: ResultSet?,
+        result: AsyncResultSet?,
     ) { }
 
     fun onSuccess(
         op: Operation.DDL,
-        result: ResultSet?
+        result: AsyncResultSet?
     ) { }
 }
 

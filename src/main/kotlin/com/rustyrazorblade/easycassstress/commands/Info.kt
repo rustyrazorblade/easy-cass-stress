@@ -29,9 +29,9 @@ class Info : IStressCommand {
             // TODO: Show dynamic parameters
 
             val cols = arrayOf(0, 0, 0)
-            cols[0] = params.map { it.name.length }.max() ?: 0 + 1
-            cols[1] = params.map { it.description.length }.max() ?: 0 + 1
-            cols[2] = params.map { it.type.length }.max() ?: 0 + 1
+            cols[0] = params.map { it.name.length }.maxOrNull() ?: 0 + 1
+            cols[1] = params.map { it.description.length }.maxOrNull() ?: 0 + 1
+            cols[2] = params.map { it.type.length }.maxOrNull() ?: 0 + 1
 
             with(TermColors()) {
                 println(

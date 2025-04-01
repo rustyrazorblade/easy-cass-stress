@@ -48,9 +48,9 @@ class RateLimiterOptimizer(
         }
 
         // determine the latency number that's closest to it's limit
-        getCurrentAndMaxLatency().map {
-            val newLimit = getNextValue(rateLimiter.rate, it.first, it.second)
-            return@map if (newLimit == rateLimiter.rate) {
+        val result = getCurrentAndMaxLatency().map { pair ->
+            val newLimit = getNextValue(rateLimiter.rate, pair.first, pair.second)
+            if (newLimit == rateLimiter.rate) {
                 log.info("Optimizer has nothing to do")
                 newLimit
             } else {
@@ -61,23 +61,24 @@ class RateLimiterOptimizer(
                         "Not increasing rate limiter, not within 10% of the current limit " +
                             "(current: $currentThroughput vs actual:${rateLimiter.rate})",
                     )
-                    return@map rateLimiter.rate
+                    rateLimiter.rate
+                } else {
+                    // if we're decreasing the limit, we want to make sure we don't lower it too quickly,
+                    // overwise we oscillate between too high and too low
+                    if (newLimit < rateLimiter.rate && currentThroughput < rateLimiter.rate * .9) {
+                        log.info(
+                            "Not decreasing rate limiter, current throughput is above current limit " +
+                                "(current: $currentThroughput vs actual: ${rateLimiter.rate})",
+                        )
+                    }
+                    log.info("Updating rate limiter from ${rateLimiter.rate} to $newLimit")
+                    rateLimiter.rate = newLimit
+                    rateLimiter.rate
                 }
-                // if we're decreasing the limit, we want to make sure we don't lower it too quickly,
-                // overwise we oscillate between too high and too low
-                if (newLimit < rateLimiter.rate && currentThroughput < rateLimiter.rate * .9) {
-                    log.info(
-                        "Not decreasing rate limiter, current throughput is above current limit " +
-                            "(current: $currentThroughput vs actual: ${rateLimiter.rate})",
-                    )
-                }
-                log.info("Updating rate limiter from ${rateLimiter.rate} to $newLimit")
-                rateLimiter.rate = newLimit
-                rateLimiter.rate
             }
-        }.orElse(
-            return rateLimiter.rate,
-        )
+        }.orElse(rateLimiter.rate)
+        
+        return result
     }
 
     /**

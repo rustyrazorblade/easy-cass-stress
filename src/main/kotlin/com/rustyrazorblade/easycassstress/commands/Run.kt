@@ -393,10 +393,10 @@ class Run(val command: String) : IStressCommand {
         var optimizer = RateLimiterOptimizer(rateLimiter, metrics, maxReadLatency, maxWriteLatency)
         optimizer.reset()
 
-        val timer =
-            Timer().schedule(10000, 5000) {
-                optimizer.execute()
-            }
+        // Schedule the optimizer to run periodically
+        Timer().schedule(10000, 5000) {
+            optimizer.execute()
+        }
 
         var runnersExecuted = 0L
 

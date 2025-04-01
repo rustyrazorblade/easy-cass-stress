@@ -153,9 +153,11 @@ class ProfileRunner(
                 writeHdr = context.mainArguments.hdrHistogramPrefix != "",
             )
             
-            // Use whenComplete for CompletionStage
-            // Cast callback to BiConsumer<AsyncResultSet?, Throwable?> to satisfy the compiler
-            future.whenComplete(callback as BiConsumer<AsyncResultSet?, Throwable?>)
+            // Use whenComplete for CompletionStage with explicit BiConsumer creation
+            // to avoid unchecked cast warning
+            future.whenComplete(BiConsumer<AsyncResultSet?, Throwable?> { result, error ->
+                callback.accept(result, error)
+            })
 
         }
     }
@@ -204,8 +206,11 @@ class ProfileRunner(
                     writeHdr = context.mainArguments.hdrHistogramPrefix != ""
                 )
                 
-                // Use whenComplete for CompletionStage
-                future.whenComplete(callback as BiConsumer<AsyncResultSet?, Throwable?>)
+                // Use whenComplete for CompletionStage with explicit BiConsumer creation
+                // to avoid unchecked cast warning
+                future.whenComplete(BiConsumer<AsyncResultSet?, Throwable?> { result, error ->
+                    callback.accept(result, error)
+                })
             }
         } catch (_: OperationStopException) {
             log.info("Received Stop signal")

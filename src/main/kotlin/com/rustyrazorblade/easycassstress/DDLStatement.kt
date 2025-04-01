@@ -6,7 +6,8 @@ sealed class DDLStatement {
     class Unknown : DDLStatement()
 
     companion object {
-        fun parse(cql: String): DDLStatement {
+        fun parse(@Suppress("UNUSED_PARAMETER") cql: String): DDLStatement {
+            // TODO: Implement CQL parsing logic
             return DDLStatement.Unknown()
         }
     }
