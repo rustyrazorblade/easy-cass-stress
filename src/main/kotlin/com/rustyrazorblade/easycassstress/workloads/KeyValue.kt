@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.generators.Field
@@ -46,9 +46,10 @@ class KeyValue : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val data = value.getText()
-                val bound = insert.bind()
-                    .setString(0, partitionKey.getText())
-                    .setString(1, data)
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setString(1, data)
 
                 return Operation.Mutation(bound)
             }

@@ -9,14 +9,19 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.sqrt
 
 /**
+ * Dynamically adjusts the rate limiter based on observed latency metrics.
  *
+ * This class implements an adaptive algorithm that:
+ * 1. Gradually increases load during an initial "step phase"
+ * 2. Monitors latencies to ensure they stay within target thresholds
+ * 3. Dynamically adjusts throughput based on current performance metrics
  */
 class RateLimiterOptimizer(
     val rateLimiter: RateLimiter,
     val metrics: Metrics,
     val maxReadLatency: Long?,
     val maxWriteLatency: Long?,
-    var isStepPhase: Boolean = true
+    var isStepPhase: Boolean = true,
 ) {
     companion object {
         val log = logger()
@@ -32,54 +37,99 @@ class RateLimiterOptimizer(
     }
 
     /**
-     * Updates the rate limiter to use the new value and returns the new rate limit
+     * Updates the rate limiter based on current metrics and returns the new rate limit.
+     *
+     * This method handles two operational phases:
+     * 1. Step phase: gradually ramps up load to the initial target
+     * 2. Optimization phase: dynamically adjusts based on latency measurements
+     *
+     * @return The updated rate limit value
      */
     fun execute(): Double {
+        // Handle fresh start or when reset() was called
         if (isStepPhase) {
-            log.info("Stepping rate limiter by $stepValue")
-            val newValue = min(rateLimiter.rate + stepValue, initial)
-            if (newValue == initial) {
-                log.info("Moving to optimization phase")
-                isStepPhase = false
-            }
-            rateLimiter.rate = newValue
-            log.info("New rate limiter value: ${rateLimiter.rate}")
+            return handleStepPhase()
+        }
+
+        // Skip optimization if we don't have enough metrics
+        if (getTotalOperations() < 100) {
+            log.info("Not enough operations performed yet to optimize")
             return rateLimiter.rate
         }
 
-        // determine the latency number that's closest to it's limit
-        val result = getCurrentAndMaxLatency().map { pair ->
-            val newLimit = getNextValue(rateLimiter.rate, pair.first, pair.second)
-            if (newLimit == rateLimiter.rate) {
-                log.info("Optimizer has nothing to do")
-                newLimit
-            } else {
-                // don't increase the rate limiter if we're not within 20% of the target
-                val currentThroughput = getCurrentTotalThroughput()
-                if (newLimit > rateLimiter.rate && currentThroughput < rateLimiter.rate * .9) {
-                    log.info(
-                        "Not increasing rate limiter, not within 10% of the current limit " +
-                            "(current: $currentThroughput vs actual:${rateLimiter.rate})",
-                    )
-                    rateLimiter.rate
-                } else {
-                    // if we're decreasing the limit, we want to make sure we don't lower it too quickly,
-                    // overwise we oscillate between too high and too low
-                    if (newLimit < rateLimiter.rate && currentThroughput < rateLimiter.rate * .9) {
-                        log.info(
-                            "Not decreasing rate limiter, current throughput is above current limit " +
-                                "(current: $currentThroughput vs actual: ${rateLimiter.rate})",
-                        )
-                    }
-                    log.info("Updating rate limiter from ${rateLimiter.rate} to $newLimit")
-                    rateLimiter.rate = newLimit
-                    rateLimiter.rate
-                }
-            }
-        }.orElse(rateLimiter.rate)
-        
-        return result
+        // Get current latency metrics and optimize if available
+        return getCurrentAndMaxLatency()
+            .map { (currentLatency, maxLatency) -> optimizeRateLimit(currentLatency, maxLatency) }
+            .orElse(rateLimiter.rate)
     }
+
+    /**
+     * Handles the initial step phase where we gradually increase load
+     */
+    private fun handleStepPhase(): Double {
+        log.info("Stepping rate limiter by $stepValue")
+        val newValue = min(rateLimiter.rate + stepValue, initial)
+
+        // Check if we've reached the initial target
+        if (newValue >= initial) {
+            log.info("Moving to optimization phase")
+            isStepPhase = false
+        }
+
+        rateLimiter.rate = newValue
+        log.info("New rate limiter value: ${rateLimiter.rate}")
+        return rateLimiter.rate
+    }
+
+    /**
+     * Optimizes the rate limit based on current latency measurements
+     */
+    private fun optimizeRateLimit(
+        currentLatency: Double,
+        maxLatency: Long,
+    ): Double {
+        val currentRate = rateLimiter.rate
+        val newLimit = getNextValue(currentRate, currentLatency, maxLatency)
+
+        // No change needed
+        if (newLimit == currentRate) {
+            log.info("Optimizer has nothing to do")
+            return currentRate
+        }
+
+        // Get current throughput for decision making
+        val currentThroughput = getCurrentTotalThroughput()
+        val utilizationRatio = currentThroughput / currentRate
+
+        // Handle rate increases - only if we're utilizing enough of current capacity
+        if (newLimit > currentRate) {
+            if (utilizationRatio < 0.9) {
+                log.info(
+                    "Not increasing rate limiter, current utilization too low (${utilizationRatio.format(2)})" +
+                        " - throughput: $currentThroughput, limit: $currentRate",
+                )
+                return currentRate
+            }
+        }
+        // Handle rate decreases - avoid oscillation
+        else if (newLimit < currentRate && utilizationRatio < 0.9) {
+            log.info(
+                "Not decreasing rate limiter despite high latency - throughput ($currentThroughput) " +
+                    "is well below current limit ($currentRate)",
+            )
+            return currentRate
+        }
+
+        // Apply the new rate limit
+        log.info("Updating rate limiter from $currentRate to $newLimit")
+        rateLimiter.rate = newLimit
+        return newLimit
+    }
+
+    /**
+     * Format a double to specified decimal places
+     */
+    private fun Double.format(decimals: Int): String = "%.${decimals}f".format(this)
 
     /**
      * Added to prevent the rate limiter from acting when queries aren't running, generally during populate phase
@@ -89,92 +139,170 @@ class RateLimiterOptimizer(
     }
 
     fun getCurrentTotalThroughput(): Double {
-        return metrics.mutations.oneMinuteRate +
-            metrics.selects.oneMinuteRate +
-            metrics.deletions.oneMinuteRate +
-            metrics.populate.oneMinuteRate
+        return metrics.getSelectThroughput() +
+                metrics.getMutationThroughput() +
+            metrics.getDeletionThroughput() +
+            metrics.getPopulateThroughput()
     }
 
     /**
-     * Returns current, target Pair
+     * Determines which latency metric is most critical and returns it with its target.
+     *
+     * This method intelligently selects between read, write, and populate latencies
+     * based on the current test phase and latency ratio to target.
+     *
+     * @return An Optional containing the current latency and its target maximum value
      */
     fun getCurrentAndMaxLatency(): Optional<Pair<Double, Long>> {
+        // Case: No latency targets specified
         if (maxWriteLatency == null && maxReadLatency == null) {
+            log.debug("No latency targets specified")
             return Optional.empty()
         }
-        // if we're in the populate phase
-        if (metrics.mutations.count == 0L &&
+
+        // Case: In populate phase
+        if (isInPopulatePhase()) {
+            return getPopulatePhaseLatency()
+        }
+
+        // Case: Only write latency target specified
+        if (maxReadLatency == null && maxWriteLatency != null) {
+            val writeLatency = getWriteLatency()
+            log.info("Only write latency target specified, current: $writeLatency ms, max: $maxWriteLatency ms")
+            return Optional.of(Pair(writeLatency, maxWriteLatency))
+        }
+
+        // Case: Only read latency target specified
+        if (maxWriteLatency == null && maxReadLatency != null) {
+            val readLatency = getReadLatency()
+            log.info("Only read latency target specified, current: $readLatency ms, max: $maxReadLatency ms")
+            return Optional.of(Pair(readLatency, maxReadLatency))
+        }
+
+        // Case: Both read and write latency targets specified - determine which is more critical
+        return determineCriticalLatency()
+    }
+
+    /**
+     * Checks if we're currently in the populate phase
+     */
+    private fun isInPopulatePhase(): Boolean =
+        metrics.mutations.count == 0L &&
             metrics.selects.count == 0L &&
             metrics.deletions.count == 0L &&
             metrics.populate.count > 0L
-        ) {
-            if (maxWriteLatency != null) {
-                log.info("In populate phase, using populate latency")
-                return Optional.of(Pair(getPopulateLatency(), maxWriteLatency))
-            } else {
-                return Optional.empty<Pair<Double, Long>>()
-            }
-        }
-        if (maxReadLatency == null) {
-            return Optional.of(Pair(getWriteLatency(), maxWriteLatency!!))
-        }
-        if (maxWriteLatency == null) {
-            return Optional.of(Pair(getReadLatency(), maxReadLatency))
-        }
 
-        val rLatP = getReadLatency() / maxReadLatency
-        val wLatP = getWriteLatency() / maxWriteLatency
+    /**
+     * Gets latency information during populate phase
+     */
+    private fun getPopulatePhaseLatency(): Optional<Pair<Double, Long>> {
+        if (maxWriteLatency != null) {
+            val populateLatency = getPopulateLatency()
+            log.info("In populate phase, using populate latency: $populateLatency ms, max: $maxWriteLatency ms")
+            return Optional.of(Pair(populateLatency, maxWriteLatency))
+        }
+        return Optional.empty()
+    }
 
-        // if either is over, return the one that's the most % over
-        return if (rLatP > wLatP) {
-            Optional.of(Pair(getReadLatency(), maxReadLatency))
+    /**
+     * Determines which latency (read or write) is most critical relative to its target
+     */
+    private fun determineCriticalLatency(): Optional<Pair<Double, Long>> {
+        val readLatency = getReadLatency()
+        val writeLatency = getWriteLatency()
+
+        // Calculate how close each latency is to its limit as a ratio
+        val readLatencyRatio = readLatency / maxReadLatency!!.toDouble()
+        val writeLatencyRatio = writeLatency / maxWriteLatency!!.toDouble()
+
+        // Return the latency that's closest to or exceeding its target
+        return if (readLatencyRatio > writeLatencyRatio) {
+            log.debug("Read latency more critical: ${readLatencyRatio.format(2)} of max vs write ${writeLatencyRatio.format(2)}")
+            Optional.of(Pair(readLatency, maxReadLatency))
         } else {
-            Optional.of(Pair(getWriteLatency(), maxWriteLatency))
+            log.debug("Write latency more critical: ${writeLatencyRatio.format(2)} of max vs read ${readLatencyRatio.format(2)}")
+            Optional.of(Pair(writeLatency, maxWriteLatency))
         }
     }
 
     /**
-     * Provide the new value for the rate limiter
-     * If we're over, we significantly reduce traffic
-     * If we're within 95% of our target we increase by 1 (just to do something)
-     * if we're under, we increase by up to 2x
+     * Calculates the optimal rate limit value based on current performance metrics.
+     *
+     * This implements an adaptive algorithm with three cases:
+     * 1. If latency exceeds target: reduce throughput quickly (by 10%)
+     * 2. If within 90% of target latency: maintain current throughput to avoid oscillation
+     * 3. If well below target: increase throughput proportionally to available headroom
+     *
+     * @param currentRate The current rate limit value
+     * @param currentLatency The current observed latency (in ms)
+     * @param maxLatency The maximum acceptable latency (in ms)
+     * @return The calculated new rate limit
      */
     fun getNextValue(
-        currentRateLimiterValue: Double,
+        currentRate: Double,
         currentLatency: Double,
         maxLatency: Long,
     ): Double {
-        // we set our max increase relative to the total latency we can tolerate, at most increasing by 5%
-        // small latency requirements (< 10ms) should barely adjust the throughput b/c it's so sensitive
-        var maxIncrease = (1.0 + sqrt(maxLatency.toDouble()) / 100.0).coerceAtMost(1.05)
+        val maxLatencyDouble = maxLatency.toDouble()
+        val latencyRatio = currentLatency / maxLatencyDouble
 
-        if (currentLatency > maxLatency) {
-            log.info("Current Latency ($currentLatency) over Max Latency ($maxLatency) reducing throughput by 10%")
-            return currentRateLimiterValue * .90
-        } else if (currentLatency / maxLatency.toDouble() > .90) {
-            log.info("Current latency ($currentLatency) within 95% of max ($maxLatency), not adjusting")
-            return currentRateLimiterValue
-        } else {
-            // increase a reasonable amount
-            // should provide a very gentle increase when we get close to the right number
-            val adjustmentFactor = (1 + cbrt(maxLatency.toDouble() - currentLatency) / maxLatency.toDouble()).coerceAtMost(maxIncrease)
-            val newLimit = currentRateLimiterValue * adjustmentFactor
+        // Case 1: Latency is too high - reduce throughput
+        if (latencyRatio > 1.0) {
+            val reductionFactor = 0.90
             log.info(
-                "Current limiter: $currentRateLimiterValue latency $currentLatency, " +
-                    "max: $maxLatency adjustment factor: $adjustmentFactor, new limit: $newLimit",
+                "Latency exceeded target: ${currentLatency.format(2)}ms > ${maxLatency}ms, " +
+                    "reducing throughput by ${(1 - reductionFactor) * 100}%",
+            )
+            return currentRate * reductionFactor
+        }
+        // Case 2: Within 90% of target - maintain current throughput
+        else if (latencyRatio > 0.90) {
+            log.info("Latency approaching target (${(latencyRatio * 100).format(1)}% of max), maintaining throughput")
+            return currentRate
+        }
+        // Case 3: Well below target - increase proportionally to available headroom
+        else {
+            // Calculate increase factor - more aggressive for low latencies, gentler as we approach target
+            // Uses cube root to provide a non-linear response curve
+            // Small latency requirements (< 10ms) will use smaller adjustments due to sensitivity
+            val maxIncreaseFactor = (1.0 + sqrt(maxLatencyDouble) / 100.0).coerceAtMost(1.05)
+            val headroom = maxLatencyDouble - currentLatency
+            val adjustmentFactor = (1.0 + cbrt(headroom) / maxLatencyDouble).coerceAtMost(maxIncreaseFactor)
+
+            val newLimit = currentRate * adjustmentFactor
+            log.info(
+                "Latency (${currentLatency.format(2)}ms) well below target (${maxLatency}ms): " +
+                    "increasing throughput by ${((adjustmentFactor - 1) * 100).format(1)}% " +
+                    "from $currentRate to ${newLimit.format(1)}",
             )
             return newLimit
         }
     }
 
+    /**
+     * Gets the current 99th percentile read latency in milliseconds
+     */
     fun getReadLatency() = metrics.selects.snapshot.get99thPercentile() * durationFactor
 
+    /**
+     * Gets the current 99th percentile write latency in milliseconds
+     */
     fun getWriteLatency() = metrics.mutations.snapshot.get99thPercentile() * durationFactor
 
+    /**
+     * Gets the current 99th percentile populate operation latency in milliseconds
+     */
     fun getPopulateLatency() = metrics.populate.snapshot.get99thPercentile() * durationFactor
 
+    /**
+     * Resets the optimizer to its initial state, starting the step phase again.
+     * This is typically called after a populate phase completes or when workload parameters change.
+     */
     fun reset() {
+        log.info("Resetting rate limiter optimizer to step phase, starting rate: $stepValue")
         isStepPhase = true
         rateLimiter.rate = stepValue
     }
+
+
 }

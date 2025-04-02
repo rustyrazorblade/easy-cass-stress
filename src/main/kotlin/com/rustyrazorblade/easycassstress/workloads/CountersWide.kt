@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -44,9 +44,10 @@ class CountersWide : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val clusteringKey = (ThreadLocalRandom.current().nextGaussian() * rowsPerPartition.toDouble()).roundToLong()
-                val tmp = increment.bind()
-                    .setString(0, partitionKey.getText())
-                    .setLong(1, clusteringKey)
+                val tmp =
+                    increment.bind()
+                        .setString(0, partitionKey.getText())
+                        .setLong(1, clusteringKey)
                 return Operation.Mutation(tmp)
             }
 
@@ -58,13 +59,13 @@ class CountersWide : IStressProfile {
                     return Operation.SelectStatement(
                         selectOne.bind()
                             .setString(0, partitionKey.getText())
-                            .setLong(1, clusteringKey)
+                            .setLong(1, clusteringKey),
                     )
                 }
 
                 return Operation.SelectStatement(
                     selectAll.bind()
-                        .setString(0, partitionKey.getText())
+                        .setString(0, partitionKey.getText()),
                 )
             }
 
@@ -73,7 +74,7 @@ class CountersWide : IStressProfile {
                 return Operation.Deletion(
                     deleteOne.bind()
                         .setString(0, partitionKey.getText())
-                        .setLong(1, clusteringKey)
+                        .setLong(1, clusteringKey),
                 )
             }
         }

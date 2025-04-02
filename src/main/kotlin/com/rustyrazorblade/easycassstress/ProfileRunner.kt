@@ -1,17 +1,15 @@
 package com.rustyrazorblade.easycassstress
 
-import com.datastax.oss.driver.api.core.cql.Statement
-import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.rustyrazorblade.easycassstress.workloads.IStressProfile
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
-import java.util.concurrent.CompletableFuture
-import java.util.function.BiConsumer
 import java.time.Duration
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.function.BiConsumer
 
 class PartitionKeyGeneratorException : Exception()
 
@@ -128,37 +126,33 @@ class ProfileRunner(
         // move the getNextOperation into the queue thing
         var paginate = context.mainArguments.paginate
         for (op in queue.getNextOperation()) {
-            // Start timing before executing the query
-            op.startTime = context.metrics.startTimer()
-            
             // In driver v4, async execution returns a CompletionStage
-            val future = when (op) {
-                is Operation.DDL -> {
-                    paginate = false
-                    // Create a SimpleStatement for DDL operations
-                    context.session.executeAsync(SimpleStatement.newInstance(op.statement!!))
+            val future =
+                when (op) {
+                    is Operation.DDL -> {
+                        paginate = false
+                        // Create a SimpleStatement for DDL operations
+                        context.session.executeAsync(SimpleStatement.newInstance(op.statement!!))
+                    }
+                    else -> {
+                        // Ensure bound statement is not null
+                        context.session.executeAsync(op.bound!!)
+                    }
                 }
-                else -> {
-                    // Ensure bound statement is not null
-                    context.session.executeAsync(op.bound!!)
-                }
-            }
-            
-            // Create callback to handle the result
-            val callback = OperationCallback(
-                context,
-                runner,
-                op,
-                paginate = paginate,
-                writeHdr = context.mainArguments.hdrHistogramPrefix != "",
-            )
-            
-            // Use whenComplete for CompletionStage with explicit BiConsumer creation
-            // to avoid unchecked cast warning
-            future.whenComplete(BiConsumer<AsyncResultSet?, Throwable?> { result, error ->
-                callback.accept(result, error)
-            })
 
+            // Create callback to handle the result
+            val callback =
+                OperationCallback(
+                    context,
+                    runner,
+                    op,
+                    paginate = paginate,
+                    writeHdr = context.mainArguments.hdrHistogramPrefix != "",
+                )
+
+            future.whenComplete { result, error ->
+                callback.accept(result, error)
+            }
         }
     }
 
@@ -191,26 +185,21 @@ class ProfileRunner(
 
         try {
             for (op in queue.getNextOperation()) {
-                // Start timing before executing the query
-                op.startTime = context.metrics.startTimer()
-                
-                // In driver v4, async execution returns a CompletionStage
                 val future = context.session.executeAsync(op.bound!!)
-                
+
                 // Create callback to handle the result
-                val callback = OperationCallback(
-                    context,
-                    runner,
-                    op,
-                    paginate = false,
-                    writeHdr = context.mainArguments.hdrHistogramPrefix != ""
-                )
-                
-                // Use whenComplete for CompletionStage with explicit BiConsumer creation
-                // to avoid unchecked cast warning
-                future.whenComplete(BiConsumer<AsyncResultSet?, Throwable?> { result, error ->
-                    callback.accept(result, error)
-                })
+                val callback =
+                    OperationCallback(
+                        context,
+                        runner,
+                        op,
+                        paginate = false,
+                        writeHdr = context.mainArguments.hdrHistogramPrefix != "",
+                    )
+
+                future.whenComplete { result, error ->
+                        callback.accept(result, error)
+                }
             }
         } catch (_: OperationStopException) {
             log.info("Received Stop signal")

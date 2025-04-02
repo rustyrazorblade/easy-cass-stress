@@ -4,7 +4,6 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
-import java.util.concurrent.CompletionStage
 import java.util.function.BiConsumer
 
 /**
@@ -23,21 +22,22 @@ class OperationCallback(
         val log = logger()
     }
 
-    override fun accept(result: AsyncResultSet?, t: Throwable?) {
+    override fun accept(
+        result: AsyncResultSet?,
+        t: Throwable?,
+    ) {
         if (t != null) {
             context.metrics.errors.mark()
             log.error { t }
             return
         }
-        
-        if (result == null) {
-            return
-        }
 
         // Handle pagination in driver v4
-        if (paginate && result.hasMorePages()) {
+        if (paginate && result != null) {
             // Fetch next page - this could be made async but we'll keep it simple for now
-            result.fetchNextPage()
+            while(result.hasMorePages()) {
+                result.fetchNextPage()
+            }
         }
 
         val time = op.startTime.stop()

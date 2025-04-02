@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.PartitionKeyGenerator
 import com.rustyrazorblade.easycassstress.PopulateOption
@@ -74,30 +74,34 @@ class Locking : IStressProfile {
 
                 log.trace { "Updating ${partitionKey.getText()} to $newState" }
 
-                val bound = update.bind()
-                    .setInt(0, newState)
-                    .setString(1, partitionKey.getText())
-                    .setInt(2, newState)
+                val bound =
+                    update.bind()
+                        .setInt(0, newState)
+                        .setString(1, partitionKey.getText())
+                        .setInt(2, newState)
                 state[partitionKey.getText()] = newState
                 return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = select.bind()
-                    .setString(0, partitionKey.getText())
+                val bound =
+                    select.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.SelectStatement(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = delete.bind()
-                    .setString(0, partitionKey.getText())
+                val bound =
+                    delete.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.Deletion(bound)
             }
 
             override fun getNextPopulate(partitionKey: PartitionKey): Operation {
-                val bound = insert.bind()
-                    .setString(0, partitionKey.getText())
-                    .setString(1, "test")
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setString(1, "test")
                 return Operation.Mutation(bound)
             }
         }

@@ -1,14 +1,13 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
 import com.rustyrazorblade.easycassstress.generators.Field
-import com.rustyrazorblade.easycassstress.generators.FieldFactory
 import com.rustyrazorblade.easycassstress.generators.FieldGenerator
 import com.rustyrazorblade.easycassstress.generators.functions.Book
 import com.rustyrazorblade.easycassstress.generators.functions.Random
@@ -69,10 +68,11 @@ class DSESearch : IStressProfile {
             val nextRowId: Int get() = c_id.nextInt(0, rows)
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
-                val bound = insert.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, nextRowId)
-                    .setString(2, value.getText())
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, nextRowId)
+                        .setString(2, value.getText())
                 return Operation.Mutation(bound)
             }
 
@@ -90,16 +90,18 @@ class DSESearch : IStressProfile {
 
                 val queryString = mapper.writeValueAsString(query)
 
-                val bound = select.bind()
-                    .setString(0, queryString)
+                val bound =
+                    select.bind()
+                        .setString(0, queryString)
                 return Operation.SelectStatement(bound)
             }
 
-            override fun getNextDelete(partitionKey: PartitionKey) = Operation.Deletion(
-                delete.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, nextRowId)
-            )
+            override fun getNextDelete(partitionKey: PartitionKey) =
+                Operation.Deletion(
+                    delete.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, nextRowId),
+                )
         }
     }
 

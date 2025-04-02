@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
@@ -59,12 +59,16 @@ class UdtTimeSeries : IStressProfile {
 
         return object : IStressRunner {
             val keyspace = context.session.getKeyspace().orElse(null) ?: throw RuntimeException("No keyspace selected")
-            val udt = context.session.getMetadata().getKeyspace(keyspace).flatMap { it.getUserDefinedType("sensor_data_details") }.orElseThrow { RuntimeException("UDT not found") }
+            val udt =
+                context.session.getMetadata().getKeyspace(keyspace).flatMap {
+                    it.getUserDefinedType("sensor_data_details")
+                }.orElseThrow { RuntimeException("UDT not found") }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = getPartitionHead.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, limit)
+                val bound =
+                    getPartitionHead.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, limit)
                 return Operation.SelectStatement(bound)
             }
 
@@ -73,16 +77,18 @@ class UdtTimeSeries : IStressProfile {
                 val chunks = data.chunked(data.length / 3)
                 val udtValue = udt.newValue().setString("data1", chunks[0]).setString("data2", chunks[1]).setString("data3", chunks[2])
                 val timestamp = Uuids.timeBased()
-                val bound = insert.bind()
-                    .setString(0, partitionKey.getText())
-                    .setUuid(1, timestamp)
-                    .setUdtValue(2, udtValue)
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setUuid(1, timestamp)
+                        .setUdtValue(2, udtValue)
                 return Operation.Mutation(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = deletePartitionHead.bind()
-                    .setString(0, partitionKey.getText())
+                val bound =
+                    deletePartitionHead.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.Deletion(bound)
             }
         }

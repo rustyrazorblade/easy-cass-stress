@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.generators.Field
@@ -40,7 +40,7 @@ class Sets : IStressProfile {
                 val value = payload.getText()
                 val valueSet = java.util.HashSet<String>()
                 valueSet.add(value)
-                
+
                 // Create a simple statement for now - we'll use direct binding
                 // The driver v4 has different ways of setting collections
                 val bound = update.bind()
@@ -51,15 +51,16 @@ class Sets : IStressProfile {
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = select.bind()
-                    .setString(0, partitionKey.getText())
+                val bound =
+                    select.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.SelectStatement(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 val valueSet = java.util.HashSet<String>()
                 valueSet.add(partitionKey.getText())
-                
+
                 // Create a simple statement for now - we'll use direct binding
                 val bound = deleteElement.bind()
                 bound.set(0, valueSet, java.util.HashSet::class.java)

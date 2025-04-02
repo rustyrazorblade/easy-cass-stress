@@ -1,8 +1,8 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 
@@ -55,13 +55,13 @@ class LWT : IStressProfile {
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
                 return Operation.SelectStatement(
                     select.bind()
-                        .setString(0, partitionKey.getText())
+                        .setString(0, partitionKey.getText()),
                 )
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 val currentValue = state[partitionKey.getText()]
-                
+
                 val deletion =
                     if (currentValue != null) {
                         delete.bind()

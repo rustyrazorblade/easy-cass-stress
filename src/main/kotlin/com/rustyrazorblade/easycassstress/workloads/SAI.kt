@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -118,11 +118,12 @@ class SAI : IStressProfile {
             val value_int = context.registry.getGenerator(TABLE, "value_int")
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
-                val bound = insert.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, nextRowId)
-                    .setString(2, value_text.getText())
-                    .setInt(3, value_int.getInt())
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, nextRowId)
+                        .setString(2, value_text.getText())
+                        .setInt(3, value_int.getInt())
                 return Operation.Mutation(bound)
             }
 
@@ -130,7 +131,7 @@ class SAI : IStressProfile {
                 // first create a bind statement
                 var bound = select.bind()
                 var index = 0
-                
+
                 if (!global) {
                     bound = bound.setString(index++, partitionKey.getText())
                 }
@@ -146,9 +147,12 @@ class SAI : IStressProfile {
                 return Operation.SelectStatement(bound)
             }
 
-            override fun getNextDelete(partitionKey: PartitionKey) = Operation.Deletion(delete.bind()
-                .setString(0, partitionKey.getText())
-                .setInt(1, nextRowId))
+            override fun getNextDelete(partitionKey: PartitionKey) =
+                Operation.Deletion(
+                    delete.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, nextRowId),
+                )
         }
     }
 

@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.generators.Field
@@ -50,7 +50,7 @@ class MaterializedViews : IStressProfile {
                     insert.bind()
                         .setString(0, partitionKey.getText())
                         .setInt(1, num)
-                        .setString(2, cities.getText())
+                        .setString(2, cities.getText()),
                 )
             }
 
@@ -61,12 +61,12 @@ class MaterializedViews : IStressProfile {
                         0L ->
                             Operation.SelectStatement(
                                 selectByAge.bind()
-                                    .setInt(0, num)
+                                    .setInt(0, num),
                             )
                         else ->
                             Operation.SelectStatement(
                                 selectByCity.bind()
-                                    .setString(0, "test")
+                                    .setString(0, "test"),
                             )
                     }
                 selectCount++
@@ -76,7 +76,7 @@ class MaterializedViews : IStressProfile {
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 return Operation.Deletion(
                     deleteBase.bind()
-                        .setString(0, partitionKey.getText())
+                        .setString(0, partitionKey.getText()),
                 )
             }
         }

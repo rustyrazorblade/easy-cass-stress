@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -77,42 +77,45 @@ class RandomPartitionAccess : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val rowId = random.nextInt(0, rows)
-                val bound = insertQuery.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, rowId)
-                    .setString(2, value.getText())
+                val bound =
+                    insertQuery.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, rowId)
+                        .setString(2, value.getText())
                 return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = when (select) {
-                    "partition" ->
-                        selectQuery.bind()
-                            .setString(0, partitionKey.getText())
-                    "row" -> {
-                        val rowId = random.nextInt(0, rows)
-                        selectQuery.bind()
-                            .setString(0, partitionKey.getText())
-                            .setInt(1, rowId)
+                val bound =
+                    when (select) {
+                        "partition" ->
+                            selectQuery.bind()
+                                .setString(0, partitionKey.getText())
+                        "row" -> {
+                            val rowId = random.nextInt(0, rows)
+                            selectQuery.bind()
+                                .setString(0, partitionKey.getText())
+                                .setInt(1, rowId)
+                        }
+                        else -> throw RuntimeException("not even sure how you got here")
                     }
-                    else -> throw RuntimeException("not even sure how you got here")
-                }
                 return Operation.SelectStatement(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = when (delete) {
-                    "partition" ->
-                        deleteQuery.bind()
-                            .setString(0, partitionKey.getText())
-                    "row" -> {
-                        val rowId = random.nextInt(0, rows)
-                        deleteQuery.bind()
-                            .setString(0, partitionKey.getText())
-                            .setInt(1, rowId)
+                val bound =
+                    when (delete) {
+                        "partition" ->
+                            deleteQuery.bind()
+                                .setString(0, partitionKey.getText())
+                        "row" -> {
+                            val rowId = random.nextInt(0, rows)
+                            deleteQuery.bind()
+                                .setString(0, partitionKey.getText())
+                                .setInt(1, rowId)
+                        }
+                        else -> throw RuntimeException("not even sure how you got here")
                     }
-                    else -> throw RuntimeException("not even sure how you got here")
-                }
                 return Operation.Deletion(bound)
             }
         }

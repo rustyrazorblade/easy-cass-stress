@@ -13,13 +13,14 @@ class FlagsTest : CassandraTestBase() {
     @BeforeEach
     fun resetRunners() {
         cleanupKeyspace()
-        keyvalue = Run("placeholder").apply {
-            profile = "KeyValue"
-            iterations = 100
-            host = ip
-            dc = localDc
-            replication = "{'class': 'SimpleStrategy', 'replication_factor':1 }"
-        }
+        keyvalue =
+            Run("placeholder").apply {
+                profile = "KeyValue"
+                iterations = 100
+                host = ip
+                dc = localDc
+                replication = "{'class': 'SimpleStrategy', 'replication_factor':1 }"
+            }
     }
 
     @Test

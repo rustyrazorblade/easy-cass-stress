@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
@@ -37,12 +37,12 @@ class RangeScan : IStressProfile {
                 val tokenRangesList = ArrayList(tokenRanges)
                 // Use a mutable list to store split ranges
                 val splitRanges = mutableListOf<TokenRange>()
-                
+
                 // Split each token range
                 for (range in tokenRangesList) {
                     splitRanges.addAll(range.splitEvenly(splits))
                 }
-                
+
                 ranges = splitRanges
                 val tmp = table.split(".")
                 var partitionKeys =
@@ -81,9 +81,10 @@ class RangeScan : IStressProfile {
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
                 return if (splits > 1) {
                     val tmp = ranges.random()
-                    val bound = select.bind()
-                        .setToken(0, tmp.start)
-                        .setToken(1, tmp.end)
+                    val bound =
+                        select.bind()
+                            .setToken(0, tmp.start)
+                            .setToken(1, tmp.end)
                     Operation.SelectStatement(bound)
                 } else {
                     Operation.SelectStatement(select.bind())

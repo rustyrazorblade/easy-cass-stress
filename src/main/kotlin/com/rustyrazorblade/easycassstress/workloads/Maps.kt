@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 
@@ -28,19 +28,21 @@ class Maps : IStressProfile {
                     insert.bind()
                         .setString(0, "key")
                         .setString(1, "value")
-                        .setString(2, partitionKey.getText())
+                        .setString(2, partitionKey.getText()),
                 )
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val b = select.bind()
-                    .setString(0, partitionKey.getText())
+                val b =
+                    select.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.SelectStatement(b)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val b = delete.bind()
-                    .setString(0, partitionKey.getText())
+                val b =
+                    delete.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.Deletion(b)
             }
         }

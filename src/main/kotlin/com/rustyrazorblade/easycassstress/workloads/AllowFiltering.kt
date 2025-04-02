@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -50,27 +50,30 @@ class AllowFiltering : IStressProfile {
                 val rowId = random.nextInt(0, rows)
                 val value = random.nextInt(0, maxValue)
 
-                val bound = insert.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, rowId)
-                    .setInt(2, value)
-                    .setString(3, payload.getText())
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, rowId)
+                        .setInt(2, value)
+                        .setString(3, payload.getText())
                 return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
                 val value = random.nextInt(0, maxValue)
-                val bound = select.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, value)
+                val bound =
+                    select.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, value)
                 return Operation.SelectStatement(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 val rowId = random.nextInt(0, rows)
-                val bound = delete.bind()
-                    .setString(0, partitionKey.getText())
-                    .setInt(1, rowId)
+                val bound =
+                    delete.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, rowId)
                 return Operation.Deletion(bound)
             }
         }
