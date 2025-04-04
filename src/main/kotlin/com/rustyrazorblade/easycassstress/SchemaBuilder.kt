@@ -3,6 +3,7 @@ package com.rustyrazorblade.easycassstress
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.logging.log4j.kotlin.logger
+import java.util.Locale
 
 fun MutableMap<String, String?>.putInt(
     key: String,
@@ -36,7 +37,7 @@ class SchemaBuilder(var baseStatement: String) {
 
         companion object {
             fun get(s: String): WindowUnit =
-                when (s.toLowerCase()) {
+                when (s.lowercase(Locale.getDefault())) {
                     "minutes" -> MINUTES
                     "hours" -> HOURS
                     "days" -> DAYS
@@ -161,7 +162,7 @@ class SchemaBuilder(var baseStatement: String) {
 
         val stuff = parts.joinToString(" AND ")
 
-        if (stuff.length > 0 && !baseStatement.toLowerCase().contains("\\swith\\s".toRegex())) {
+        if (stuff.length > 0 && !baseStatement.lowercase(Locale.getDefault()).contains("\\swith\\s".toRegex())) {
             sb.append(" WITH ")
         } else if (stuff.count() > 0) {
             sb.append(" AND ")

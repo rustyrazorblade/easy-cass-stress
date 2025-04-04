@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress
 
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.MoreExecutors
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.rustyrazorblade.easycassstress.workloads.IStressProfile
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
@@ -9,6 +9,7 @@ import java.time.Duration
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.function.BiConsumer
 
 class PartitionKeyGeneratorException : Exception()
 
@@ -125,28 +126,33 @@ class ProfileRunner(
         // move the getNextOperation into the queue thing
         var paginate = context.mainArguments.paginate
         for (op in queue.getNextOperation()) {
-            val future = when (op) {
-                is Operation.DDL -> {
-                    paginate = false
-                    context.session.executeAsync(op.statement)
+            // In driver v4, async execution returns a CompletionStage
+            val future =
+                when (op) {
+                    is Operation.DDL -> {
+                        paginate = false
+                        // Create a SimpleStatement for DDL operations
+                        context.session.executeAsync(SimpleStatement.newInstance(op.statement!!))
+                    }
+                    else -> {
+                        // Ensure bound statement is not null
+                        context.session.executeAsync(op.bound!!)
+                    }
                 }
-                else -> {
-                    context.session.executeAsync(op.bound)
 
-                }
-            }
-            Futures.addCallback(
-                future,
+            // Create callback to handle the result
+            val callback =
                 OperationCallback(
                     context,
                     runner,
                     op,
                     paginate = paginate,
                     writeHdr = context.mainArguments.hdrHistogramPrefix != "",
-                ),
-                MoreExecutors.directExecutor(),
-            )
+                )
 
+            future.whenComplete { result, error ->
+                callback.accept(result, error)
+            }
         }
     }
 
@@ -179,12 +185,21 @@ class ProfileRunner(
 
         try {
             for (op in queue.getNextOperation()) {
-                val future = context.session.executeAsync(op.bound)
-                Futures.addCallback(
-                    future,
-                    OperationCallback(context, runner, op, false),
-                    MoreExecutors.directExecutor(),
-                )
+                val future = context.session.executeAsync(op.bound!!)
+
+                // Create callback to handle the result
+                val callback =
+                    OperationCallback(
+                        context,
+                        runner,
+                        op,
+                        paginate = false,
+                        writeHdr = context.mainArguments.hdrHistogramPrefix != "",
+                    )
+
+                future.whenComplete { result, error ->
+                        callback.accept(result, error)
+                }
             }
         } catch (_: OperationStopException) {
             log.info("Received Stop signal")

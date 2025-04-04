@@ -56,8 +56,8 @@ class FunctionLoader : Iterable<FunctionDescription> {
      * Returns an instance of the requested class
      */
     fun getInstance(name: String): FieldGenerator {
-        val tmp = map[name]
-        val result = tmp?.newInstance() ?: throw FunctionNotFound(name)
+        val tmp = map[name] ?: throw FunctionNotFound(name)
+        val result = tmp.getDeclaredConstructor().newInstance()
         return result
     }
 

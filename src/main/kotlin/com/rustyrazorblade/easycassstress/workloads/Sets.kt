@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.generators.Field
@@ -14,7 +14,7 @@ class Sets : IStressProfile {
     lateinit var select: PreparedStatement
     lateinit var deleteElement: PreparedStatement
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         insert = session.prepare("INSERT INTO sets (key, values) VALUES (?, ?)")
         update = session.prepare("UPDATE sets SET values = values + ? WHERE key = ?")
         select = session.prepare("SELECT * from sets WHERE key = ?")
@@ -38,21 +38,33 @@ class Sets : IStressProfile {
         return object : IStressRunner {
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val value = payload.getText()
-                val bound =
-                    update.bind()
-                        .setSet(0, setOf(value))
-                        .setString(1, partitionKey.getText())
+                val valueSet = java.util.HashSet<String>()
+                valueSet.add(value)
+
+                // Create a simple statement for now - we'll use direct binding
+                // The driver v4 has different ways of setting collections
+                val bound = update.bind()
+                bound.set(0, valueSet, java.util.HashSet::class.java)
+                bound.setString(1, partitionKey.getText())
 
                 return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = select.bind(partitionKey.getText())
+                val bound =
+                    select.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.SelectStatement(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = deleteElement.bind(setOf(partitionKey.getText()), partitionKey.getText())
+                val valueSet = java.util.HashSet<String>()
+                valueSet.add(partitionKey.getText())
+
+                // Create a simple statement for now - we'll use direct binding
+                val bound = deleteElement.bind()
+                bound.set(0, valueSet, java.util.HashSet::class.java)
+                bound.setString(1, partitionKey.getText())
                 return Operation.Deletion(bound)
             }
         }

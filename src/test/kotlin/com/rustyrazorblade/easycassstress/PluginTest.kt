@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress
 
-import com.datastax.driver.core.BoundStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.BoundStatement
 import com.rustyrazorblade.easycassstress.workloads.IStressProfile
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
@@ -28,7 +28,7 @@ internal class PluginTest {
 
         var notWorkloadParameter: String = "oh nooo"
 
-        override fun prepare(session: Session) = Unit
+        override fun prepare(session: CqlSession) = Unit
 
         override fun schema(): List<String> = listOf()
 

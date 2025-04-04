@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -17,7 +17,7 @@ class CountersWide : IStressProfile {
     @WorkloadParameter("Total rows per partition.")
     var rowsPerPartition = 10000
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         increment = session.prepare("UPDATE counter_wide SET value = value + 1 WHERE key = ? and cluster = ?")
         selectOne = session.prepare("SELECT * from counter_wide WHERE key = ? AND cluster = ?")
         selectAll = session.prepare("SELECT * from counter_wide WHERE key = ?")
@@ -44,7 +44,10 @@ class CountersWide : IStressProfile {
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val clusteringKey = (ThreadLocalRandom.current().nextGaussian() * rowsPerPartition.toDouble()).roundToLong()
-                val tmp = increment.bind(partitionKey.getText(), clusteringKey)
+                val tmp =
+                    increment.bind()
+                        .setString(0, partitionKey.getText())
+                        .setLong(1, clusteringKey)
                 return Operation.Mutation(tmp)
             }
 
@@ -53,15 +56,26 @@ class CountersWide : IStressProfile {
 
                 if (iterations % 2 == 0L) {
                     val clusteringKey = (ThreadLocalRandom.current().nextGaussian() * rowsPerPartition.toDouble()).roundToLong()
-                    return Operation.SelectStatement(selectOne.bind(partitionKey.getText(), clusteringKey))
+                    return Operation.SelectStatement(
+                        selectOne.bind()
+                            .setString(0, partitionKey.getText())
+                            .setLong(1, clusteringKey),
+                    )
                 }
 
-                return Operation.SelectStatement(selectAll.bind(partitionKey.getText()))
+                return Operation.SelectStatement(
+                    selectAll.bind()
+                        .setString(0, partitionKey.getText()),
+                )
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 val clusteringKey = (ThreadLocalRandom.current().nextGaussian() * rowsPerPartition.toDouble()).roundToLong()
-                return Operation.Deletion(deleteOne.bind(partitionKey.getText(), clusteringKey))
+                return Operation.Deletion(
+                    deleteOne.bind()
+                        .setString(0, partitionKey.getText())
+                        .setLong(1, clusteringKey),
+                )
             }
         }
     }

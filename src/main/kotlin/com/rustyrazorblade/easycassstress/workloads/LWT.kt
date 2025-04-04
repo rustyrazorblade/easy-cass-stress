@@ -1,8 +1,8 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 
@@ -17,7 +17,7 @@ class LWT : IStressProfile {
         return arrayListOf("""CREATE TABLE IF NOT EXISTS lwt (id text primary key, value int) """)
     }
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         insert = session.prepare("INSERT INTO lwt (id, value) VALUES (?, ?) IF NOT EXISTS")
         update = session.prepare("UPDATE lwt SET value = ? WHERE id = ? IF value = ?")
         select = session.prepare("SELECT * from lwt WHERE id = ?")
@@ -38,35 +38,45 @@ class LWT : IStressProfile {
                 val mutation =
                     if (currentValue != null) {
                         newValue = currentValue + 1
-                        update.bind(0, partitionKey.getText(), newValue)
+                        update.bind()
+                            .setInt(0, newValue)
+                            .setString(1, partitionKey.getText())
+                            .setInt(2, currentValue)
                     } else {
                         newValue = 0
-                        insert.bind(partitionKey.getText(), newValue)
+                        insert.bind()
+                            .setString(0, partitionKey.getText())
+                            .setInt(1, newValue)
                     }
                 val payload = CallbackPayload(partitionKey.getText(), newValue)
                 return Operation.Mutation(mutation, payload)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                return Operation.SelectStatement(select.bind(partitionKey.getText()))
+                return Operation.SelectStatement(
+                    select.bind()
+                        .setString(0, partitionKey.getText()),
+                )
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 val currentValue = state[partitionKey.getText()]
-                val newValue: Int
 
                 val deletion =
                     if (currentValue != null) {
-                        delete.bind(partitionKey.getText(), currentValue)
+                        delete.bind()
+                            .setString(0, partitionKey.getText())
+                            .setInt(1, currentValue)
                     } else {
-                        deletePartition.bind(partitionKey.getText())
+                        deletePartition.bind()
+                            .setString(0, partitionKey.getText())
                     }
                 return Operation.Deletion(deletion)
             }
 
             override fun onSuccess(
                 op: Operation.Mutation,
-                result: ResultSet?,
+                result: AsyncResultSet?,
             ) {
                 val payload = op.callbackPayload!! as CallbackPayload
                 state[payload.id] = payload.value

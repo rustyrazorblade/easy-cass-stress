@@ -20,6 +20,7 @@ plugins {
 
 apply plugin: 'idea'
 apply plugin: 'java'
+apply plugin: 'kotlin'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 
@@ -37,14 +38,14 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.10"
+//    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.10"
     implementation group: 'com.beust', name: 'jcommander', version: '1.82'
 
     // https://mvnrepository.com/artifact/org.apache.commons/commons-text
     implementation group: 'org.apache.commons', name: 'commons-text', version: '1.3'
 
-    // https://mvnrepository.com/artifact/com.datastax.cassandra/cassandra-driver-core
-    implementation "org.apache.cassandra:cassandra-driver-core:3.12.1"
+    // Java driver v4
+    implementation "org.apache.cassandra:java-driver-core:4.19.0"
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4'
 
     // https://mvnrepository.com/artifact/org.reflections/reflections
@@ -64,8 +65,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.4'
 
     // https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core
-    // need to use the same version as datastax driver
-    implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.2.2'
+    // Newer version to work with Cassandra driver v4
+    implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '4.1.18'
 
     // https://mvnrepository.com/artifact/com.google.guava/guava
     implementation group: 'com.google.guava', name: 'guava', version: '32.1.3-jre'

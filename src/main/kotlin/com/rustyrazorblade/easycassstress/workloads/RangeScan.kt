@@ -1,8 +1,8 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.TokenRange
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.metadata.token.TokenRange
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -28,16 +28,29 @@ class RangeScan : IStressProfile {
 
     var logger = logger()
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         val rq =
             if (splits > 1) {
-                ranges = session.cluster.metadata.tokenRanges.flatMap { it.splitEvenly(splits) }
+                val metadata = session.getMetadata()
+                val tokenRanges = metadata.getTokenMap().get().tokenRanges
+                // Convert to ArrayList to be able to split and store
+                val tokenRangesList = ArrayList(tokenRanges)
+                // Use a mutable list to store split ranges
+                val splitRanges = mutableListOf<TokenRange>()
+
+                // Split each token range
+                for (range in tokenRangesList) {
+                    splitRanges.addAll(range.splitEvenly(splits))
+                }
+
+                ranges = splitRanges
                 val tmp = table.split(".")
                 var partitionKeys =
-                    session.cluster.metadata.getKeyspace(tmp[0])
-                        .getTable(tmp[1])
-                        .partitionKey.map { it.name }
-                        .joinToString(", ")
+                    metadata.getKeyspace(tmp[0]).flatMap { ks ->
+                        ks.getTable(tmp[1]).map { table ->
+                            table.partitionKey.map { col -> col.name.asInternal() }.joinToString(", ")
+                        }
+                    }.orElseThrow { RuntimeException("Table not found") }
                 logger.info("Using splits on $partitionKeys")
                 " WHERE token($partitionKeys) > ? AND token($partitionKeys) < ?"
             } else {
@@ -68,7 +81,11 @@ class RangeScan : IStressProfile {
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
                 return if (splits > 1) {
                     val tmp = ranges.random()
-                    Operation.SelectStatement(select.bind(tmp.start.value, tmp.end.value))
+                    val bound =
+                        select.bind()
+                            .setToken(0, tmp.start)
+                            .setToken(1, tmp.end)
+                    Operation.SelectStatement(bound)
                 } else {
                     Operation.SelectStatement(select.bind())
                 }
