@@ -251,9 +251,6 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--max-requests"], description = "Sets the max requests per connection")
     var maxRequestsPerConnection: Int = 32768
 
-    @Parameter(names = ["--core-connections"], description = "Sets the number of core connections per host")
-    var coreConnections: Int = 4
-
     @Parameter(names = ["--max-connections"], description = "Sets the number of max connections per host")
     var maxConnections: Int = 8
 
@@ -304,14 +301,6 @@ class Run(val command: String) : IStressCommand {
             sessionBuilder.withSslContext(javax.net.ssl.SSLContext.getDefault())
         }
 
-        // Configure coordinator-only mode if needed
-        if (coordinatorOnlyMode) {
-            println("Using experimental coordinator only mode.")
-            // In v4, we would need a custom implementation of NodeFilterPolicy
-            // This is just a placeholder for now
-            println("WARNING: Coordinator-only mode is not fully implemented with driver v4")
-        }
-
         // Show settings about to be used
         println(
             "Executing $iterations operations with consistency level $consistencyLevel and serial consistency " +
@@ -320,7 +309,6 @@ class Run(val command: String) : IStressCommand {
 
         // Build the session
         val session = sessionBuilder.build()
-
         // No post-initialization steps needed with the new driver
 
         println("Connected to Cassandra cluster.")
