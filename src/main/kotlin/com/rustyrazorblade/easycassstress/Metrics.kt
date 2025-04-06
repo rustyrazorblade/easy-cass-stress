@@ -48,8 +48,36 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
 
     val populate = metricRegistry.timer("populateMutations")
 
+    // Throughput trackers for metrics
+    val selectThroughputTracker = getTracker { selects.count }.start()
+    val mutationThroughputTracker = getTracker { mutations.count }.start()
+    val deletionThroughputTracker = getTracker { deletions.count }.start()
+    val populateThroughputTracker = getTracker { populate.count }.start()
+
     // Using a synchronized histogram for now, we may need to change this later if it's a perf bottleneck
     val mutationHistogram = SynchronizedHistogram(2)
     val selectHistogram = SynchronizedHistogram(2)
     val deleteHistogram = SynchronizedHistogram(2)
+
+    /**
+     * We track throughput using separate structures than Dropwizard
+     */
+    fun resetThroughputTrackers() {
+        selectThroughputTracker.reset()
+        mutationThroughputTracker.reset()
+        deletionThroughputTracker.reset()
+        populateThroughputTracker.reset()
+    }
+
+    fun getTracker(countSupplier: () -> Long): ThroughputTracker {
+        return ThroughputTracker(
+            windowSize = 10,
+            countSupplier = countSupplier,
+        )
+    }
+
+    fun getSelectThroughput() = selectThroughputTracker.getCurrentThroughput()
+    fun getMutationThroughput() = mutationThroughputTracker.getCurrentThroughput()
+    fun getDeletionThroughput() = deletionThroughputTracker.getCurrentThroughput()
+    fun getPopulateThroughput() = populateThroughputTracker.getCurrentThroughput()
 }

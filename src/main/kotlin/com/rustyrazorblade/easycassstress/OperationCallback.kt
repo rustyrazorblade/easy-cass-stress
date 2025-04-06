@@ -1,10 +1,10 @@
 package com.rustyrazorblade.easycassstress
 
-import com.datastax.driver.core.ResultSet
-import com.google.common.util.concurrent.FutureCallback
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
+import java.util.function.BiConsumer
 
 /**
  * Callback after a mutation or select
@@ -17,22 +17,26 @@ class OperationCallback(
     val op: Operation,
     val paginate: Boolean = false,
     val writeHdr: Boolean = true,
-) : FutureCallback<ResultSet> {
+) : BiConsumer<AsyncResultSet?, Throwable?> {
     companion object {
         val log = logger()
     }
 
-    override fun onFailure(t: Throwable) {
-        context.metrics.errors.mark()
-        log.error { t }
-    }
+    override fun accept(
+        result: AsyncResultSet?,
+        t: Throwable?,
+    ) {
+        if (t != null) {
+            context.metrics.errors.mark()
+            log.error { t }
+            return
+        }
 
-    override fun onSuccess(result: ResultSet) {
-        // maybe paginate
-        if (paginate) {
-            var tmp = result
-            while (!tmp.isFullyFetched) {
-                tmp = result.fetchMoreResults().get()
+        // Handle pagination in driver v4
+        if (paginate && result != null) {
+            // Fetch next page - this could be made async but we'll keep it simple for now
+            while(result.hasMorePages()) {
+                result.fetchNextPage()
             }
         }
 

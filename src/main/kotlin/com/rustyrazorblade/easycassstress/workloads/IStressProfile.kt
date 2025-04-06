@@ -1,9 +1,9 @@
 package com.rustyrazorblade.easycassstress.workloads
 
 import com.codahale.metrics.Timer.Context
-import com.datastax.driver.core.BoundStatement
-import com.datastax.driver.core.ResultSet
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.datastax.oss.driver.api.core.cql.BoundStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.PartitionKeyGenerator
 import com.rustyrazorblade.easycassstress.PopulateOption
@@ -36,12 +36,12 @@ interface IStressRunner {
      */
     fun onSuccess(
         op: Operation.Mutation,
-        result: ResultSet?,
+        result: AsyncResultSet?,
     ) { }
 
     fun onSuccess(
         op: Operation.DDL,
-        result: ResultSet?
+        result: AsyncResultSet?,
     ) { }
 }
 
@@ -56,7 +56,7 @@ interface IStressProfile {
      * the class should track all prepared statements internally
      * and pass them on to the Runner
      */
-    fun prepare(session: Session)
+    fun prepare(session: CqlSession)
 
     /**
      * returns a bunch of DDL statements
@@ -105,9 +105,10 @@ interface IStressProfile {
     fun getPopulatePartitionKeyGenerator(): Optional<PartitionKeyGenerator> = Optional.empty()
 }
 
-sealed class Operation(val bound: BoundStatement? = null,
-                       val statement: String? = null) {
-
+sealed class Operation(
+    val bound: BoundStatement? = null,
+    val statement: String? = null,
+) {
     // we're going to track metrics on the mutations differently
     // inserts will also carry data that might be saved for later validation
     // clustering keys won't be realistic to compute in the framework
@@ -120,5 +121,6 @@ sealed class Operation(val bound: BoundStatement? = null,
     class Deletion(bound: BoundStatement) : Operation(bound)
 
     class Stop : Operation(null)
-    class DDL(statement: String) : Operation(null, statement=statement)
+
+    class DDL(statement: String) : Operation(null, statement = statement)
 }

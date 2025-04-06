@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -53,7 +53,7 @@ class SAI : IStressProfile {
 
     val log = logger()
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         println("Preparing workload with global=$global")
 
         indexFieldsSet = indexFields.split("\\s*,\\s*".toRegex()).toSet()
@@ -118,31 +118,41 @@ class SAI : IStressProfile {
             val value_int = context.registry.getGenerator(TABLE, "value_int")
 
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
-                val bound = insert.bind(partitionKey.getText(), nextRowId, value_text.getText(), value_int.getInt())
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, nextRowId)
+                        .setString(2, value_text.getText())
+                        .setInt(3, value_int.getInt())
                 return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                // first bind the partition key
-                val boundValues = mutableListOf<Any>()
+                // first create a bind statement
+                var bound = select.bind()
+                var index = 0
 
                 if (!global) {
-                    boundValues.add(partitionKey.getText())
+                    bound = bound.setString(index++, partitionKey.getText())
                 }
 
                 if (searchFieldsSet.contains("value_text")) {
-                    boundValues.add(value_text.getText())
+                    bound = bound.setString(index++, value_text.getText())
                 }
 
                 if (searchFieldsSet.contains("value_int")) {
-                    boundValues.add(value_int.getInt())
+                    bound = bound.setInt(index, value_int.getInt())
                 }
 
-                val boundStatement = select.bind(*boundValues.toTypedArray())
-                return Operation.SelectStatement(boundStatement)
+                return Operation.SelectStatement(bound)
             }
 
-            override fun getNextDelete(partitionKey: PartitionKey) = Operation.Deletion(delete.bind(partitionKey.getText(), nextRowId))
+            override fun getNextDelete(partitionKey: PartitionKey) =
+                Operation.Deletion(
+                    delete.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, nextRowId),
+                )
         }
     }
 

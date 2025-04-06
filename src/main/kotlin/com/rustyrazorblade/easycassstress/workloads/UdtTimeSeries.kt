@@ -1,8 +1,8 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
-import com.datastax.driver.core.utils.UUIDs
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -45,7 +45,7 @@ class UdtTimeSeries : IStressProfile {
     @WorkloadParameter("Limit select to N rows.")
     var limit = 500
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         insert = session.prepare("INSERT INTO sensor_data_udt (sensor_id, timestamp, data) VALUES (?, ?, ?)")
         getPartitionHead = session.prepare("SELECT * from sensor_data_udt WHERE sensor_id = ? LIMIT ?")
         deletePartitionHead = session.prepare("DELETE from sensor_data_udt WHERE sensor_id = ?")
@@ -58,10 +58,17 @@ class UdtTimeSeries : IStressProfile {
         val dataField = context.registry.getGenerator("sensor_data", "data")
 
         return object : IStressRunner {
-            val udt = context.session.cluster.getMetadata().getKeyspace(context.session.loggedKeyspace).getUserType("sensor_data_details")
+            val keyspace = context.session.getKeyspace().orElse(null) ?: throw RuntimeException("No keyspace selected")
+            val udt =
+                context.session.getMetadata().getKeyspace(keyspace).flatMap {
+                    it.getUserDefinedType("sensor_data_details")
+                }.orElseThrow { RuntimeException("UDT not found") }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                val bound = getPartitionHead.bind(partitionKey.getText(), limit)
+                val bound =
+                    getPartitionHead.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, limit)
                 return Operation.SelectStatement(bound)
             }
 
@@ -69,13 +76,19 @@ class UdtTimeSeries : IStressProfile {
                 val data = dataField.getText()
                 val chunks = data.chunked(data.length / 3)
                 val udtValue = udt.newValue().setString("data1", chunks[0]).setString("data2", chunks[1]).setString("data3", chunks[2])
-                val timestamp = UUIDs.timeBased()
-                val bound = insert.bind(partitionKey.getText(), timestamp, udtValue)
+                val timestamp = Uuids.timeBased()
+                val bound =
+                    insert.bind()
+                        .setString(0, partitionKey.getText())
+                        .setUuid(1, timestamp)
+                        .setUdtValue(2, udtValue)
                 return Operation.Mutation(bound)
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                val bound = deletePartitionHead.bind(partitionKey.getText())
+                val bound =
+                    deletePartitionHead.bind()
+                        .setString(0, partitionKey.getText())
                 return Operation.Deletion(bound)
             }
         }

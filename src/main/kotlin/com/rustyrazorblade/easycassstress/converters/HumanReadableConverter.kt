@@ -8,16 +8,16 @@ class HumanReadableConverter : IStringConverter<Long> {
         val result = regex.find(value!!)
 
         return result?.groups?.let {
-            val value = it[1]?.value
+            val numValue = it[1]?.value
             val label = it[2]
 
-            if (value == null) return 0L
+            if (numValue == null) return 0L
 
-            when (label?.value?.toLowerCase()) {
-                "k" -> 1000L * value.toLong()
-                "m" -> 1000000L * value.toLong()
-                "b" -> 1000000000L * value.toLong()
-                else -> value.toLong()
+            when (label?.value?.lowercase()) {
+                "k" -> 1000L * numValue.toLong()
+                "m" -> 1000000L * numValue.toLong()
+                "b" -> 1000000000L * numValue.toLong()
+                else -> numValue.toLong()
             }
         } ?: 0L
     }

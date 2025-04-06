@@ -106,4 +106,4 @@ class Registry(
     }
 }
 
-class FieldNotFoundException(message: String) : Throwable()
+class FieldNotFoundException(message: String) : Throwable(message)

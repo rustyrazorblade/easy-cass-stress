@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -25,7 +25,7 @@ class RandomPartitionAccess : IStressProfile {
     lateinit var selectQuery: PreparedStatement
     lateinit var deleteQuery: PreparedStatement
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
         insertQuery = session.prepare("INSERT INTO random_access (partition_id, row_id, value) values (?, ?, ?)")
 
         selectQuery =
@@ -78,11 +78,10 @@ class RandomPartitionAccess : IStressProfile {
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 val rowId = random.nextInt(0, rows)
                 val bound =
-                    insertQuery.bind(
-                        partitionKey.getText(),
-                        rowId,
-                        value.getText(),
-                    )
+                    insertQuery.bind()
+                        .setString(0, partitionKey.getText())
+                        .setInt(1, rowId)
+                        .setString(2, value.getText())
                 return Operation.Mutation(bound)
             }
 
@@ -90,10 +89,13 @@ class RandomPartitionAccess : IStressProfile {
                 val bound =
                     when (select) {
                         "partition" ->
-                            selectQuery.bind(partitionKey.getText())
+                            selectQuery.bind()
+                                .setString(0, partitionKey.getText())
                         "row" -> {
                             val rowId = random.nextInt(0, rows)
-                            selectQuery.bind(partitionKey.getText(), rowId)
+                            selectQuery.bind()
+                                .setString(0, partitionKey.getText())
+                                .setInt(1, rowId)
                         }
                         else -> throw RuntimeException("not even sure how you got here")
                     }
@@ -104,10 +106,13 @@ class RandomPartitionAccess : IStressProfile {
                 val bound =
                     when (delete) {
                         "partition" ->
-                            deleteQuery.bind(partitionKey.getText())
+                            deleteQuery.bind()
+                                .setString(0, partitionKey.getText())
                         "row" -> {
                             val rowId = random.nextInt(0, rows)
-                            deleteQuery.bind(partitionKey.getText(), rowId)
+                            deleteQuery.bind()
+                                .setString(0, partitionKey.getText())
+                                .setInt(1, rowId)
                         }
                         else -> throw RuntimeException("not even sure how you got here")
                     }

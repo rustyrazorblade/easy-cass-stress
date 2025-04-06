@@ -1,7 +1,7 @@
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.datastax.driver.core.PreparedStatement
-import com.datastax.driver.core.Session
+import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.PreparedStatement
 import com.rustyrazorblade.easycassstress.PartitionKey
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
@@ -22,8 +22,6 @@ import kotlin.concurrent.schedule
  * impact of schema operations on running workloads.
  */
 class CreateDrop : IStressProfile {
-
-
     @WorkloadParameter("Number of fields in each table.")
     var fields = 1
 
@@ -35,7 +33,7 @@ class CreateDrop : IStressProfile {
 
     var logger = logger()
 
-    override fun prepare(session: Session) {
+    override fun prepare(session: CqlSession) {
     }
 
     override fun schema(): List<String> {
@@ -44,31 +42,32 @@ class CreateDrop : IStressProfile {
 
     override fun getDefaultReadRate() = 0.0
 
-
     override fun getRunner(context: StressContext): IStressRunner {
         /**
          * We're going to be managing a bunch of tables here, and each one needs it's own prepared statements
          */
-        data class Table(val name: String,
-                         var insert: PreparedStatement,
-                         var select: PreparedStatement,
-                         var delete: PreparedStatement)
+        data class Table(
+            val name: String,
+            var insert: PreparedStatement,
+            var select: PreparedStatement,
+            var delete: PreparedStatement,
+        )
 
         var tableCount = AtomicInteger(0)
 
         var currentTables = ArrayDeque<Table>(activeTables * 2)
 
         // query fragments
-        var fieldList = (0 until fields).map { "f${it}" }
+        var fieldList = (0 until fields).map { "f$it" }
         var createFieldsWithType = fieldList.map { "$it text" }.joinToString(",")
-        val fieldStr = fieldList.joinToString(", " )
+        val fieldStr = fieldList.joinToString(", ")
         val placeholders = (0 until fields).map { "?" }.joinToString(", ")
 
         // whether or not to execute a DDL statement in the next iteration
         val timer = Timer()
         var latch = CountDownLatch(1)
 
-        fun getRandomTable() : Table =
+        fun getRandomTable(): Table =
             if (currentTables.size == 1) {
                 currentTables.first()
             } else {
@@ -77,9 +76,10 @@ class CreateDrop : IStressProfile {
             }
 
         logger.info("Scheduling DDL every $seconds seconds")
-        timer.schedule(0L,
-            seconds.toLong() * 1000) {
-
+        timer.schedule(
+            0L,
+            seconds.toLong() * 1000,
+        ) {
             if (currentTables.size < activeTables) {
                 val next = tableCount.addAndGet(1)
                 val name = "create_drop_${context.thread}_${context.mainArguments.id}_$next"
@@ -99,26 +99,23 @@ class CreateDrop : IStressProfile {
                             name,
                             insert = insertPrepared,
                             select = selectPrepared,
-                            delete = deletePrepared
-                        )
+                            delete = deletePrepared,
+                        ),
                     )
                 } catch (e: Exception) {
                     logger.error(e)
                 }
-            }
-            else {
+            } else {
                 val name = currentTables.removeFirst()
                 context.session.execute("DROP TABLE IF EXISTS ${name.name}")
             }
             latch.countDown()
-
         }
         latch.await()
 
         val field = context.registry.getGenerator("create_drop", "f")
 
         return object : IStressRunner {
-
             override fun getNextMutation(partitionKey: PartitionKey): Operation {
                 // consider removing this to be able to test concurrent schema modifications
                 val table = getRandomTable()
@@ -130,18 +127,28 @@ class CreateDrop : IStressProfile {
                     boundValues.add(field.getText())
                 }
 
-                return Operation.Mutation(table.insert.bind(*boundValues.toTypedArray()))
-
+                // Build bound statement one parameter at a time in v4
+                val bound = table.insert.bind()
+                bound.setString(0, partitionKey.getText())
+                for (i in 0 until fields) {
+                    bound.setString(i + 1, field.getText())
+                }
+                return Operation.Mutation(bound)
             }
 
             override fun getNextSelect(partitionKey: PartitionKey): Operation {
-                return Operation.SelectStatement(getRandomTable().select.bind(partitionKey.getText()))
+                return Operation.SelectStatement(
+                    getRandomTable().select.bind()
+                        .setString(0, partitionKey.getText()),
+                )
             }
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
-                return Operation.Deletion(getRandomTable().delete.bind(partitionKey.getText()))
+                return Operation.Deletion(
+                    getRandomTable().delete.bind()
+                        .setString(0, partitionKey.getText()),
+                )
             }
-
         }
     }
 
@@ -152,7 +159,7 @@ class CreateDrop : IStressProfile {
                 Random().apply {
                     min = 10
                     max = 20
-                }
+                },
         )
     }
 }
