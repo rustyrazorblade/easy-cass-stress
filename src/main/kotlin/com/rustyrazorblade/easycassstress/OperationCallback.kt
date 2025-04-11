@@ -28,6 +28,7 @@ class OperationCallback(
     ) {
         if (t != null) {
             context.metrics.errors.mark()
+            context.metrics.recordError() // Record error to OTel
             log.error { t }
             return
         }
@@ -35,7 +36,7 @@ class OperationCallback(
         // Handle pagination in driver v4
         if (paginate && result != null) {
             // Fetch next page - this could be made async but we'll keep it simple for now
-            while(result.hasMorePages()) {
+            while (result.hasMorePages()) {
                 result.fetchNextPage()
             }
         }
@@ -49,6 +50,7 @@ class OperationCallback(
                 if (writeHdr) {
                     context.metrics.mutationHistogram.recordValue(time)
                 }
+                context.metrics.recordMutation() // Record mutation to OTel
                 runner.onSuccess(op, result)
             }
 
@@ -56,17 +58,20 @@ class OperationCallback(
                 if (writeHdr) {
                     context.metrics.deleteHistogram.recordValue(time)
                 }
+                context.metrics.recordDeletion() // Record deletion to OTel
             }
 
             is Operation.SelectStatement -> {
                 if (writeHdr) {
                     context.metrics.selectHistogram.recordValue(time)
                 }
+                context.metrics.recordSelect() // Record select to OTel
             }
             is Operation.DDL -> {
                 if (writeHdr) {
                     context.metrics.mutationHistogram.recordValue(time)
                 }
+                context.metrics.recordMutation() // Record DDL as mutation to OTel
                 runner.onSuccess(op, result)
             }
             is Operation.Stop -> {

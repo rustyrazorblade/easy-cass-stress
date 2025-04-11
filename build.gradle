@@ -77,6 +77,13 @@ dependencies {
     implementation 'io.prometheus:simpleclient:0.16.0'
     implementation 'io.prometheus:simpleclient_dropwizard:0.16.0'
     implementation 'io.prometheus:simpleclient_httpserver:0.16.0'
+    
+    // OpenTelemetry dependencies
+    implementation 'io.opentelemetry:opentelemetry-api:1.19.0'
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.19.0'
+    implementation 'io.opentelemetry:opentelemetry-sdk-metrics:1.19.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.19.0'
+    implementation 'io.opentelemetry:opentelemetry-semconv:1.19.0-alpha'
 
     implementation group: 'me.tongfei', name: 'progressbar', version: '0.7.2'
 

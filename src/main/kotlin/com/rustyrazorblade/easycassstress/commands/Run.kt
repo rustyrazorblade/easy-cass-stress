@@ -225,6 +225,12 @@ class Run(val command: String) : IStressCommand {
     )
     var prometheusPort = System.getenv("EASY_CASS_STRESS_PROM_PORT")?.toInt() ?: 9500
 
+    @Parameter(
+        names = ["--otel-endpoint"],
+        description = "OpenTelemetry collector endpoint (e.g. localhost:4317). If empty, OpenTelemetry export is disabled.",
+    )
+    var otelEndpoint: String = System.getenv("EASY_CASS_STRESS_OTEL_ENDPOINT") ?: ""
+
     @Parameter(names = ["--ssl"], description = "Enable SSL")
     var ssl = false
 
@@ -563,7 +569,7 @@ class Run(val command: String) : IStressCommand {
         }
         reporters.add(SingleLineConsoleReporter(registry))
 
-        return Metrics(registry, reporters, prometheusPort)
+        return Metrics(registry, reporters, prometheusPort, otelEndpoint)
     }
 
     private fun createFieldRegistry(plugin: Plugin): Registry {

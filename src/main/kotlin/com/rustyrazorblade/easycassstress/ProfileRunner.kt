@@ -1,6 +1,5 @@
 package com.rustyrazorblade.easycassstress
 
-import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.datastax.oss.driver.api.core.cql.SimpleStatement
 import com.rustyrazorblade.easycassstress.workloads.IStressProfile
 import com.rustyrazorblade.easycassstress.workloads.Operation
@@ -9,7 +8,6 @@ import java.time.Duration
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.function.BiConsumer
 
 class PartitionKeyGeneratorException : Exception()
 
@@ -198,7 +196,7 @@ class ProfileRunner(
                     )
 
                 future.whenComplete { result, error ->
-                        callback.accept(result, error)
+                    callback.accept(result, error)
                 }
             }
         } catch (_: OperationStopException) {

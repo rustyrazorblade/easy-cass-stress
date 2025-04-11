@@ -140,7 +140,7 @@ class RateLimiterOptimizer(
 
     fun getCurrentTotalThroughput(): Double {
         return metrics.getSelectThroughput() +
-                metrics.getMutationThroughput() +
+            metrics.getMutationThroughput() +
             metrics.getDeletionThroughput() +
             metrics.getPopulateThroughput()
     }
@@ -303,6 +303,4 @@ class RateLimiterOptimizer(
         isStepPhase = true
         rateLimiter.rate = stepValue
     }
-
-
 }
