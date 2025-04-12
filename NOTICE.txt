@@ -1,0 +1,20 @@
+Apache Cassandra Stress
+Copyright 2025- The Apache Software Foundation
+
+This product includes software developed by The Apache Software
+Foundation (http://www.apache.org/).
+
+This product originates, before git sha
+289784a1d7f6b0af04f0895d7b0846c11664c8eb, from The Last Pickle
+ and other individual contributors.
+
+Contributors who made contributions after sha 2d4542c27d3f1c0e24899c01247b9a8ee3c9a238 are listed below.
+Those marked with an asterisk (*) have agreed to donate (copyright assign) their contributions to the
+Apache Software Foundation, signing CLAs when appropriate.
+
+Anthony Grasso (anthony.grasso@datastax.com)*
+Jon Haddad (jon@rustyrazorblade.com)*
+Jordan West (jwest@apache.org)*
+Dominik Stadler (dominik.stadler@gmx.at)*
+Sarma Pydipally (sarmadroid@gmail.com)*
+Sean Sullivan (github@seansullivan.com)
