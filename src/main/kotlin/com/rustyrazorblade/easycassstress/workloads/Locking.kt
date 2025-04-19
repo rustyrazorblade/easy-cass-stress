@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Note: currently broken :(
- * Warning: this workload is under development and should not be used as a reference across multiple easy-cass-stress runs with
- * different versions of easy-cass-stress as the implementation may change!
+ * Warning: this workload is under development and should not be used as a reference across multiple cassandra-stress runs with
+ * different versions of cassandra-stress as the implementation may change!
  *
  * Load test for a case where we have a dataset that requires LWT for a status update type workload
  * This could be a lock on status or a state machine in the real world

@@ -205,7 +205,7 @@ class SchemaBuilder(var baseStatement: String) {
     /**
      * Helper function for compaction shortcuts
      * If the functino parses, we return a
-     * @see <a href="https://github.com/rustyrazorblade/easy-cass-stress/issues/80">Issue 80 on Github</a>
+     * @see <a href="https://github.com/rustyrazorblade/cassandra-stress/issues/80">Issue 80 on Github</a>
      */
     fun parseCompaction(compaction: String): Compaction {
         val parsed = compactionShortcutRegex.find(compaction)

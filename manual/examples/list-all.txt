@@ -1,4 +1,4 @@
-$ bin/easy-cass-stress list
+$ bin/cassandra-stress list
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 Available Workloads:
 
@@ -17,4 +17,4 @@ SAI
 Sets 
 UdtTimeSeries 
 
-You can run any of these workloads by running easy-cass-stress run WORKLOAD.
+You can run any of these workloads by running cassandra-stress run WORKLOAD.

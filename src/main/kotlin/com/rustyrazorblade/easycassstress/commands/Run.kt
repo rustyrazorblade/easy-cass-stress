@@ -65,10 +65,10 @@ class NoSplitter : IParameterSplitter {
  * command is the original command that started the program.
  * It's used solely for logging and reporting purposes.
  */
-@Parameters(commandDescription = "Run a easy-cass-stress profile")
+@Parameters(commandDescription = "Run a cassandra-stress profile")
 class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--host"])
-    var host = System.getenv("EASY_CASS_STRESS_CASSANDRA_HOST") ?: "127.0.0.1"
+    var host = System.getenv("CASSANDRA_STRESS_CASSANDRA_HOST") ?: "127.0.0.1"
 
     @Parameter(names = ["--port"], description = "Override the cql port. Defaults to 9042.")
     var cqlPort = 9042
@@ -183,17 +183,17 @@ class Run(val command: String) : IStressCommand {
         names = ["--cl"],
         description =
             "Consistency level for reads/writes (Defaults to LOCAL_ONE, " +
-                "set custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).",
+                "set custom default with CASSANDRA_STRESS_CONSISTENCY_LEVEL).",
         converter = ConsistencyLevelConverter::class,
     )
     var consistencyLevel =
-        System.getenv("EASY_CASS_STRESS_CONSISTENCY_LEVEL")?.let {
+        System.getenv("CASSANDRA_STRESS_CONSISTENCY_LEVEL")?.let {
             ConsistencyLevelConverter().convert(it)
         } ?: ConsistencyLevel.LOCAL_ONE
 
     @Parameter(names = ["--scl"], description = "Serial consistency level")
     var serialConsistencyLevel =
-        System.getenv("EASY_CASS_STRESS_SERIAL_CONSISTENCY_LEVEL")?.let {
+        System.getenv("CASSANDRA_STRESS_SERIAL_CONSISTENCY_LEVEL")?.let {
             ConsistencyLevelConverter().convert(it)
         } ?: ConsistencyLevel.LOCAL_SERIAL
 
@@ -215,7 +215,7 @@ class Run(val command: String) : IStressCommand {
     @Parameter(
         names = ["--coordinatoronly", "--co"],
         description =
-            "Coordinator only mode.  This will cause easy-cass-stress to round robin between nodes " +
+            "Coordinator only mode.  This will cause cassandra-stress to round robin between nodes " +
                 "without tokens.  Requires using -Djoin_ring=false in cassandra-env.sh.  " +
                 "When using this option you must only provide a coordinator to --host.",
     )
@@ -238,9 +238,9 @@ class Run(val command: String) : IStressCommand {
 
     @Parameter(
         names = ["--prometheusport"],
-        description = "Override the default prometheus port.  Set the default with EASY_CASS_STRESS_PROM_PORT, or set to 0 to disable.",
+        description = "Override the default prometheus port.  Set the default with CASSANDRA_STRESS_PROM_PORT, or set to 0 to disable.",
     )
-    var prometheusPort = System.getenv("EASY_CASS_STRESS_PROM_PORT")?.toInt() ?: 9500
+    var prometheusPort = System.getenv("CASSANDRA_STRESS_PROM_PORT")?.toInt() ?: 9500
 
     @Parameter(names = ["--ssl"], description = "Enable SSL")
     var ssl = false
@@ -249,7 +249,7 @@ class Run(val command: String) : IStressCommand {
     var ttl: Long = 0
 
     @Parameter(names = ["--dc"], description = "The data center to which requests should be sent")
-    var dc: String = System.getenv("EASY_CASS_STRESS_DEFAULT_DC") ?: "datacenter1"
+    var dc: String = System.getenv("CASSANDRA_STRESS_DEFAULT_DC") ?: "datacenter1"
 
     @DynamicParameter(names = ["--workload.", "-w."], description = "Override workload specific parameters.")
     var workloadParameters: Map<String, String> = mutableMapOf()
@@ -458,8 +458,8 @@ class Run(val command: String) : IStressCommand {
             }
         } catch (e: Exception) {
             println(
-                "There was an error with easy-cass-stress.  Please file a bug at " +
-                    "https://github.com/rustyrazorblade/easy-cass-stress and report the following exception:\n $e",
+                "There was an error with cassandra-stress.  Please file a bug at " +
+                    "https://github.com/rustyrazorblade/cassandra-stress and report the following exception:\n $e",
             )
             throw e
         } finally {

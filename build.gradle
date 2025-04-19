@@ -47,7 +47,7 @@ group 'com.rustyrazorblade'
 sourceCompatibility = 11
 
 application {
-    applicationName = "easy-cass-stress"
+    applicationName = "cassandra-stress"
     mainClassName = "com.rustyrazorblade.easycassstress.MainKt"
 }
 
@@ -132,7 +132,7 @@ task docs(type:Exec) {
     dependsOn("shadowJar")
     dependsOn("generateExamples")
 
-    environment "EASY_CASS_STRESS_VERSION", "${version}"
+    environment "CASSANDRA_STRESS_VERSION", "${version}"
     commandLine 'docker-compose', 'up', 'docs'
     group = "Documentation"
     description = "Build website documentation"
@@ -147,18 +147,18 @@ task generateExamples(type: Exec) {
 
 jib {
     to {
-        image = "rustyrazorblade/easy-cass-stress"
+        image = "rustyrazorblade/cassandra-stress"
         tags = [version, "latest"]
     }
 }
 
 ospackage {
     os = LINUX
-    link("/usr/local/bin/easy-cass-stress", "/opt/easy-cass-stress/bin/easy-cass-stress" )
+    link("/usr/local/bin/cassandra-stress", "/opt/cassandra-stress/bin/cassandra-stress" )
     packager "Jon Haddad"
     maintainer "Jon Haddad"
     vendor "Rustyrazorblade Consulting"
-    url "http://rustyrazorblade.com/easy-cass-stress/"
+    url "http://rustyrazorblade.com/cassandra-stress/"
     license "Apache License 2.0"
     description "Stress Tool for Apache Cassandra by Rustyrazorblade Consulting"
 }

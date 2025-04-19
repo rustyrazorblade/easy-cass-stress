@@ -1,1 +1,1 @@
-$ bin/easy-cass-stress run KeyValue -n 10000
+$ bin/cassandra-stress run KeyValue -n 10000

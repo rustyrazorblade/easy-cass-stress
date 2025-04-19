@@ -30,5 +30,5 @@ services:
         - ./manual:/documents
         - ./docs:/html
 
-        command: asciidoctor -o /html/index.html MANUAL.adoc -a EASY_CASS_STRESS_VERSION=${EASY_CASS_STRESS_VERSION}
+        command: asciidoctor -o /html/index.html MANUAL.adoc -a CASSANDRA_STRESS_VERSION=${CASSANDRA_STRESS_VERSION}
 

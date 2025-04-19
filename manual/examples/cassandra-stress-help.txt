@@ -1,17 +1,17 @@
-$ bin/easy-cass-stress
+$ bin/cassandra-stress
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Usage: easy-cass-stress [options] [command] [command options]
+Usage: cassandra-stress [options] [command] [command options]
   Options:
     --help, -h
       Shows this help.
       Default: false
   Commands:
-    run      Run a easy-cass-stress profile
+    run      Run a cassandra-stress profile
       Usage: run [options]
         Options:
           --cl
             Consistency level for reads/writes (Defaults to LOCAL_ONE, set 
-            custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).
+            custom default with CASSANDRA_STRESS_CONSISTENCY_LEVEL).
             Default: LOCAL_ONE
             Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --compaction
@@ -27,7 +27,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             clusters.  This flag is deprecated and does nothing.
             Default: 100
           --coordinatoronly, --co
-            Coordinator only mode.  This will cause easy-cass-stress to round 
+            Coordinator only mode.  This will cause cassandra-stress to round 
             robin between nodes without tokens.  Requires using 
             -Djoin_ring=false in cassandra-env.sh.  When using this option you 
             must only provide a coordinator to --host.
@@ -114,7 +114,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             Default: 9042
           --prometheusport
             Override the default prometheus port.  Set the default with 
-            EASY_CASS_STRESS_PROM_PORT, or set to 0 to disable.
+            CASSANDRA_STRESS_PROM_PORT, or set to 0 to disable.
             Default: 9500
           --queue
             Queue Depth.  2x the rate by default.

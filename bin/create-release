@@ -10,7 +10,7 @@ VERSION_KEY="version"
 DEBUG=false
 GH_RELEASE_DEBUG=""
 
-HOMEBREW_FORMULA="${RRB_HOMEBREW_REPO}/Formula/easy-cass-stress.rb"
+HOMEBREW_FORMULA="${RRB_HOMEBREW_REPO}/Formula/cassandra-stress.rb"
 
 
 # Parse command line options
@@ -93,7 +93,7 @@ echo "Current version: $current_version, new version: $new_version"
 echo "Building..."
 
 gw distTar
-RELEASE_FILE="build/distributions/easy-cass-stress-${current_version}.tar.gz"
+RELEASE_FILE="build/distributions/cassandra-stress-${current_version}.tar.gz"
 
 if [ ! -f "$RELEASE_FILE" ]; then
   echo "Release file $RELEASE_FILE does not exist, exiting."
