@@ -59,7 +59,7 @@ class FileReporter(registry: MetricRegistry, outputFileName: String, command: St
                 outputFile.bufferedWriter()
             }
 
-        buffer.write("# cassandra-stress run at $startTime")
+        buffer.write("# cassandra-easy-stress run at $startTime")
         buffer.newLine()
         buffer.write("# $command")
         buffer.newLine()

@@ -29,6 +29,6 @@ class ListCommand : IStressCommand {
         for ((key, _) in plugins) {
             println("$key ")
         }
-        println("\nYou can run any of these workloads by running cassandra-stress run WORKLOAD.")
+        println("\nYou can run any of these workloads by running cassandra-easy-stress run WORKLOAD.")
     }
 }

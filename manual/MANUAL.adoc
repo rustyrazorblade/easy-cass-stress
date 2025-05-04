@@ -1,19 +1,19 @@
-= cassandra-stress
+= cassandra-easy-stress
 Jon Haddad <jon@rustyrazorblade.com>
 Anthony Grasso <anthony@thelastpickle.com>
 :toc: left
 :icon: font
 
-cassandra-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
+cassandra-easy-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
 Workloads are easy to write and because they are written in code. You
 have the ultimate flexibility to build whatever you want without having to learn and
 operate around the restrictions of a configuration DSL. Workloads can be tweaked via command line
 parameters to make them fit your environment more closely.
 
-One of the goals of cassandra-stress is to provide enough pre-designed
+One of the goals of cassandra-easy-stress is to provide enough pre-designed
 workloads _out of the box,_ so it’s unnecessary to code up a workload for
 most use cases. For instance, it’s very common to have a key value
-workload, and want to test that. cassandra-stress allows you to customize a
+workload, and want to test that. cassandra-easy-stress allows you to customize a
 pre-configured key-value workload, using simple parameters to modify the
 workload to fit your needs. Several workloads are included, such as:
 
@@ -40,7 +40,7 @@ The goal of this project is to be testing common workloads (time series, key val
 ////
 The easiest way to get started is to use your favorite package manager.
 
-The current version is {CASSANDRA_STRESS_VERSION}.
+The current version is {CASSANDRA_EASY_STRESS_VERSION}.
 
 ==== Deb Packages
 
@@ -48,7 +48,7 @@ The current version is {CASSANDRA_STRESS_VERSION}.
 $ echo "deb https://dl.bintray.com/rustyrazorblade/tlp-tools-deb weezy main" | sudo tee -a /etc/apt/sources.list
 $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 2895100917357435
 $ sudo apt update
-$ sudo apt install cassandra-stress
+$ sudo apt install cassandra-easy-stress
 ```
 
 ==== RPM Packages
@@ -67,7 +67,7 @@ enabled=1
 Then run the following to install:
 
 ```
-$ yum install cassandra-stress
+$ yum install cassandra-easy-stress
 ```
 
 
@@ -78,15 +78,15 @@ Further information can be found on the https://bintray.com/beta/#/rustyrazorbla
 
 [subs="attributes"]
 ```
-$ curl -L -O "https://dl.bintray.com/rustyrazorblade/tlp-tools-tarball/cassandra-stress-{CASSANDRA_STRESS_VERSION}.tar
-$ tar -xzf cassandra-stress-{CASSANDRA_STRESS_VERSION}.tar
+$ curl -L -O "https://dl.bintray.com/rustyrazorblade/tlp-tools-tarball/cassandra-easy-stress-{CASSANDRA_EASY_STRESS_VERSION}.tar
+$ tar -xzf cassandra-easy-stress-{CASSANDRA_EASY_STRESS_VERSION}.tar
 ```
 
 ////
 
 === Building / Using the Stress Tool from Source
 
-This is currently the only way to use the latest version of cassandra-stress.  I'm working on getting the packages updated.
+This is currently the only way to use the latest version of cassandra-easy-stress.  I'm working on getting the packages updated.
 
 ////
 This is advisable only if you're comfortable debugging the bash scripts, gradle, and Kotlin yourself and want to be either on the bleeding edge or add a feature.  If not, that's OK, we recommend using one of the above packages instead.
@@ -96,12 +96,12 @@ First you'll need to clone and build the repo.  You can grab the source here and
 
 
 ```bash
-$ git clone https://github.com/rustyrazorblade/cassandra-stress.git
-$ cd cassandra-stress
+$ git clone https://github.com/rustyrazorblade/cassandra-easy-stress.git
+$ cd cassandra-easy-stress
 $ ./gradlew shadowJar
 ```
 
-You can now run the stress tool via the `bin/cassandra-stress` script.  This is not the same script you'll be running if you've installed from a package or the tarball.
+You can now run the stress tool via the `bin/cassandra-easy-stress` script.  This is not the same script you'll be running if you've installed from a package or the tarball.
 
 You can also create a zip, tar, or deb package by doing the following:
 
@@ -116,18 +116,18 @@ $ ./gradlew deb
 Assuming you have either a CCM cluster or are running a single node
 locally, you can run this quickstart.
 
-Either add the `bin` directory to your PATH or from within cassandra-stress
+Either add the `bin` directory to your PATH or from within cassandra-easy-stress
 run the following command to execute 10,000 queries:
 
 ```
-include::examples/cassandra-stress-keyvalue.txt[lines=1]
+include::examples/cassandra-easy-stress-keyvalue.txt[lines=1]
 ```
 
 You'll see the output of the keyspaces and tables that are created as well as some statistical information regarding the workload:
 
 [source,bash,options="nowrap"]
 ----
-include::examples/cassandra-stress-keyvalue.txt[lines=2..-1]
+include::examples/cassandra-easy-stress-keyvalue.txt[lines=2..-1]
 ----
 
 If you've made it this far, congrats!  You've run your first workload.
@@ -136,14 +136,14 @@ If you've made it this far, congrats!  You've run your first workload.
 
 == Usage
 
-You'll probably want to do a bit more than simply run a few thousand queries against a KeyValue table with default settings.  The nice part about cassandra-stress is that it not only comes with a variety of workloads that you can run to test your cluster, but that it allows you to change many of the parameters.  In the quickstart example we used the `-n` flag to change the total number of operations `cassandra-stress` will execute against the database.  There are many more options available, this section will cover some of them.
+You'll probably want to do a bit more than simply run a few thousand queries against a KeyValue table with default settings.  The nice part about cassandra-easy-stress is that it not only comes with a variety of workloads that you can run to test your cluster, but that it allows you to change many of the parameters.  In the quickstart example we used the `-n` flag to change the total number of operations `cassandra-easy-stress` will execute against the database.  There are many more options available, this section will cover some of them.
 
 === General Help
 
-`cassandra-stress` will display the help if the `cassandra-stress` command is run without any arguments or if the `--help` flag is passed:
+`cassandra-easy-stress` will display the help if the `cassandra-easy-stress` command is run without any arguments or if the `--help` flag is passed:
 
 ```bash
-include::examples/cassandra-stress-help.txt[]
+include::examples/cassandra-easy-stress-help.txt[]
 ```
 
 === Listing All Workloads
@@ -181,13 +181,13 @@ You might need to run a stress test for a given duration instead of providing a 
 For example, running a test for 1 hours and 30 minutes will be done as follows:
 
 ```
-$ cassandra-stress run KeyValue -d "1h 30m"
+$ cassandra-easy-stress run KeyValue -d "1h 30m"
 ```
 
-To run a test for 1 days, 3 hours and 15 minutes (why not?), run cassandra-stress as follows:
+To run a test for 1 days, 3 hours and 15 minutes (why not?), run cassandra-easy-stress as follows:
 
 ```
-$ cassandra-stress run KeyValue -d "1d 3h 15m"
+$ cassandra-easy-stress run KeyValue -d "1d 3h 15m"
 ```
 
 ==== Partition Keys
@@ -285,7 +285,7 @@ Ideally we’d like to tweak this workload to be closer to our production
 use case. Let’s use random sections from various books:
 
 ```
-$ cassandra-stress run KeyValue --field.keyvalue.value='book(20,40)`
+$ cassandra-easy-stress run KeyValue --field.keyvalue.value='book(20,40)`
 ```
 
 Instead of using random strings of garbage, the KeyValue workload will
@@ -297,23 +297,23 @@ workload to specify which fields can be used this way.
 
 === Logging
 
-`cassandra-stress` uses the https://logging.apache.org/[Log4J 2] logging framework.
+`cassandra-easy-stress` uses the https://logging.apache.org/[Log4J 2] logging framework.
 
-You can find the default log4j config inhttps://github.com/rustyrazorblade/cassandra-stress/blob/main/src/main/resources/log4j2.yaml[`conf`, window="_blank"].  This should be suitable for most use cases.
+You can find the default log4j config inhttps://github.com/rustyrazorblade/cassandra-easy-stress/blob/main/src/main/resources/log4j2.yaml[`conf`, window="_blank"].  This should be suitable for most use cases.
 
-To use your own logging configuration, simply set the shell variable `CASSANDRA_STRESS_LOG4J` to the path of the new logging configuration before running `cassandra-stress` to point to the config file of your choice.
+To use your own logging configuration, simply set the shell variable `CASSANDRA_EASY_STRESS_LOG4J` to the path of the new logging configuration before running `cassandra-easy-stress` to point to the config file of your choice.
 
 For more information on how to configure Log4J 2 please see the https://logging.apache.org/log4j/2.x/manual/configuration.html[configuration] documentation.
 
 
 ==== Debian Package
 
-The Debian package installs a basic configuration file to `/etc/cassandra-stress/log4j2.yaml`.
+The Debian package installs a basic configuration file to `/etc/cassandra-easy-stress/log4j2.yaml`.
 
 
 === Exporting Metrics
 
-cassandra-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.
+cassandra-easy-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.
 
 === Workload Restrictions
 
@@ -337,4 +337,4 @@ $ docker-compose up docs
 
 === Writing a Custom Workload
 
-`cassandra-stress` is a work in progress.  Writing a stress workload isn't documented yet as it is still changing.
+`cassandra-easy-stress` is a work in progress.  Writing a stress workload isn't documented yet as it is still changing.

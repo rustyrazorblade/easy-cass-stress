@@ -31,8 +31,8 @@ import java.net.InetSocketAddress
 abstract class CassandraTestBase {
     companion object {
         // Connection parameters with environment variable fallbacks
-        val ip = System.getenv("CASSANDRA_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
-        val localDc = System.getenv("CASSANDRA_STRESS_DATACENTER") ?: "datacenter1"
+        val ip = System.getenv("CASSANDRA_EASY_STRESS_CASSANDRA_IP") ?: "127.0.0.1"
+        val localDc = System.getenv("CASSANDRA_EASY_STRESS_DATACENTER") ?: "datacenter1"
 
         // Configure driver with reasonable timeouts for tests
         val configLoader =

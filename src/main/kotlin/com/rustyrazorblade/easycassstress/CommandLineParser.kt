@@ -37,7 +37,7 @@ class CommandLineParser(
     companion object {
         fun parse(arguments: Array<String>): CommandLineParser {
             // JCommander set up
-            val jcommander = JCommander.newBuilder().programName("cassandra-stress")
+            val jcommander = JCommander.newBuilder().programName("cassandra-easy-stress")
             val args = MainArgs()
 
             // needed to get help

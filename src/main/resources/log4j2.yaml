@@ -19,7 +19,7 @@ Configuration:
   Properties:
     property:
       - name: logs
-        value: "${env:CASSANDRA_STRESS_LOG_DIR:-${sys:user.home}/.cassandra-stress}"
+        value: "${env:CASSANDRA_EASY_STRESS_LOG_DIR:-${sys:user.home}/.cassandra-easy-stress}"
 
   status: info
   name: StandardConfiguration

@@ -1,4 +1,4 @@
-$ bin/cassandra-stress run KeyValue -n 10000
+$ bin/cassandra-easy-stress run KeyValue -n 10000
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 Creating easy_cass_stress: 
 CREATE KEYSPACE

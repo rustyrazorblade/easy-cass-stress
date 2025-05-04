@@ -1,1 +1,1 @@
-$ bin/cassandra-stress
+$ bin/cassandra-easy-stress
