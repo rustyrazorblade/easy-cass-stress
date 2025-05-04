@@ -39,6 +39,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/distributions/easy-cass-stress-6.0.0.zip
-          asset_name: easy-cass-stress-6.0.0.zip
+          asset_path: ./build/distributions/cassandra-easy-stress-6.0.0.zip
+          asset_name: cassandra-easy-stress-6.0.0.zip
           asset_content_type: application/gzip

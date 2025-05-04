@@ -1,4 +1,4 @@
-$ bin/easy-cass-stress info KeyValue
+$ bin/cassandra-easy-stress info KeyValue
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 CREATE TABLE IF NOT EXISTS keyvalue (
                         key text PRIMARY KEY,
