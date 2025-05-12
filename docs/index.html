@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
 <meta name="author" content="Jon Haddad">
-<title>easy-cass-stress</title>
+<title>cassandra-easy-stress</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -437,7 +437,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>easy-cass-stress</h1>
+<h1>cassandra-easy-stress</h1>
 <div class="details">
 <span id="author" class="author">Jon Haddad</span><br>
 <span id="email" class="email"><a href="mailto:jon@rustyrazorblade.com">jon@rustyrazorblade.com</a></span><br>
@@ -478,17 +478,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>easy-cass-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
+<p>cassandra-easy-stress is a workload-centric stress tool for Apache Cassandra, written in Kotlin.
 Workloads are easy to write and because they are written in code. You
 have the ultimate flexibility to build whatever you want without having to learn and
 operate around the restrictions of a configuration DSL. Workloads can be tweaked via command line
 parameters to make them fit your environment more closely.</p>
 </div>
 <div class="paragraph">
-<p>One of the goals of easy-cass-stress is to provide enough pre-designed
+<p>One of the goals of cassandra-easy-stress is to provide enough pre-designed
 workloads <em>out of the box,</em> so it’s unnecessary to code up a workload for
 most use cases. For instance, it’s very common to have a key value
-workload, and want to test that. easy-cass-stress allows you to customize a
+workload, and want to test that. cassandra-easy-stress allows you to customize a
 pre-configured key-value workload, using simple parameters to modify the
 workload to fit your needs. Several workloads are included, such as:</p>
 </div>
@@ -536,20 +536,20 @@ automatically captured by the Dropwizard metrics library.</p>
 <div class="sect2">
 <h3 id="_building_using_the_stress_tool_from_source">Building / Using the Stress Tool from Source</h3>
 <div class="paragraph">
-<p>This is currently the only way to use the latest version of easy-cass-stress.  I&#8217;m working on getting the packages updated.</p>
+<p>This is currently the only way to use the latest version of cassandra-easy-stress.  I&#8217;m working on getting the packages updated.</p>
 </div>
 <div class="paragraph">
 <p>First you&#8217;ll need to clone and build the repo.  You can grab the source here and build via the included gradle script:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">$ git clone https://github.com/rustyrazorblade/easy-cass-stress.git
-$ cd easy-cass-stress
+<pre class="highlight"><code class="language-bash" data-lang="bash">$ git clone https://github.com/rustyrazorblade/cassandra-easy-stress.git
+$ cd cassandra-easy-stress
 $ ./gradlew shadowJar</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>You can now run the stress tool via the <code>bin/easy-cass-stress</code> script.  This is not the same script you&#8217;ll be running if you&#8217;ve installed from a package or the tarball.</p>
+<p>You can now run the stress tool via the <code>bin/cassandra-easy-stress</code> script.  This is not the same script you&#8217;ll be running if you&#8217;ve installed from a package or the tarball.</p>
 </div>
 <div class="paragraph">
 <p>You can also create a zip, tar, or deb package by doing the following:</p>
@@ -569,12 +569,12 @@ $ ./gradlew deb</code></pre>
 locally, you can run this quickstart.</p>
 </div>
 <div class="paragraph">
-<p>Either add the <code>bin</code> directory to your PATH or from within easy-cass-stress
+<p>Either add the <code>bin</code> directory to your PATH or from within cassandra-easy-stress
 run the following command to execute 10,000 queries:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/easy-cass-stress run KeyValue -n 10000</code></pre>
+<pre class="highlight"><code>$ bin/cassandra-easy-stress run KeyValue -n 10000</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -627,29 +627,29 @@ Stress complete, 1.</code></pre>
 <h2 id="_usage">Usage</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You&#8217;ll probably want to do a bit more than simply run a few thousand queries against a KeyValue table with default settings.  The nice part about easy-cass-stress is that it not only comes with a variety of workloads that you can run to test your cluster, but that it allows you to change many of the parameters.  In the quickstart example we used the <code>-n</code> flag to change the total number of operations <code>easy-cass-stress</code> will execute against the database.  There are many more options available, this section will cover some of them.</p>
+<p>You&#8217;ll probably want to do a bit more than simply run a few thousand queries against a KeyValue table with default settings.  The nice part about cassandra-easy-stress is that it not only comes with a variety of workloads that you can run to test your cluster, but that it allows you to change many of the parameters.  In the quickstart example we used the <code>-n</code> flag to change the total number of operations <code>cassandra-easy-stress</code> will execute against the database.  There are many more options available, this section will cover some of them.</p>
 </div>
 <div class="sect2">
 <h3 id="_general_help">General Help</h3>
 <div class="paragraph">
-<p><code>easy-cass-stress</code> will display the help if the <code>easy-cass-stress</code> command is run without any arguments or if the <code>--help</code> flag is passed:</p>
+<p><code>cassandra-easy-stress</code> will display the help if the <code>cassandra-easy-stress</code> command is run without any arguments or if the <code>--help</code> flag is passed:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">$ bin/easy-cass-stress
+<pre class="highlight"><code class="language-bash" data-lang="bash">$ bin/cassandra-easy-stress
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
-Usage: easy-cass-stress [options] [command] [command options]
+Usage: cassandra-easy-stress [options] [command] [command options]
   Options:
     --help, -h
       Shows this help.
       Default: false
   Commands:
-    run      Run a easy-cass-stress profile
+    run      Run a cassandra-easy-stress profile
       Usage: run [options]
         Options:
           --cl
             Consistency level for reads/writes (Defaults to LOCAL_ONE, set
-            custom default with EASY_CASS_STRESS_CONSISTENCY_LEVEL).
+            custom default with CASSANDRA_EASY_STRESS_CONSISTENCY_LEVEL).
             Default: LOCAL_ONE
             Possible Values: [ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE]
           --compaction
@@ -665,7 +665,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             clusters.  This flag is deprecated and does nothing.
             Default: 100
           --coordinatoronly, --co
-            Coordinator only mode.  This will cause easy-cass-stress to round
+            Coordinator only mode.  This will cause cassandra-easy-stress to round
             robin between nodes without tokens.  Requires using
             -Djoin_ring=false in cassandra-env.sh.  When using this option you
             must only provide a coordinator to --host.
@@ -752,7 +752,7 @@ Usage: easy-cass-stress [options] [command] [command options]
             Default: 9042
           --prometheusport
             Override the default prometheus port.  Set the default with
-            EASY_CASS_STRESS_PROM_PORT, or set to 0 to disable.
+            CASSANDRA_EASY_STRESS_PROM_PORT, or set to 0 to disable.
             Default: 9500
           --queue
             Queue Depth.  2x the rate by default.
@@ -804,7 +804,7 @@ Usage: easy-cass-stress [options] [command] [command options]
 <h3 id="_listing_all_workloads">Listing All Workloads</h3>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/easy-cass-stress list
+<pre class="highlight"><code>$ bin/cassandra-easy-stress list
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 Available Workloads:
 
@@ -823,7 +823,7 @@ SAI
 Sets
 UdtTimeSeries
 
-You can run any of these workloads by running easy-cass-stress run WORKLOAD.</code></pre>
+You can run any of these workloads by running cassandra-easy-stress run WORKLOAD.</code></pre>
 </div>
 </div>
 </div>
@@ -834,7 +834,7 @@ You can run any of these workloads by running easy-cass-stress run WORKLOAD.</co
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ bin/easy-cass-stress info KeyValue
+<pre class="highlight"><code>$ bin/cassandra-easy-stress info KeyValue
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 CREATE TABLE IF NOT EXISTS keyvalue (
                         key text PRIMARY KEY,
@@ -897,15 +897,15 @@ For example, running a test for 1 hours and 30 minutes will be done as follows:<
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ easy-cass-stress run KeyValue -d "1h 30m"</code></pre>
+<pre class="highlight"><code>$ cassandra-easy-stress run KeyValue -d "1h 30m"</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To run a test for 1 days, 3 hours and 15 minutes (why not?), run easy-cass-stress as follows:</p>
+<p>To run a test for 1 days, 3 hours and 15 minutes (why not?), run cassandra-easy-stress as follows:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ easy-cass-stress run KeyValue -d "1d 3h 15m"</code></pre>
+<pre class="highlight"><code>$ cassandra-easy-stress run KeyValue -d "1d 3h 15m"</code></pre>
 </div>
 </div>
 <div class="sect3">
@@ -1046,7 +1046,7 @@ use case. Let’s use random sections from various books:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code>$ easy-cass-stress run KeyValue --field.keyvalue.value='book(20,40)`</code></pre>
+<pre class="highlight"><code>$ cassandra-easy-stress run KeyValue --field.keyvalue.value='book(20,40)`</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1063,13 +1063,13 @@ workload to specify which fields can be used this way.</p>
 <div class="sect2">
 <h3 id="_logging">Logging</h3>
 <div class="paragraph">
-<p><code>easy-cass-stress</code> uses the <a href="https://logging.apache.org/">Log4J 2</a> logging framework.</p>
+<p><code>cassandra-easy-stress</code> uses the <a href="https://logging.apache.org/">Log4J 2</a> logging framework.</p>
 </div>
 <div class="paragraph">
-<p>You can find the default log4j config inhttps://github.com/rustyrazorblade/easy-cass-stress/blob/main/src/main/resources/log4j2.yaml[<code>conf</code>, window="_blank"].  This should be suitable for most use cases.</p>
+<p>You can find the default log4j config inhttps://github.com/rustyrazorblade/cassandra-easy-stress/blob/main/src/main/resources/log4j2.yaml[<code>conf</code>, window="_blank"].  This should be suitable for most use cases.</p>
 </div>
 <div class="paragraph">
-<p>To use your own logging configuration, simply set the shell variable <code>EASY_CASS_STRESS_LOG4J</code> to the path of the new logging configuration before running <code>easy-cass-stress</code> to point to the config file of your choice.</p>
+<p>To use your own logging configuration, simply set the shell variable <code>CASSANDRA_EASY_STRESS_LOG4J</code> to the path of the new logging configuration before running <code>cassandra-easy-stress</code> to point to the config file of your choice.</p>
 </div>
 <div class="paragraph">
 <p>For more information on how to configure Log4J 2 please see the <a href="https://logging.apache.org/log4j/2.x/manual/configuration.html">configuration</a> documentation.</p>
@@ -1077,14 +1077,14 @@ workload to specify which fields can be used this way.</p>
 <div class="sect3">
 <h4 id="_debian_package">Debian Package</h4>
 <div class="paragraph">
-<p>The Debian package installs a basic configuration file to <code>/etc/easy-cass-stress/log4j2.yaml</code>.</p>
+<p>The Debian package installs a basic configuration file to <code>/etc/cassandra-easy-stress/log4j2.yaml</code>.</p>
 </div>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_exporting_metrics">Exporting Metrics</h3>
 <div class="paragraph">
-<p>easy-cass-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.</p>
+<p>cassandra-easy-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1120,7 +1120,7 @@ workload to specify which fields can be used this way.</p>
 <div class="sect2">
 <h3 id="_writing_a_custom_workload">Writing a Custom Workload</h3>
 <div class="paragraph">
-<p><code>easy-cass-stress</code> is a work in progress.  Writing a stress workload isn&#8217;t documented yet as it is still changing.</p>
+<p><code>cassandra-easy-stress</code> is a work in progress.  Writing a stress workload isn&#8217;t documented yet as it is still changing.</p>
 </div>
 </div>
 </div>

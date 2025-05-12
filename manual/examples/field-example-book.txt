@@ -1,4 +1,4 @@
-$ bin/easy-cass-stress run KeyValue --field.keyvalue.value="book(20,40)"
+$ bin/cassandra-easy-stress run KeyValue --field.keyvalue.value="book(20,40)"
 WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
 Creating easy_cass_stress: 
 CREATE KEYSPACE

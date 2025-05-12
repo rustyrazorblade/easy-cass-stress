@@ -1,8 +1,8 @@
-# easy-cass-stress Developer Guide
+# cassandra-easy-stress Developer Guide
 
 ## Build and Testing Commands
 - Build: `./gradlew shadowJar`
-- Run: `bin/easy-cass-stress`
+- Run: `bin/cassandra-easy-stress`
 - Run tests: `./gradlew test`
 - Run single test: `./gradlew test --tests "com.rustyrazorblade.easycassstress.MainArgumentsTest"`
 - Format code: `./gradlew ktlintFormat`
