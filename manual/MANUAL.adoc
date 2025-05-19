@@ -96,7 +96,7 @@ First you'll need to clone and build the repo.  You can grab the source here and
 
 
 ```bash
-$ git clone https://github.com/rustyrazorblade/cassandra-easy-stress.git
+$ git clone https://github.com/apache/cassandra-easy-stress.git
 $ cd cassandra-easy-stress
 $ ./gradlew shadowJar
 ```
@@ -299,7 +299,7 @@ workload to specify which fields can be used this way.
 
 `cassandra-easy-stress` uses the https://logging.apache.org/[Log4J 2] logging framework.
 
-You can find the default log4j config inhttps://github.com/rustyrazorblade/cassandra-easy-stress/blob/main/src/main/resources/log4j2.yaml[`conf`, window="_blank"].  This should be suitable for most use cases.
+You can find the default log4j config in https://github.com/apache/cassandra-easy-stress/blob/main/src/main/resources/log4j2.yaml [`conf`, window="_blank"].  This should be suitable for most use cases.
 
 To use your own logging configuration, simply set the shell variable `CASSANDRA_EASY_STRESS_LOG4J` to the path of the new logging configuration before running `cassandra-easy-stress` to point to the config file of your choice.
 

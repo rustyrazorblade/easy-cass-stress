@@ -6,19 +6,19 @@ cassandra-easy-stress is a configuration-based tool for doing benchmarks and tes
 Unfortunately, it can be challenging to configure a workload. There are fairly common data models and workloads seen on Apache Cassandra.  
 This tool aims to provide a means of executing configurable, pre-defined profiles.
 
-Full docs are here: https://rustyrazorblade.github.io/cassandra-easy-stress/
+Full docs are here: https://apache.github.io/cassandra-easy-stress/
 
 # Installation
 
 The easiest way to get started on Linux is to use system packages.
-Instructions for installation can be found here: https://rustyrazorblade.github.io/cassandra-easy-stress/#_installation
+Instructions for installation can be found here: https://apache.github.io/cassandra-easy-stress/#_installation
 
 
 # Building
 
 Clone this repo, then build with gradle:
 
-    git clone https://github.com/rustyrazorblade/cassandra-easy-stress.git
+    git clone https://github.com/apache/cassandra-easy-stress.git
     cd cassandra-easy-stress
     ./gradlew shadowJar
 

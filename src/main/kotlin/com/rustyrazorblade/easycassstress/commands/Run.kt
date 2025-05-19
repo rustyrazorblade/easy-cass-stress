@@ -459,7 +459,7 @@ class Run(val command: String) : IStressCommand {
         } catch (e: Exception) {
             println(
                 "There was an error with cassandra-easy-stress.  Please file a bug at " +
-                    "https://github.com/rustyrazorblade/cassandra-easy-stress and report the following exception:\n $e",
+                    "https://github.com/apache/cassandra-easy-stress and report the following exception:\n $e",
             )
             throw e
         } finally {
