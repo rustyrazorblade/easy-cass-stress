@@ -52,7 +52,7 @@ class OperationCallback(
         // Handle pagination in driver v4
         if (paginate && result != null) {
             // Fetch next page - this could be made async but we'll keep it simple for now
-            while(result.hasMorePages()) {
+            while (result.hasMorePages()) {
                 result.fetchNextPage()
             }
         }

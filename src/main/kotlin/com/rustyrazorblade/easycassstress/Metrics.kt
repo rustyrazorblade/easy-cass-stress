@@ -94,7 +94,10 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     }
 
     fun getSelectThroughput() = selectThroughputTracker.getCurrentThroughput()
+
     fun getMutationThroughput() = mutationThroughputTracker.getCurrentThroughput()
+
     fun getDeletionThroughput() = deletionThroughputTracker.getCurrentThroughput()
+
     fun getPopulateThroughput() = populateThroughputTracker.getCurrentThroughput()
 }
