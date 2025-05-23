@@ -22,7 +22,6 @@ import com.codahale.metrics.ScheduledReporter
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.dropwizard.DropwizardExports
 import io.prometheus.client.exporter.HTTPServer
-import org.HdrHistogram.SynchronizedHistogram
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 
@@ -70,11 +69,6 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     val mutationThroughputTracker = getTracker { mutations.count }.start()
     val deletionThroughputTracker = getTracker { deletions.count }.start()
     val populateThroughputTracker = getTracker { populate.count }.start()
-
-    // Using a synchronized histogram for now, we may need to change this later if it's a perf bottleneck
-    val mutationHistogram = SynchronizedHistogram(2)
-    val selectHistogram = SynchronizedHistogram(2)
-    val deleteHistogram = SynchronizedHistogram(2)
 
     /**
      * We track throughput using separate structures than Dropwizard

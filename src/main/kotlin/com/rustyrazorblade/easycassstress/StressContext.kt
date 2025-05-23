@@ -17,10 +17,14 @@
  */
 package com.rustyrazorblade.easycassstress
 
+import com.codahale.metrics.Timer
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.google.common.util.concurrent.RateLimiter
+import com.rustyrazorblade.easycassstress.collector.Collector
 import com.rustyrazorblade.easycassstress.commands.Run
 import com.rustyrazorblade.easycassstress.generators.Registry
+import com.rustyrazorblade.easycassstress.workloads.Operation
 
 data class StressContext(
     val session: CqlSession,
@@ -29,4 +33,42 @@ data class StressContext(
     val metrics: Metrics,
     val registry: Registry,
     val rateLimiter: RateLimiter?,
-)
+    val collector: Collector,
+) {
+    fun collect(
+        op: Operation,
+        result: Either<AsyncResultSet, Throwable>,
+        startNanos: Long,
+        endNanos: Long,
+    ) = collector.collect(this, op, result, startNanos, endNanos)
+
+    // we're using a separate timer for populate phase
+    // regardless of the operation performed
+    fun timer(
+        op: Operation,
+        populatePhase: Boolean,
+    ): Timer =
+        if (populatePhase) {
+            metrics.populate
+        } else {
+            when (op) {
+                is Operation.SelectStatement -> metrics.selects
+                is Operation.Mutation -> metrics.mutations
+                is Operation.Deletion -> metrics.deletions
+                is Operation.Stop -> throw OperationStopException()
+                // maybe this should be under DDL, it's a weird case.
+                is Operation.DDL -> metrics.mutations
+            }
+        }
+}
+
+data class Context(
+    val session: CqlSession,
+    val mainArguments: Run,
+    val metrics: Metrics,
+    val registry: Registry,
+    val rateLimiter: RateLimiter?,
+    val collector: Collector,
+) {
+    fun stress(thread: Int): StressContext = StressContext(session, mainArguments, thread, metrics, registry, rateLimiter, collector)
+}

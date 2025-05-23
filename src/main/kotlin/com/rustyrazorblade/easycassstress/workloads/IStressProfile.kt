@@ -17,7 +17,6 @@
  */
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.codahale.metrics.Timer.Context
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.datastax.oss.driver.api.core.cql.BoundStatement
@@ -42,9 +41,7 @@ interface IStressRunner {
      * However, certain workloads may need custom setup.
      * @see Locking
      **/
-    fun getNextPopulate(partitionKey: PartitionKey): Operation {
-        return getNextMutation(partitionKey)
-    }
+    fun getNextPopulate(partitionKey: PartitionKey): Operation = getNextMutation(partitionKey)
 
     /**
      * Callback after a query executes successfully.
@@ -113,9 +110,7 @@ interface IStressProfile {
      */
     fun getFieldGenerators(): Map<Field, FieldGenerator> = mapOf()
 
-    fun getDefaultReadRate(): Double {
-        return .01
-    }
+    fun getDefaultReadRate(): Double = .01
 
     fun getPopulateOption(args: Run): PopulateOption = PopulateOption.Standard()
 
@@ -126,18 +121,25 @@ sealed class Operation(
     val bound: BoundStatement? = null,
     val statement: String? = null,
 ) {
-    // we're going to track metrics on the mutations differently
-    // inserts will also carry data that might be saved for later validation
-    // clustering keys won't be realistic to compute in the framework
-    lateinit var startTime: Context
+    val createdAtNanos = System.nanoTime()
+    val createdAtMillis = System.currentTimeMillis()
 
-    class Mutation(bound: BoundStatement, val callbackPayload: Any? = null) : Operation(bound)
+    class Mutation(
+        bound: BoundStatement,
+        val callbackPayload: Any? = null,
+    ) : Operation(bound)
 
-    class SelectStatement(bound: BoundStatement) : Operation(bound)
+    class SelectStatement(
+        bound: BoundStatement,
+    ) : Operation(bound)
 
-    class Deletion(bound: BoundStatement) : Operation(bound)
+    class Deletion(
+        bound: BoundStatement,
+    ) : Operation(bound)
 
     class Stop : Operation(null)
 
-    class DDL(statement: String) : Operation(null, statement = statement)
+    class DDL(
+        statement: String,
+    ) : Operation(null, statement = statement)
 }
