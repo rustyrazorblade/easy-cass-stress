@@ -98,7 +98,9 @@ Usage: cassandra-easy-stress [options] [command] [command options]
           --paging
             Override the driver's default page size.
           --parquet
-            Capture client latency metrics to a Parquet file at the specified path
+            Capture client latency metrics to a Apache Parquet file at the
+            specified path.  If the file is a directory, the file will be
+            named rawlog.parquet within that directory
             Default: <empty string>
           --partitiongenerator, --pg
             Method of generating partition keys.  Supports random, normal 

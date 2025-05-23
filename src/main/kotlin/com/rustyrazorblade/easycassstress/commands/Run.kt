@@ -227,7 +227,7 @@ class Run(val command: String) : IStressCommand {
     @Parameter(names = ["--csv"], description = "Write metrics to this file in CSV format.")
     var csvFile = ""
 
-    @Parameter(names = ["--parquet"], description = "Write client events to this file in Parquet format.  If the file is a directory, the file will be named rawlog.parquet within that directory")
+    @Parameter(names = ["--parquet"], description = "Capture client latency metrics to a Apache Parquet file at the specified path.  If the file is a directory, the file will be named rawlog.parquet within that directory")
     var parquetFile = ""
 
     @Parameter(names = ["--paging"], description = "Override the driver's default page size.")
