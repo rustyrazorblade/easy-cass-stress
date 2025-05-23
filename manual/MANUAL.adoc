@@ -327,6 +327,44 @@ This writes operation metrics including operation type, success/failure status, 
 
 If a directory is provided instead of a file, cassandra-easy-stress will automatically create an appropriately named file in that directory.
 
+==== Analyzing Parquet Files with DuckDB
+
+The Parquet files created by cassandra-easy-stress can be easily analyzed using DuckDB, a lightweight analytical database engine. Here are some example queries to get you started:
+
+```sql
+-- Show summary statistics for operation latencies by operation type
+SELECT 
+    op, 
+    COUNT(*) as count,
+    MIN(duration_ns)/1000000.0 as min_ms,
+    MAX(duration_ns)/1000000.0 as max_ms,
+    AVG(duration_ns)/1000000.0 as avg_ms,
+    APPROX_PERCENTILE(duration_ns/1000000.0, 0.95) as p95_ms,
+    APPROX_PERCENTILE(duration_ns/1000000.0, 0.99) as p99_ms
+FROM 'output.parquet'
+GROUP BY op
+ORDER BY count DESC;
+
+-- Show error counts and rates by second
+SELECT 
+    STRFTIME(start_time_ms/1000, '%Y-%m-%d %H:%M:%S') as second,
+    COUNT(*) as total_ops,
+    COUNT(*) FILTER (WHERE reason IS NOT NULL) as errors,
+    (COUNT(*) FILTER (WHERE reason IS NOT NULL)::FLOAT / COUNT(*)::FLOAT) * 100 as error_rate_percent
+FROM 'output.parquet'
+GROUP BY second
+ORDER BY second;
+```
+
+To run these queries, install DuckDB and use its command line interface:
+
+```bash
+$ duckdb
+D > SELECT * FROM 'path/to/output.parquet' LIMIT 5;
+```
+
+You can also use DuckDB through its various clients including Python, R, Java, and JDBC.
+
 === Workload Restrictions
 
 The `BasicTimeSeries` workload only supports Cassandra versions 3.0 and above. This is because range deletes are used by this workload during runtime. Range deletes are only support in Cassandra versions 3.0. An exception will is thrown if this workload is used and a Cassandra version less than 3.0 is detected during runtime.
