@@ -25,7 +25,7 @@ abstract class AsyncCollector(
         fun write(event: Event)
     }
 
-    private val queue = MpscArrayQueue<Event>(Integer.getInteger("tlp-stress.event_csv_queue_size", 4096))
+    private val queue = MpscArrayQueue<Event>(Integer.getInteger("cassandra-easy-stress.event_csv_queue_size", 4096))
     private val writer = createWriter(fileOrDirectory)
 
     @Volatile
@@ -35,7 +35,7 @@ abstract class AsyncCollector(
 
     init {
         thread.isDaemon = true
-        thread.name = "tlp-stress event raw log collector"
+        thread.name = "cassandra-easy-stress event raw log collector"
         thread.start()
     }
 
