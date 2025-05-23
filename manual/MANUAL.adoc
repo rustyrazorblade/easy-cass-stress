@@ -393,9 +393,9 @@ SELECT
     operation,
     AVG(service_duration_ns / 1000 / 1000) as avg_service_time_ms,
     AVG(request_duration_ns / 1000 / 1000) as avg_request_time_ms,
-    AVG(request_duration_ns - service_time_ns) / 1000 / 1000 as avg_queue_time_ms
+    AVG(request_duration_ns - service_duration_ns) / 1000 / 1000 as avg_queue_time_ms
 FROM read_parquet('rawlog.parquet')
-GROUP BY operation_type;
+GROUP BY operation;
 ```
 
 A significant difference between average request time and average service time indicates queuing or scheduling delays in your system, which can be an early warning sign of performance bottlenecks.
