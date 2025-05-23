@@ -367,13 +367,6 @@ WHERE failure_reason != ''
 GROUP BY failure_reason;
 ```
 
-To run these queries, install DuckDB and use its command line interface:
-
-```bash
-$ duckdb
-D > SELECT * FROM 'path/to/output.parquet' LIMIT 5;
-```
-
 You can also use DuckDB through its various clients including Python, R, Java, and JDBC.
 
 === Workload Restrictions
