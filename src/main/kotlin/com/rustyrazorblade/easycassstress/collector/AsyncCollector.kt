@@ -9,9 +9,10 @@ import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue
 import org.agrona.concurrent.BackoffIdleStrategy
 import org.slf4j.LoggerFactory
 import java.io.Closeable
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-abstract class AsyncCollector : Collector {
+abstract class AsyncCollector(fileOrDirectory: File) : Collector {
     data class Event(
         val op: Operation,
         val result: Either<AsyncResultSet, Throwable>,
@@ -24,7 +25,7 @@ abstract class AsyncCollector : Collector {
     }
 
     private val queue = MpscArrayQueue<Event>(Integer.getInteger("tlp-stress.event_csv_queue_size", 4096))
-    private val writer = createWriter()
+    private val writer = createWriter(fileOrDirectory)
 
     @Volatile
     private var running = true
@@ -40,7 +41,7 @@ abstract class AsyncCollector : Collector {
     val dropped = AtomicInteger()
     val counter = AtomicInteger()
 
-    abstract fun createWriter(): Writer
+    abstract fun createWriter(fileOrDirectory: File): Writer
 
     override fun collect(
         ctx: StressContext,

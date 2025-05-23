@@ -11,9 +11,9 @@ import org.apache.parquet.hadoop.example.ExampleParquetWriter
 import org.apache.parquet.schema.MessageTypeParser
 import java.io.File
 
-class ParquetCollector(val fileOrDirectory: File) : AsyncCollector() {
+class ParquetCollector(fileOrDirectory: File) : AsyncCollector(fileOrDirectory) {
 
-    override fun createWriter(): Writer = ParquetTableWriter(if (fileOrDirectory.isDirectory) File(fileOrDirectory, "rawlog.parquet") else fileOrDirectory)
+    override fun createWriter(fileOrDirectory: File): Writer = ParquetTableWriter(if (fileOrDirectory.isDirectory) File(fileOrDirectory, "rawlog.parquet") else fileOrDirectory)
 
     class ParquetTableWriter(file: File) : Writer {
         private val writer: ParquetWriter<Group>
