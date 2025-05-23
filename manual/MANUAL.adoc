@@ -53,7 +53,7 @@ $ sudo apt install cassandra-easy-stress
 
 ==== RPM Packages
 
-eYou'll need the bintray repo set up on your machine.  Create this `/etc/yum.repos.d/tlp-tools.repo`:
+You'll need the bintray repo set up on your machine.  Create this `/etc/yum.repos.d/tlp-tools.repo`:
 
 ```
 [bintraybintray-rustyrazorblade-tlp-tools-rpm]

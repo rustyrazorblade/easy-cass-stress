@@ -71,11 +71,6 @@ class Metrics(val metricRegistry: MetricRegistry, val reporters: List<ScheduledR
     val deletionThroughputTracker = getTracker { deletions.count }.start()
     val populateThroughputTracker = getTracker { populate.count }.start()
 
-    // Using a synchronized histogram for now, we may need to change this later if it's a perf bottleneck
-    val mutationHistogram = SynchronizedHistogram(2)
-    val selectHistogram = SynchronizedHistogram(2)
-    val deleteHistogram = SynchronizedHistogram(2)
-
     /**
      * We track throughput using separate structures than Dropwizard
      */

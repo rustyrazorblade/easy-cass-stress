@@ -126,11 +126,6 @@ sealed class Operation(
     val bound: BoundStatement? = null,
     val statement: String? = null,
 ) {
-    // we're going to track metrics on the mutations differently
-    // inserts will also carry data that might be saved for later validation
-    // clustering keys won't be realistic to compute in the framework
-    lateinit var startTime: Context
-
     class Mutation(bound: BoundStatement, val callbackPayload: Any? = null) : Operation(bound)
 
     class SelectStatement(bound: BoundStatement) : Operation(bound)

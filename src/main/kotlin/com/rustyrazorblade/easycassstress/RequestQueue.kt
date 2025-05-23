@@ -113,8 +113,6 @@ class RequestQueue(
                             runner.getNextMutation(key)
                         }
 
-                    op.startTime = getTimer(op).time()
-
                     if (!queue.offer(op)) {
                         context.metrics.errors.mark()
                     }

@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader
 import com.google.common.base.Preconditions
 import com.google.common.util.concurrent.RateLimiter
+import com.rustyrazorblade.easycassstress.Context
 import com.rustyrazorblade.easycassstress.FileReporter
 import com.rustyrazorblade.easycassstress.Metrics
 import com.rustyrazorblade.easycassstress.Plugin
@@ -37,7 +38,10 @@ import com.rustyrazorblade.easycassstress.ProfileRunner
 import com.rustyrazorblade.easycassstress.RateLimiterOptimizer
 import com.rustyrazorblade.easycassstress.SchemaBuilder
 import com.rustyrazorblade.easycassstress.SingleLineConsoleReporter
-import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.collector.Collector
+import com.rustyrazorblade.easycassstress.collector.CompositeCollector
+import com.rustyrazorblade.easycassstress.collector.HdrCollector
+import com.rustyrazorblade.easycassstress.collector.ParquetCollector
 import com.rustyrazorblade.easycassstress.converters.ConsistencyLevelConverter
 import com.rustyrazorblade.easycassstress.converters.HumanReadableConverter
 import com.rustyrazorblade.easycassstress.converters.HumanReadableTimeConverter
@@ -47,7 +51,6 @@ import me.tongfei.progressbar.ProgressBar
 import me.tongfei.progressbar.ProgressBarStyle
 import org.apache.logging.log4j.kotlin.logger
 import java.io.File
-import java.io.PrintStream
 import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.schedule
@@ -223,6 +226,9 @@ class Run(val command: String) : IStressCommand {
 
     @Parameter(names = ["--csv"], description = "Write metrics to this file in CSV format.")
     var csvFile = ""
+
+    @Parameter(names = ["--parquet"], description = "Write client events to this file in Parquet format.  If the file is a directory, the file will be named rawlog.parquet within that directory")
+    var parquetFile = ""
 
     @Parameter(names = ["--paging"], description = "Override the driver's default page size.")
     var paging: Int? = null
@@ -405,9 +411,12 @@ class Run(val command: String) : IStressCommand {
 
         var runnersExecuted = 0L
 
+        val collector = createCollector()
+        val context = Context(session, this, metrics, fieldRegistry, rateLimiter, collector)
+
         try {
             // run the prepare for each
-            val runners = createRunners(plugin, metrics, fieldRegistry, rateLimiter)
+            val runners = createRunners(plugin, context)
 
             populateData(plugin, runners, metrics)
             metrics.resetErrors()
@@ -443,20 +452,6 @@ class Run(val command: String) : IStressCommand {
             for (reporter in metrics.reporters) {
                 reporter.report()
             }
-
-            // print out the hdr histograms if requested to 3 separate files
-            if (hdrHistogramPrefix != "") {
-                val pairs =
-                    listOf(
-                        Pair(metrics.mutationHistogram, "mutations"),
-                        Pair(metrics.selectHistogram, "reads"),
-                        Pair(metrics.deleteHistogram, "deletes"),
-                    )
-                for (entry in pairs) {
-                    val fp = File(hdrHistogramPrefix + "-" + entry.second + ".txt")
-                    entry.first.outputPercentileDistribution(PrintStream(fp), 1_000_000.0)
-                }
-            }
         } catch (e: Exception) {
             println(
                 "There was an error with cassandra-easy-stress.  Please file a bug at " +
@@ -467,10 +462,21 @@ class Run(val command: String) : IStressCommand {
             // we need to be able to run multiple tests in the same JVM
             // without this cleanup we could have the metrics runner still running and it will cause subsequent tests to fail
             metrics.shutdown()
+            collector.close(context)
             Thread.sleep(1000)
 
             println("Stress complete, $runnersExecuted.")
         }
+    }
+
+    private fun createCollector(): Collector {
+        val collectors = ArrayList<Collector>()
+
+        if (hdrHistogramPrefix != "")
+            collectors.add(HdrCollector(hdrHistogramPrefix))
+        if (parquetFile != "")
+            collectors.add(ParquetCollector(File(parquetFile)))
+        return CompositeCollector(*collectors.toTypedArray())
     }
 
     private fun getRateLimiter(): RateLimiter {
@@ -548,15 +554,13 @@ class Run(val command: String) : IStressCommand {
 
     private fun createRunners(
         plugin: Plugin,
-        metrics: Metrics,
-        fieldRegistry: Registry,
-        rateLimiter: RateLimiter?,
+        sharedContext: Context,
     ): List<ProfileRunner> {
         val runners =
             IntRange(0, threads - 1).map {
                 // println("Connecting")
                 println("Connecting to Cassandra cluster ...")
-                val context = StressContext(session, this, it, metrics, fieldRegistry, rateLimiter)
+                val context = sharedContext.stress(it)
                 ProfileRunner.create(context, plugin.instance)
             }
 

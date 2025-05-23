@@ -1,0 +1,77 @@
+package com.rustyrazorblade.easycassstress.collector
+
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.rustyrazorblade.easycassstress.Context
+import com.rustyrazorblade.easycassstress.Either
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.workloads.Operation
+import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue
+import org.agrona.concurrent.BackoffIdleStrategy
+import org.slf4j.LoggerFactory
+import java.io.Closeable
+import java.util.concurrent.atomic.AtomicInteger
+
+abstract class AsyncCollector : Collector {
+    data class Event(
+        val op: Operation,
+        val result: Either<AsyncResultSet, Throwable>,
+        val startTimeMs: Long,
+        val durationNs: Long
+    )
+
+    interface Writer : Closeable {
+        fun write(event: Event)
+    }
+
+    private val queue = MpscArrayQueue<Event>(Integer.getInteger("tlp-stress.event_csv_queue_size", 4096))
+    private val writer = createWriter()
+
+    @Volatile
+    private var running = true
+    private val thread = Thread(this::run)
+    private val idleStrategy = BackoffIdleStrategy()
+
+    init {
+        thread.isDaemon = true
+        thread.name = "tlp-stress event raw log collector"
+        thread.start()
+    }
+
+    val dropped = AtomicInteger()
+    val counter = AtomicInteger()
+
+    abstract fun createWriter(): Writer
+
+    override fun collect(
+        ctx: StressContext,
+        op: Operation,
+        result: Either<AsyncResultSet, Throwable>,
+        startTimeMs: Long,
+        durationNs: Long
+    ) {
+        if (!queue.offer(Event(op, result, startTimeMs, durationNs)))
+            dropped.incrementAndGet()
+    }
+
+    private fun run() {
+        while (running) {
+            try {
+                val processed = queue.drain(writer::write)
+                counter.addAndGet(processed)
+                idleStrategy.idle(processed)
+            } catch (t: Throwable) {
+                System.err.println("Exception while writing raw logs")
+                t.printStackTrace()
+                running = false
+                return
+            }
+        }
+    }
+
+    override fun close(context: Context) {
+        running = false
+        thread.join()
+        writer.close()
+        println("Wrote ${counter.get()} events; Dropped ${dropped.get()} events")
+    }
+}

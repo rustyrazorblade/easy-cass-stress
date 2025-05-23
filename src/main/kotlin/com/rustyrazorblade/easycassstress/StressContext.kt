@@ -18,9 +18,12 @@
 package com.rustyrazorblade.easycassstress
 
 import com.datastax.oss.driver.api.core.CqlSession
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.google.common.util.concurrent.RateLimiter
+import com.rustyrazorblade.easycassstress.collector.Collector
 import com.rustyrazorblade.easycassstress.commands.Run
 import com.rustyrazorblade.easycassstress.generators.Registry
+import com.rustyrazorblade.easycassstress.workloads.Operation
 
 data class StressContext(
     val session: CqlSession,
@@ -29,4 +32,19 @@ data class StressContext(
     val metrics: Metrics,
     val registry: Registry,
     val rateLimiter: RateLimiter?,
-)
+    val collector: Collector
+) {
+    fun collect(op: Operation, result: Either<AsyncResultSet, Throwable>, startTimeMs: Long, durationNs: Long) =
+        collector.collect(this, op, result, startTimeMs, durationNs)
+}
+
+data class Context(val session: CqlSession,
+                   val mainArguments: Run,
+                   val metrics: Metrics,
+                   val registry: Registry,
+                   val rateLimiter: RateLimiter?,
+                   val collector: Collector
+) {
+    fun stress(thread: Int): StressContext =
+        StressContext(session, mainArguments, thread, metrics, registry, rateLimiter, collector)
+}

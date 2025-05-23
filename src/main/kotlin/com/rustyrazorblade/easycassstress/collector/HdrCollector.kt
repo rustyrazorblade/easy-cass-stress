@@ -1,0 +1,58 @@
+package com.rustyrazorblade.easycassstress.collector
+
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.rustyrazorblade.easycassstress.Context
+import com.rustyrazorblade.easycassstress.Either
+import com.rustyrazorblade.easycassstress.StressContext
+import com.rustyrazorblade.easycassstress.workloads.Operation
+import org.HdrHistogram.SynchronizedHistogram
+import java.io.File
+import java.io.PrintStream
+
+class HdrCollector(val hdrHistogramPrefix: String) : Collector {
+    // Using a synchronized histogram for now, we may need to change this later if it's a perf bottleneck
+    val mutationHistogram = SynchronizedHistogram(2)
+    val selectHistogram = SynchronizedHistogram(2)
+    val deleteHistogram = SynchronizedHistogram(2)
+
+    override fun collect(
+        ctx: StressContext,
+        op: Operation,
+        result: Either<AsyncResultSet, Throwable>,
+        startTimeMs: Long,
+        durationNs: Long
+    ) {
+        if (result is Either.Right) return // only success is tracked
+
+        // we log to the HDR histogram and do the callback for mutations
+        // might extend this to select, but I can't see a reason for it now
+        when (op) {
+            is Operation.Mutation, is Operation.DDL -> {
+                mutationHistogram.recordValue(durationNs)
+            }
+            is Operation.Deletion -> {
+                deleteHistogram.recordValue(durationNs)
+            }
+            is Operation.SelectStatement -> {
+                selectHistogram.recordValue(durationNs)
+            }
+            else -> {
+                // ignore
+            }
+        }
+    }
+
+    override fun close(ctx: Context) {
+        // print out the hdr histograms if requested to 3 separate files
+        val pairs =
+            listOf(
+                Pair(mutationHistogram, "mutations"),
+                Pair(selectHistogram, "reads"),
+                Pair(deleteHistogram, "deletes"),
+            )
+        for (entry in pairs) {
+            val fp = File(hdrHistogramPrefix + "-" + entry.second + ".txt")
+            entry.first.outputPercentileDistribution(PrintStream(fp), 1_000_000.0)
+        }
+    }
+}

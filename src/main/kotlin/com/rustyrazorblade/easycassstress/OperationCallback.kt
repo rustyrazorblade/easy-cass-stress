@@ -18,6 +18,7 @@
 package com.rustyrazorblade.easycassstress
 
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet
+import com.google.common.base.Throwables
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
@@ -32,8 +33,9 @@ class OperationCallback(
     val context: StressContext,
     val runner: IStressRunner,
     val op: Operation,
+    val startTimeMs: Long,
+    val startNanos: Long,
     val paginate: Boolean = false,
-    val writeHdr: Boolean = true,
 ) : BiConsumer<AsyncResultSet?, Throwable?> {
     companion object {
         val log = logger()
@@ -45,6 +47,7 @@ class OperationCallback(
     ) {
         if (t != null) {
             context.metrics.errors.mark()
+            context.collect(op, Either.Right(Throwables.getRootCause(t!!)), startTimeMs, System.nanoTime() - startNanos)
             log.error { t }
             return
         }
@@ -56,38 +59,23 @@ class OperationCallback(
                 result.fetchNextPage()
             }
         }
+        //TODO (visibility): include details about paging?
+        context.collect(op, Either.Left(result!!), startTimeMs, System.nanoTime() - startNanos)
 
-        val time = op.startTime.stop()
-
-        // we log to the HDR histogram and do the callback for mutations
+        // do the callback for mutations
         // might extend this to select, but I can't see a reason for it now
         when (op) {
             is Operation.Mutation -> {
-                if (writeHdr) {
-                    context.metrics.mutationHistogram.recordValue(time)
-                }
                 runner.onSuccess(op, result)
             }
-
-            is Operation.Deletion -> {
-                if (writeHdr) {
-                    context.metrics.deleteHistogram.recordValue(time)
-                }
-            }
-
-            is Operation.SelectStatement -> {
-                if (writeHdr) {
-                    context.metrics.selectHistogram.recordValue(time)
-                }
-            }
             is Operation.DDL -> {
-                if (writeHdr) {
-                    context.metrics.mutationHistogram.recordValue(time)
-                }
                 runner.onSuccess(op, result)
             }
             is Operation.Stop -> {
                 throw OperationStopException()
+            }
+            else -> {
+                // ignore
             }
         }
     }

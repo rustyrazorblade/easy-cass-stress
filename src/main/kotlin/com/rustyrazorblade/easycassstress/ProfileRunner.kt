@@ -142,6 +142,8 @@ class ProfileRunner(
         var paginate = context.mainArguments.paginate
         for (op in queue.getNextOperation()) {
             // In driver v4, async execution returns a CompletionStage
+            val startNanos = System.nanoTime();
+            val startTimeMs = System.currentTimeMillis()
             val future =
                 when (op) {
                     is Operation.DDL -> {
@@ -161,8 +163,8 @@ class ProfileRunner(
                     context,
                     runner,
                     op,
+                    startTimeMs, startNanos,
                     paginate = paginate,
-                    writeHdr = context.mainArguments.hdrHistogramPrefix != "",
                 )
 
             future.whenComplete { result, error ->
@@ -200,6 +202,8 @@ class ProfileRunner(
 
         try {
             for (op in queue.getNextOperation()) {
+                val startNanos = System.nanoTime();
+                val startTimeMs = System.currentTimeMillis()
                 val future = context.session.executeAsync(op.bound!!)
 
                 // Create callback to handle the result
@@ -208,8 +212,8 @@ class ProfileRunner(
                         context,
                         runner,
                         op,
+                        startTimeMs, startNanos,
                         paginate = false,
-                        writeHdr = context.mainArguments.hdrHistogramPrefix != "",
                     )
 
                 future.whenComplete { result, error ->
