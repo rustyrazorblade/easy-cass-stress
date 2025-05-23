@@ -390,8 +390,8 @@ When using the Parquet files for analysis, you can examine both metrics to get a
 ```sql
 -- Compare average service time vs request time by operation type
 SELECT 
-    operation_type,
-    AVG(service_time_ns / 1000 / 1000) as avg_service_time_ms,
+    operation,
+    AVG(service_duration_ns / 1000 / 1000) as avg_service_time_ms,
     AVG(request_duration_ns / 1000 / 1000) as avg_request_time_ms,
     AVG(request_duration_ns - service_time_ns) / 1000 / 1000 as avg_queue_time_ms
 FROM read_parquet('rawlog.parquet')
