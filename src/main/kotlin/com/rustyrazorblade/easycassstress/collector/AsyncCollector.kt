@@ -11,6 +11,12 @@ import java.io.Closeable
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Base type for collectors that have "expensive" work that needs to happen off-thread.  Every call to collect will
+ * generate an object, push to a queue, and processed in another worker thread.
+ *
+ * Implementations must define the writer interface which will be called to do the "real" work for the collector.
+ */
 abstract class AsyncCollector(
     fileOrDirectory: File,
 ) : Collector {

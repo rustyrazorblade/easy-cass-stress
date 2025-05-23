@@ -488,6 +488,9 @@ class Run(
         if (parquetFile != "") {
             collectors.add(ParquetCollector(File(parquetFile)))
         }
+        if (collectors.size == 1) {
+            return collectors[0]
+        }
         return CompositeCollector(*collectors.toTypedArray())
     }
 

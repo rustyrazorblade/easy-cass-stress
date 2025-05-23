@@ -12,6 +12,10 @@ import org.apache.parquet.schema.MessageTypeParser
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+/**
+ * Publishes all the requests to a Apache Parquet file to allow analytical tools to process the raw data rather than
+ * having to rely solely on metrics (which are sampled).
+ */
 class ParquetCollector(
     fileOrDirectory: File,
 ) : AsyncCollector(fileOrDirectory) {

@@ -6,6 +6,9 @@ import com.rustyrazorblade.easycassstress.Either
 import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.workloads.Operation
 
+/**
+ * Groups a list of collectors together and will call each in the same order.
+ */
 class CompositeCollector(
     private vararg val collectors: Collector,
 ) : Collector {

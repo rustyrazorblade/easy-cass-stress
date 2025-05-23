@@ -9,6 +9,9 @@ import org.HdrHistogram.SynchronizedHistogram
 import java.io.File
 import java.io.PrintStream
 
+/**
+ * Stores all events into a HdrHistorgram and publishes to 3 files at the end of the run
+ */
 class HdrCollector(
     val hdrHistogramPrefix: String,
 ) : Collector {
