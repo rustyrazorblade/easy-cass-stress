@@ -315,6 +315,18 @@ The Debian package installs a basic configuration file to `/etc/cassandra-easy-s
 
 cassandra-easy-stress automatically runs an HTTP server exporting metrics in Prometheus format on port 9501.
 
+=== Capturing Client Latencies to Parquet
+
+You can capture detailed client latency metrics to an Apache Parquet file using the `--parquet` flag followed by a path to a file or directory:
+
+```
+$ bin/cassandra-easy-stress run KeyValue -n 10000 --parquet /path/to/output.parquet
+```
+
+This writes operation metrics including operation type, success/failure status, start time, and duration to a Parquet file that can be analyzed later with data analysis tools like Pandas, Spark, or visualization tools that support the Parquet format.
+
+If a directory is provided instead of a file, cassandra-easy-stress will automatically create an appropriately named file in that directory.
+
 === Workload Restrictions
 
 The `BasicTimeSeries` workload only supports Cassandra versions 3.0 and above. This is because range deletes are used by this workload during runtime. Range deletes are only support in Cassandra versions 3.0. An exception will is thrown if this workload is used and a Cassandra version less than 3.0 is detected during runtime.
