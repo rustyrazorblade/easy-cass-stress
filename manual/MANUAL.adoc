@@ -370,6 +370,36 @@ GROUP BY failure_reason;
 
 You can also use DuckDB through its various clients including Python, R, Java, and JDBC.
 
+==== Understanding Request Time vs Service Time
+
+When analyzing latency data from the Parquet files, it's important to understand the distinction between two key metrics:
+
+* **Service Time**: This is the actual time it takes for the database to process a request and return a response once the request is received by the database. It measures only the execution time of the operation.
+
+* **Request Time**: This is the total time from when the client intended to make the request until receiving the response. It includes the service time plus any queue time or delays that might have occurred before the request was actually sent to the database.
+
+The difference between these metrics is critical for understanding coordinated omission, a common problem in performance testing where the test client doesn't accurately capture the full latency that would be experienced by real users when the system is under load.
+
+For example, if your database is overloaded and can only process 100 operations per second, but your test is trying to send 200 operations per second:
+
+* A naïve benchmark would only measure the service time of the operations that actually got processed, missing the fact that half the operations were delayed.
+* A properly instrumented benchmark (like cassandra-easy-stress) captures the request time, which includes how long operations had to wait in a queue.
+
+When using the Parquet files for analysis, you can examine both metrics to get a more complete picture of your system's performance under load:
+
+```sql
+-- Compare average service time vs request time by operation type
+SELECT 
+    operation_type,
+    AVG(service_time_ns / 1000 / 1000) as avg_service_time_ms,
+    AVG(request_duration_ns / 1000 / 1000) as avg_request_time_ms,
+    AVG(request_duration_ns - service_time_ns) / 1000 / 1000 as avg_queue_time_ms
+FROM read_parquet('rawlog.parquet')
+GROUP BY operation_type;
+```
+
+A significant difference between average request time and average service time indicates queuing or scheduling delays in your system, which can be an early warning sign of performance bottlenecks.
+
 === Workload Restrictions
 
 The `BasicTimeSeries` workload only supports Cassandra versions 3.0 and above. This is because range deletes are used by this workload during runtime. Range deletes are only support in Cassandra versions 3.0. An exception will is thrown if this workload is used and a Cassandra version less than 3.0 is detected during runtime.
