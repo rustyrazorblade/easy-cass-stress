@@ -143,7 +143,6 @@ class ProfileRunner(
         for (op in queue.getNextOperation()) {
             // In driver v4, async execution returns a CompletionStage
             val startNanos = System.nanoTime()
-            val startTimeMs = System.currentTimeMillis()
             val future =
                 when (op) {
                     is Operation.DDL -> {
@@ -163,7 +162,6 @@ class ProfileRunner(
                     context,
                     runner,
                     op,
-                    startTimeMs,
                     startNanos,
                     queue.populatePhase,
                     paginate = paginate,
@@ -205,7 +203,6 @@ class ProfileRunner(
         try {
             for (op in queue.getNextOperation()) {
                 val startNanos = System.nanoTime()
-                val startTimeMs = System.currentTimeMillis()
                 val future = context.session.executeAsync(op.bound!!)
 
                 // Create callback to handle the result
@@ -214,7 +211,6 @@ class ProfileRunner(
                         context,
                         runner,
                         op,
-                        startTimeMs,
                         startNanos,
                         queue.populatePhase,
                         paginate = false,

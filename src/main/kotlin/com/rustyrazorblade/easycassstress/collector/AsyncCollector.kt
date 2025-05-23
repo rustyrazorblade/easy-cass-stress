@@ -11,12 +11,14 @@ import java.io.Closeable
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-abstract class AsyncCollector(fileOrDirectory: File) : Collector {
+abstract class AsyncCollector(
+    fileOrDirectory: File,
+) : Collector {
     data class Event(
         val op: Operation,
         val result: Either<AsyncResultSet, Throwable>,
-        val startTimeMs: Long,
-        val durationNs: Long,
+        val startNanos: Long,
+        val endNanos: Long,
     )
 
     interface Writer : Closeable {
@@ -46,10 +48,10 @@ abstract class AsyncCollector(fileOrDirectory: File) : Collector {
         ctx: StressContext,
         op: Operation,
         result: Either<AsyncResultSet, Throwable>,
-        startTimeMs: Long,
-        durationNs: Long,
+        startNanos: Long,
+        endNanos: Long,
     ) {
-        if (!queue.offer(Event(op, result, startTimeMs, durationNs))) {
+        if (!queue.offer(Event(op, result, startNanos, endNanos))) {
             dropped.incrementAndGet()
         }
     }

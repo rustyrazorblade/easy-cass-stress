@@ -11,8 +11,8 @@ interface Collector {
         ctx: StressContext,
         op: Operation,
         result: Either<AsyncResultSet, Throwable>,
-        startTimeMs: Long,
-        durationNs: Long,
+        startNanos: Long,
+        endNanos: Long,
     )
 
     fun close(context: Context) {

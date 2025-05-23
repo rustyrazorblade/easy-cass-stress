@@ -38,9 +38,9 @@ data class StressContext(
     fun collect(
         op: Operation,
         result: Either<AsyncResultSet, Throwable>,
-        startTimeMs: Long,
-        durationNs: Long,
-    ) = collector.collect(this, op, result, startTimeMs, durationNs)
+        startNanos: Long,
+        endNanos: Long,
+    ) = collector.collect(this, op, result, startNanos, endNanos)
 
     // we're using a separate timer for populate phase
     // regardless of the operation performed

@@ -41,9 +41,7 @@ interface IStressRunner {
      * However, certain workloads may need custom setup.
      * @see Locking
      **/
-    fun getNextPopulate(partitionKey: PartitionKey): Operation {
-        return getNextMutation(partitionKey)
-    }
+    fun getNextPopulate(partitionKey: PartitionKey): Operation = getNextMutation(partitionKey)
 
     /**
      * Callback after a query executes successfully.
@@ -112,9 +110,7 @@ interface IStressProfile {
      */
     fun getFieldGenerators(): Map<Field, FieldGenerator> = mapOf()
 
-    fun getDefaultReadRate(): Double {
-        return .01
-    }
+    fun getDefaultReadRate(): Double = .01
 
     fun getPopulateOption(args: Run): PopulateOption = PopulateOption.Standard()
 
@@ -125,13 +121,25 @@ sealed class Operation(
     val bound: BoundStatement? = null,
     val statement: String? = null,
 ) {
-    class Mutation(bound: BoundStatement, val callbackPayload: Any? = null) : Operation(bound)
+    val createdAtNanos = System.nanoTime()
+    val createdAtMillis = System.currentTimeMillis()
 
-    class SelectStatement(bound: BoundStatement) : Operation(bound)
+    class Mutation(
+        bound: BoundStatement,
+        val callbackPayload: Any? = null,
+    ) : Operation(bound)
 
-    class Deletion(bound: BoundStatement) : Operation(bound)
+    class SelectStatement(
+        bound: BoundStatement,
+    ) : Operation(bound)
+
+    class Deletion(
+        bound: BoundStatement,
+    ) : Operation(bound)
 
     class Stop : Operation(null)
 
-    class DDL(statement: String) : Operation(null, statement = statement)
+    class DDL(
+        statement: String,
+    ) : Operation(null, statement = statement)
 }

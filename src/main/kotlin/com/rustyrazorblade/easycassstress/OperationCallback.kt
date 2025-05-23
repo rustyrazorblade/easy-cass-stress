@@ -34,7 +34,6 @@ class OperationCallback(
     val context: StressContext,
     val runner: IStressRunner,
     val op: Operation,
-    val startTimeMs: Long,
     val startNanos: Long,
     val populatePhase: Boolean,
     val paginate: Boolean = false,
@@ -49,7 +48,7 @@ class OperationCallback(
     ) {
         if (t != null) {
             context.metrics.errors.mark()
-            context.collect(op, Either.Right(Throwables.getRootCause(t)), startTimeMs, System.nanoTime() - startNanos)
+            context.collect(op, Either.Right(Throwables.getRootCause(t)), startNanos, System.nanoTime())
             log.error { t }
             return
         }
@@ -61,10 +60,10 @@ class OperationCallback(
                 result.fetchNextPage()
             }
         }
-        val durationNanos = System.nanoTime() - startNanos
-        context.timer(op, populatePhase).update(durationNanos, TimeUnit.NANOSECONDS)
+        val endNanos = System.nanoTime()
+        context.timer(op, populatePhase).update(endNanos - op.createdAtNanos, TimeUnit.NANOSECONDS)
         // TODO (visibility): include details about paging?
-        context.collect(op, Either.Left(result!!), startTimeMs, durationNanos)
+        context.collect(op, Either.Left(result!!), startNanos, endNanos)
 
         // do the callback for mutations
         // might extend this to select, but I can't see a reason for it now

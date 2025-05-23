@@ -9,7 +9,9 @@ import org.HdrHistogram.SynchronizedHistogram
 import java.io.File
 import java.io.PrintStream
 
-class HdrCollector(val hdrHistogramPrefix: String) : Collector {
+class HdrCollector(
+    val hdrHistogramPrefix: String,
+) : Collector {
     // Using a synchronized histogram for now, we may need to change this later if it's a perf bottleneck
     val mutationHistogram = SynchronizedHistogram(2)
     val selectHistogram = SynchronizedHistogram(2)
@@ -19,8 +21,8 @@ class HdrCollector(val hdrHistogramPrefix: String) : Collector {
         ctx: StressContext,
         op: Operation,
         result: Either<AsyncResultSet, Throwable>,
-        startTimeMs: Long,
-        durationNs: Long,
+        startNanos: Long,
+        endNanos: Long,
     ) {
         if (result is Either.Right) return // only success is tracked
 
@@ -28,13 +30,13 @@ class HdrCollector(val hdrHistogramPrefix: String) : Collector {
         // might extend this to select, but I can't see a reason for it now
         when (op) {
             is Operation.Mutation, is Operation.DDL -> {
-                mutationHistogram.recordValue(durationNs)
+                mutationHistogram.recordValue(endNanos - op.createdAtNanos)
             }
             is Operation.Deletion -> {
-                deleteHistogram.recordValue(durationNs)
+                deleteHistogram.recordValue(endNanos - op.createdAtNanos)
             }
             is Operation.SelectStatement -> {
-                selectHistogram.recordValue(durationNs)
+                selectHistogram.recordValue(endNanos - op.createdAtNanos)
             }
             else -> {
                 // ignore
