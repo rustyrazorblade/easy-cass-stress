@@ -127,9 +127,8 @@ class RateLimiterOptimizer(
                 )
                 return currentRate
             }
-        }
-        // Handle rate decreases - avoid oscillation
-        else if (newLimit < currentRate && utilizationRatio < 0.9) {
+        } else if (newLimit < currentRate && utilizationRatio < 0.9) {
+            // Handle rate decreases - avoid oscillation
             log.info(
                 "Not decreasing rate limiter despite high latency - throughput ($currentThroughput) " +
                     "is well below current limit ($currentRate)",
@@ -271,14 +270,12 @@ class RateLimiterOptimizer(
                     "reducing throughput by ${(1 - reductionFactor) * 100}%",
             )
             return currentRate * reductionFactor
-        }
-        // Case 2: Within 90% of target - maintain current throughput
-        else if (latencyRatio > 0.90) {
+        } else if (latencyRatio > 0.90) {
+            // Case 2: Within 90% of target - maintain current throughput
             log.info("Latency approaching target (${(latencyRatio * 100).format(1)}% of max), maintaining throughput")
             return currentRate
-        }
-        // Case 3: Well below target - increase proportionally to available headroom
-        else {
+        } else {
+            // Case 3: Well below target - increase proportionally to available headroom
             // Calculate increase factor - more aggressive for low latencies, gentler as we approach target
             // Uses cube root to provide a non-linear response curve
             // Small latency requirements (< 10ms) will use smaller adjustments due to sensitivity

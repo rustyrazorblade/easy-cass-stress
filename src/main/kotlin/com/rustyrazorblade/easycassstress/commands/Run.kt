@@ -238,7 +238,8 @@ class Run(val command: String) : IStressCommand {
 
     @Parameter(
         names = ["--prometheusport"],
-        description = "Override the default prometheus port.  Set the default with CASSANDRA_EASY_STRESS_PROM_PORT, or set to 0 to disable.",
+        description = """Override the default prometheus port.  
+            Set the default with CASSANDRA_EASY_STRESS_PROM_PORT, or set to 0 to disable.""",
     )
     var prometheusPort = System.getenv("CASSANDRA_EASY_STRESS_PROM_PORT")?.toInt() ?: 9500
 
