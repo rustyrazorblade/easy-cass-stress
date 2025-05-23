@@ -164,6 +164,7 @@ class ProfileRunner(
                     runner,
                     op,
                     startTimeMs, startNanos,
+                    queue.populatePhase,
                     paginate = paginate,
                 )
 
@@ -213,6 +214,7 @@ class ProfileRunner(
                         runner,
                         op,
                         startTimeMs, startNanos,
+                        queue.populatePhase,
                         paginate = false,
                     )
 

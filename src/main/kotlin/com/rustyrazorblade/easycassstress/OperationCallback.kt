@@ -22,6 +22,7 @@ import com.google.common.base.Throwables
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger
+import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
 /**
@@ -35,6 +36,7 @@ class OperationCallback(
     val op: Operation,
     val startTimeMs: Long,
     val startNanos: Long,
+    val populatePhase: Boolean,
     val paginate: Boolean = false,
 ) : BiConsumer<AsyncResultSet?, Throwable?> {
     companion object {
@@ -47,7 +49,7 @@ class OperationCallback(
     ) {
         if (t != null) {
             context.metrics.errors.mark()
-            context.collect(op, Either.Right(Throwables.getRootCause(t!!)), startTimeMs, System.nanoTime() - startNanos)
+            context.collect(op, Either.Right(Throwables.getRootCause(t)), startTimeMs, System.nanoTime() - startNanos)
             log.error { t }
             return
         }
@@ -59,8 +61,10 @@ class OperationCallback(
                 result.fetchNextPage()
             }
         }
+        val durationNanos = System.nanoTime() - startNanos
+        context.timer(op, populatePhase).update(durationNanos, TimeUnit.NANOSECONDS)
         //TODO (visibility): include details about paging?
-        context.collect(op, Either.Left(result!!), startTimeMs, System.nanoTime() - startNanos)
+        context.collect(op, Either.Left(result!!), startTimeMs, durationNanos)
 
         // do the callback for mutations
         // might extend this to select, but I can't see a reason for it now

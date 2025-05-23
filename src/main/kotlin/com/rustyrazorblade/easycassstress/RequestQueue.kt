@@ -38,7 +38,7 @@ class RequestQueue(
     runner: IStressRunner,
     readRate: Double,
     deleteRate: Double,
-    populatePhase: Boolean = false,
+    val populatePhase: Boolean = false,
 ) {
     val queue = ArrayBlockingQueue<Operation>(context.mainArguments.queueDepth.toInt(), true)
     var generatorThread: Thread
@@ -56,23 +56,6 @@ class RequestQueue(
                 val desiredEndTime = LocalDateTime.now().plusMinutes(duration)
                 var executed = 0L
                 log.info("populate=$populatePhase total values: $totalValues, duration: $duration")
-
-                // we're using a separate timer for populate phase
-                // regardless of the operation performed
-                fun getTimer(operation: Operation): Timer {
-                    return if (populatePhase) {
-                        context.metrics.populate
-                    } else {
-                        when (operation) {
-                            is Operation.SelectStatement -> context.metrics.selects
-                            is Operation.Mutation -> context.metrics.mutations
-                            is Operation.Deletion -> context.metrics.deletions
-                            is Operation.Stop -> throw OperationStopException()
-                            // maybe this should be under DDL, it's a weird case.
-                            is Operation.DDL -> context.metrics.mutations
-                        }
-                    }
-                }
 
                 for (key in partitionKeyGenerator.generateKey(totalValues, context.mainArguments.partitionValues)) {
                     if (duration > 0 && desiredEndTime.isBefore(LocalDateTime.now())) {

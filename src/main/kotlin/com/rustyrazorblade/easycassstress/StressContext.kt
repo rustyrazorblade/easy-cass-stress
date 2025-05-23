@@ -17,6 +17,7 @@
  */
 package com.rustyrazorblade.easycassstress
 
+import com.codahale.metrics.Timer
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.google.common.util.concurrent.RateLimiter
@@ -36,6 +37,21 @@ data class StressContext(
 ) {
     fun collect(op: Operation, result: Either<AsyncResultSet, Throwable>, startTimeMs: Long, durationNs: Long) =
         collector.collect(this, op, result, startTimeMs, durationNs)
+
+    // we're using a separate timer for populate phase
+    // regardless of the operation performed
+    fun timer(op: Operation, populatePhase: Boolean): Timer = if (populatePhase) {
+        metrics.populate
+    } else {
+        when (op) {
+            is Operation.SelectStatement -> metrics.selects
+            is Operation.Mutation -> metrics.mutations
+            is Operation.Deletion -> metrics.deletions
+            is Operation.Stop -> throw OperationStopException()
+            // maybe this should be under DDL, it's a weird case.
+            is Operation.DDL -> metrics.mutations
+        }
+    }
 }
 
 data class Context(val session: CqlSession,
