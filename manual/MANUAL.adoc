@@ -323,7 +323,7 @@ You can capture detailed client latency metrics to an Apache Parquet file using 
 $ bin/cassandra-easy-stress run KeyValue -n 10000 --parquet /path/to/output.parquet
 ```
 
-This writes operation metrics including operation type, success/failure status, start time, and duration to a Parquet file that can be analyzed later with data analysis tools like Pandas, Spark, or visualization tools that support the Parquet format.
+This writes operation metrics including operation type, success/failure status, start time, and duration to a Parquet file that can be analyzed later with data analysis tools like Pandas, Spark, DuckDB, or visualization tools that support the Parquet format.
 
 If a directory is provided instead of a file, cassandra-easy-stress will automatically create an appropriately named file in that directory.
 
