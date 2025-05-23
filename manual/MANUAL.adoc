@@ -320,7 +320,7 @@ cassandra-easy-stress automatically runs an HTTP server exporting metrics in Pro
 You can capture detailed client latency metrics to an Apache Parquet file using the `--parquet` flag followed by a path to a file or directory:
 
 ```
-$ bin/cassandra-easy-stress run KeyValue -n 10000 --parquet /path/to/output.parquet
+$ bin/cassandra-easy-stress run KeyValue --duration 5m --parquet rawlog.parquet
 ```
 
 This writes operation metrics including operation type, success/failure status, start time, and duration to a Parquet file that can be analyzed later with data analysis tools like Pandas, Spark, DuckDB, or visualization tools that support the Parquet format.
@@ -347,6 +347,18 @@ SELECT date_trunc('minute', epoch_ms(start_time_ms)) as minute,
 FROM read_parquet('rawlog.parquet')
 GROUP BY minute
 ORDER BY minute;
+
+┌─────────────────────┬────────┬─────────────────────┬──────────┬────────────────────┬─────────────────────┬─────────────────────┬────────────────────┬────────┬───────────────┬────────────────┐
+│       minute        │ count  │         avg         │   min    │        max         │         p50         │         p90         │        p99         │ errors │ read_timeouts │ write_timeouts │
+│      timestamp      │ int64  │       double        │  double  │       double       │       double        │       double        │       double       │ int64  │     int64     │     int64      │
+├─────────────────────┼────────┼─────────────────────┼──────────┼────────────────────┼─────────────────────┼─────────────────────┼────────────────────┼────────┼───────────────┼────────────────┤
+│ 2025-05-23 17:18:00 │  73070 │ 0.22682791323388612 │ 0.112125 │          14.250709 │ 0.19321675505385863 │  0.2671348456385043 │ 0.6792484397922071 │      0 │             0 │              0 │
+│ 2025-05-23 17:19:00 │ 292804 │ 0.26252900618502417 │ 0.080291 │          22.061125 │ 0.20316327581644364 │  0.2583348759088921 │ 1.0816527356489594 │      0 │             0 │              0 │
+│ 2025-05-23 17:20:00 │ 300066 │  0.2508126731485714 │ 0.094542 │             20.094 │ 0.20675043575788943 │   0.260757258645301 │ 1.0710369799328208 │      0 │             0 │              0 │
+│ 2025-05-23 17:21:00 │ 300071 │  0.3081645918132665 │ 0.092625 │          69.316209 │ 0.22366136264023692 │ 0.33916271386088764 │  2.142214878915513 │      0 │             0 │              0 │
+│ 2025-05-23 17:22:00 │ 300064 │ 0.29298010069852054 │ 0.092917 │ 29.913833999999998 │ 0.22169414414577554 │  0.3112883490863284 │ 1.7297924489657603 │      0 │             0 │              0 │
+│ 2025-05-23 17:23:00 │ 100299 │  0.2728603535229634 │ 0.093875 │  5.927207999999999 │ 0.22253089267653953 │ 0.31193827208041464 │  1.441108141473468 │      0 │             0 │              0 │
+└─────────────────────┴────────┴─────────────────────┴──────────┴────────────────────┴─────────────────────┴─────────────────────┴────────────────────┴────────┴───────────────┴────────────────┘
 
 -- Show error counts
 SELECT failure_reason, count(*)
