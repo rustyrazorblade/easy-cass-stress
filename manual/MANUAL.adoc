@@ -332,28 +332,27 @@ If a directory is provided instead of a file, cassandra-easy-stress will automat
 The Parquet files created by cassandra-easy-stress can be easily analyzed using DuckDB, a lightweight analytical database engine. Here are some example queries to get you started:
 
 ```sql
--- Show summary statistics for operation latencies by operation type
-SELECT 
-    op, 
-    COUNT(*) as count,
-    MIN(duration_ns)/1000000.0 as min_ms,
-    MAX(duration_ns)/1000000.0 as max_ms,
-    AVG(duration_ns)/1000000.0 as avg_ms,
-    APPROX_PERCENTILE(duration_ns/1000000.0, 0.95) as p95_ms,
-    APPROX_PERCENTILE(duration_ns/1000000.0, 0.99) as p99_ms
-FROM 'output.parquet'
-GROUP BY op
-ORDER BY count DESC;
+-- Show summary statistics for operation latencies for every minute
+SELECT date_trunc('minute', epoch_ms(start_time_ms)) as minute,
+       COUNT(*) as count,
+       AVG(duration_ns / 1000 / 1000) as avg,
+       MIN(duration_ns / 1000 / 1000) as min,
+       MAX(duration_ns / 1000 / 1000) as max,
+       approx_quantile(duration_ns / 1000 / 1000, .5) as p50,
+       approx_quantile(duration_ns / 1000 / 1000, .9) as p90,
+       approx_quantile(duration_ns / 1000 / 1000, .99) as p99,
+       COUNT(CASE WHEN failure_reason != '' THEN 1 END) AS errors,
+       COUNT(CASE WHEN failure_reason = 'ReadTimeoutException' THEN 1 END) AS read_timeouts,
+       COUNT(CASE WHEN failure_reason = 'WriteTimeoutException' THEN 1 END) AS write_timeouts,
+FROM read_parquet('rawlog.parquet')
+GROUP BY minute
+ORDER BY minute;
 
--- Show error counts and rates by second
-SELECT 
-    STRFTIME(start_time_ms/1000, '%Y-%m-%d %H:%M:%S') as second,
-    COUNT(*) as total_ops,
-    COUNT(*) FILTER (WHERE reason IS NOT NULL) as errors,
-    (COUNT(*) FILTER (WHERE reason IS NOT NULL)::FLOAT / COUNT(*)::FLOAT) * 100 as error_rate_percent
-FROM 'output.parquet'
-GROUP BY second
-ORDER BY second;
+-- Show error counts
+SELECT failure_reason, count(*)
+FROM read_parquet('rawlog.parquet')
+WHERE failure_reason != ''
+GROUP BY failure_reason;
 ```
 
 To run these queries, install DuckDB and use its command line interface:
