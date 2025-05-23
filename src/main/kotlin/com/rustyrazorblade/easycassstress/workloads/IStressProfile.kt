@@ -17,7 +17,6 @@
  */
 package com.rustyrazorblade.easycassstress.workloads
 
-import com.codahale.metrics.Timer.Context
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet
 import com.datastax.oss.driver.api.core.cql.BoundStatement

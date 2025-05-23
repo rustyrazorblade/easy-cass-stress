@@ -17,7 +17,6 @@
  */
 package com.rustyrazorblade.easycassstress
 
-import com.codahale.metrics.Timer
 import com.rustyrazorblade.easycassstress.workloads.IStressRunner
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import org.apache.logging.log4j.kotlin.logger

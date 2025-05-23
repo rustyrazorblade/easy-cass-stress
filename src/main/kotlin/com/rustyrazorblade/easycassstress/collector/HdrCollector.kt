@@ -20,7 +20,7 @@ class HdrCollector(val hdrHistogramPrefix: String) : Collector {
         op: Operation,
         result: Either<AsyncResultSet, Throwable>,
         startTimeMs: Long,
-        durationNs: Long
+        durationNs: Long,
     ) {
         if (result is Either.Right) return // only success is tracked
 

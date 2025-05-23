@@ -63,7 +63,7 @@ class OperationCallback(
         }
         val durationNanos = System.nanoTime() - startNanos
         context.timer(op, populatePhase).update(durationNanos, TimeUnit.NANOSECONDS)
-        //TODO (visibility): include details about paging?
+        // TODO (visibility): include details about paging?
         context.collect(op, Either.Left(result!!), startTimeMs, durationNanos)
 
         // do the callback for mutations

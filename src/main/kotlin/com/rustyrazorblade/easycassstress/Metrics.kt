@@ -22,7 +22,6 @@ import com.codahale.metrics.ScheduledReporter
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.dropwizard.DropwizardExports
 import io.prometheus.client.exporter.HTTPServer
-import org.HdrHistogram.SynchronizedHistogram
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 

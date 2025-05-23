@@ -7,11 +7,13 @@ import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.workloads.Operation
 
 class CompositeCollector(private vararg val collectors: Collector) : Collector {
-    override fun collect(ctx: StressContext,
-                         op: Operation,
-                         result: Either<AsyncResultSet, Throwable>,
-                         startTimeMs: Long,
-                         durationNs: Long) {
+    override fun collect(
+        ctx: StressContext,
+        op: Operation,
+        result: Either<AsyncResultSet, Throwable>,
+        startTimeMs: Long,
+        durationNs: Long,
+    ) {
         for (c in collectors)
             c.collect(ctx, op, result, startTimeMs, durationNs)
     }

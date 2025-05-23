@@ -33,34 +33,42 @@ data class StressContext(
     val metrics: Metrics,
     val registry: Registry,
     val rateLimiter: RateLimiter?,
-    val collector: Collector
+    val collector: Collector,
 ) {
-    fun collect(op: Operation, result: Either<AsyncResultSet, Throwable>, startTimeMs: Long, durationNs: Long) =
-        collector.collect(this, op, result, startTimeMs, durationNs)
+    fun collect(
+        op: Operation,
+        result: Either<AsyncResultSet, Throwable>,
+        startTimeMs: Long,
+        durationNs: Long,
+    ) = collector.collect(this, op, result, startTimeMs, durationNs)
 
     // we're using a separate timer for populate phase
     // regardless of the operation performed
-    fun timer(op: Operation, populatePhase: Boolean): Timer = if (populatePhase) {
-        metrics.populate
-    } else {
-        when (op) {
-            is Operation.SelectStatement -> metrics.selects
-            is Operation.Mutation -> metrics.mutations
-            is Operation.Deletion -> metrics.deletions
-            is Operation.Stop -> throw OperationStopException()
-            // maybe this should be under DDL, it's a weird case.
-            is Operation.DDL -> metrics.mutations
+    fun timer(
+        op: Operation,
+        populatePhase: Boolean,
+    ): Timer =
+        if (populatePhase) {
+            metrics.populate
+        } else {
+            when (op) {
+                is Operation.SelectStatement -> metrics.selects
+                is Operation.Mutation -> metrics.mutations
+                is Operation.Deletion -> metrics.deletions
+                is Operation.Stop -> throw OperationStopException()
+                // maybe this should be under DDL, it's a weird case.
+                is Operation.DDL -> metrics.mutations
+            }
         }
-    }
 }
 
-data class Context(val session: CqlSession,
-                   val mainArguments: Run,
-                   val metrics: Metrics,
-                   val registry: Registry,
-                   val rateLimiter: RateLimiter?,
-                   val collector: Collector
+data class Context(
+    val session: CqlSession,
+    val mainArguments: Run,
+    val metrics: Metrics,
+    val registry: Registry,
+    val rateLimiter: RateLimiter?,
+    val collector: Collector,
 ) {
-    fun stress(thread: Int): StressContext =
-        StressContext(session, mainArguments, thread, metrics, registry, rateLimiter, collector)
+    fun stress(thread: Int): StressContext = StressContext(session, mainArguments, thread, metrics, registry, rateLimiter, collector)
 }

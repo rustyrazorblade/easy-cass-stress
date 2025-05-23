@@ -7,7 +7,6 @@ import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.workloads.Operation
 import io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueue
 import org.agrona.concurrent.BackoffIdleStrategy
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -17,7 +16,7 @@ abstract class AsyncCollector(fileOrDirectory: File) : Collector {
         val op: Operation,
         val result: Either<AsyncResultSet, Throwable>,
         val startTimeMs: Long,
-        val durationNs: Long
+        val durationNs: Long,
     )
 
     interface Writer : Closeable {
@@ -48,10 +47,11 @@ abstract class AsyncCollector(fileOrDirectory: File) : Collector {
         op: Operation,
         result: Either<AsyncResultSet, Throwable>,
         startTimeMs: Long,
-        durationNs: Long
+        durationNs: Long,
     ) {
-        if (!queue.offer(Event(op, result, startTimeMs, durationNs)))
+        if (!queue.offer(Event(op, result, startTimeMs, durationNs))) {
             dropped.incrementAndGet()
+        }
     }
 
     private fun run() {
