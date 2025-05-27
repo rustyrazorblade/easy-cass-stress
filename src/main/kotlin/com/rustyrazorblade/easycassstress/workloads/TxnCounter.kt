@@ -31,13 +31,13 @@ enum class Impl {
  * ```
  * # Run with LWT implementation (default)
  * cassandra-easy-stress run TxnCounter
- * 
+ *
  * # Run with Accord implementation
  * cassandra-easy-stress run TxnCounter --workload.impl=ACCORD
- * 
+ *
  * # Specify explicit reads with Accord implementation
  * cassandra-easy-stress run TxnCounter --workload.impl=ACCORD --workload.accordAutoRead=false
- * 
+ *
  * # Add a custom postfix to table names
  * cassandra-easy-stress run TxnCounter --workload.postfix=test_run1
  * ```

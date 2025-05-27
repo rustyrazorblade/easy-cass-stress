@@ -27,6 +27,7 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.jvm.javaType
 
 /**
  * Wrapper for Stress Profile Plugins
@@ -40,7 +41,11 @@ data class Plugin(
     val cls: Class<out IStressProfile>,
     val instance: IStressProfile,
 ) {
-    data class WorkloadParameterType(val name: String, val description: String, val type: String)
+    data class WorkloadParameterType(
+        val name: String,
+        val description: String,
+        val type: String,
+    )
 
     override fun toString() = name
 
@@ -104,6 +109,18 @@ data class Plugin(
             if (prop.returnType.isSubtypeOf(Double::class.createType())) {
                 log.debug("Found the type, we have a Boolean, setting the value")
                 prop.setter.call(instance, value.toDouble())
+                continue
+            }
+
+            // Handle Enum types
+            if ((prop.returnType.javaType as Class<*>).isEnum) {
+                log.debug("Found the type, we have an Enum, setting the value")
+                val enumClass = (prop.returnType.classifier as kotlin.reflect.KClass<*>).java
+                val enumValue =
+                    enumClass.enumConstants.first {
+                        (it as Enum<*>).name.equals(value, ignoreCase = true)
+                    }
+                prop.setter.call(instance, enumValue)
                 continue
             }
         }
