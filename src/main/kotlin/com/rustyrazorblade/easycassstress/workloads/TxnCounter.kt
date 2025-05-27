@@ -6,10 +6,42 @@ import com.rustyrazorblade.easycassstress.StressContext
 import com.rustyrazorblade.easycassstress.WorkloadParameter
 
 enum class Impl {
+    /**
+     * Lightweight Transactions - uses Cassandra's native conditional updates with IF EXISTS
+     * to ensure atomicity of counter operations.
+     */
     LWT,
+
+    /**
+     * Accord Transaction Protocol - uses Cassandra's newer transaction protocol designed
+     * to handle distributed transactions with multiple key support and more flexible logic.
+     */
     ACCORD,
 }
 
+/**
+ * A stress profile that tests distributed counters using different transaction algorithms in Apache Cassandra.
+ * This workload simulates concurrent increments of counter values using either Lightweight Transactions (LWT)
+ * or Accord transaction protocol, allowing performance comparison between these transaction mechanisms.
+ *
+ * The test helps evaluate the consistency and performance characteristics of distributed counter operations
+ * under high concurrency conditions.
+ *
+ * Example:
+ * ```
+ * # Run with LWT implementation (default)
+ * cassandra-easy-stress run TxnCounter
+ * 
+ * # Run with Accord implementation
+ * cassandra-easy-stress run TxnCounter --workload.impl=ACCORD
+ * 
+ * # Specify explicit reads with Accord implementation
+ * cassandra-easy-stress run TxnCounter --workload.impl=ACCORD --workload.accordAutoRead=false
+ * 
+ * # Add a custom postfix to table names
+ * cassandra-easy-stress run TxnCounter --workload.postfix=test_run1
+ * ```
+ */
 class TxnCounter : IStressProfile {
     @WorkloadParameter("Which type of transaction system to use")
     var impl = Impl.LWT
