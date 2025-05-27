@@ -166,16 +166,17 @@ class TxnCounter : IStressProfile {
             override fun getNextMutation(partitionKey: PartitionKey): Operation =
                 Operation.Mutation(
                     if (accordAutoRead) {
-                        update.bind(partitionKey)
+                        update.bind(partitionKey.getText())
                     } else {
-                        update.bind(partitionKey, partitionKey)
+                        update.bind(partitionKey.getText(), partitionKey.getText())
                     },
                 )
 
             override fun getNextPopulate(partitionKey: PartitionKey): Operation =
-                Operation.Mutation(prepareInsert.bind(partitionKey, partitionKey))
+                Operation.Mutation(prepareInsert.bind(partitionKey.getText(), partitionKey.getText()))
 
-            override fun getNextSelect(partitionKey: PartitionKey): Operation = Operation.SelectStatement(select.bind(partitionKey))
+            override fun getNextSelect(partitionKey: PartitionKey): Operation =
+                Operation.SelectStatement(select.bind(partitionKey.getText()))
 
             override fun getNextDelete(partitionKey: PartitionKey): Operation {
                 TODO("Counter test does not support delete")
